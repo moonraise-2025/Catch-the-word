@@ -29,7 +29,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // int _counter = 0; // Đã loại bỏ
   final TextEditingController _nameController = TextEditingController();
 
   @override
@@ -38,11 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
-  // void _incrementCounter() { // Đã loại bỏ
-  //   setState(() {
-  //     _counter++;
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -109,10 +103,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                   ),
-                  // Text(
-                  //   '$_counter',
-                  //   style: Theme.of(context).textTheme.headlineMedium,
-                  // ),
                 ],
               ),
             ),
@@ -155,11 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton( // Đã loại bỏ nút +
-      //   onPressed: _incrementCounter,
-      //   tooltip: 'Increment',
-      //   child: const Icon(Icons.add),
-      // ),
+      
     );
   }
 }
