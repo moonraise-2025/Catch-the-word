@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'GameScreen.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
@@ -52,20 +53,29 @@ class StartScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 40),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.black12),
-                        ),
-                        child: const Text(
-                          'Chơi ngay',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                          textStyle: const TextStyle(fontSize: 24),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: const BorderSide(color: Colors.black12),
                           ),
                         ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const GameScreen(
+                                imageName: 'cau1.png',
+                                answer: 'APPLE',
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Chơi ngay'),
                       ),
                     ],
                   ),
