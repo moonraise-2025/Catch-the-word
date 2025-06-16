@@ -68,10 +68,7 @@ class StartScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const GameScreen(
-                                imageName: 'cau1.png',
-                                answer: 'APPLE',
-                              ),
+                              builder: (context) => const GameScreen(),
                             ),
                           );
                         },
