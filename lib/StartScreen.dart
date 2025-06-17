@@ -15,7 +15,7 @@ class StartScreen extends StatelessWidget {
             height: size.height,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/background.png'),
+                image: AssetImage('assets/images/background2.png'),
                 fit: BoxFit.cover,
                 repeat: ImageRepeat.noRepeat,
               ),
@@ -33,10 +33,11 @@ class StartScreen extends StatelessWidget {
                       color: Colors.white,
                     ),
                     child: const Text(
-                      'Điểm: 0',
+                      'Level: 0',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 22,
+                        fontFamily: 'Pacifico',
                       ),
                     ),
                   ),
@@ -45,20 +46,31 @@ class StartScreen extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'Đuổi hình bắt chữ',
+                      Text(
+                        'BẮT CHỮ',
                         style: TextStyle(
+                          fontSize: 90,
                           fontWeight: FontWeight.bold,
-                          fontSize: 60,
+                          color: Colors.orange,
+                          letterSpacing: 8,
+                          fontFamily: 'Pacifico',
+                          shadows: [
+                            Shadow(
+                              offset: Offset(3, 3),
+                              blurRadius: 4,
+                              color: Colors.black.withOpacity(0.2),
+                            ),
+                          ],
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 60),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                          textStyle: const TextStyle(fontSize: 24),
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                          textStyle: const TextStyle(fontSize: 30, fontFamily: 'Pacifico'),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                             side: const BorderSide(color: Colors.black12),
