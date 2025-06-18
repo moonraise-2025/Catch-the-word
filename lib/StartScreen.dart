@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'GameScreen.dart';
+import 'SettingPopup.dart';
+import 'InfoPopup.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
@@ -22,26 +24,6 @@ class StartScreen extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black, width: 1),
-                      borderRadius: BorderRadius.circular(6),
-                      color: Colors.white,
-                    ),
-                    child: const Text(
-                      'Level: 0',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
-                        fontFamily: 'Pacifico',
-                      ),
-                    ),
-                  ),
-                ),
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -49,11 +31,10 @@ class StartScreen extends StatelessWidget {
                       Text(
                         'BẮT CHỮ',
                         style: TextStyle(
-                          fontSize: 90,
+                          fontSize: 100,
                           fontWeight: FontWeight.bold,
                           color: Colors.orange,
                           letterSpacing: 8,
-                          fontFamily: 'Pacifico',
                           shadows: [
                             Shadow(
                               offset: Offset(3, 3),
@@ -67,13 +48,13 @@ class StartScreen extends StatelessWidget {
                       const SizedBox(height: 60),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                          textStyle: const TextStyle(fontSize: 30, fontFamily: 'Pacifico'),
+                          textStyle: const TextStyle(fontSize: 30),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
-                            side: const BorderSide(color: Colors.black12),
+                            side: const BorderSide(color: Colors.black),
                           ),
                         ),
                         onPressed: () {
@@ -92,12 +73,48 @@ class StartScreen extends StatelessWidget {
                 Positioned(
                   left: 32,
                   bottom: 32,
-                  child: Icon(Icons.volume_up, size: 48),
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const SettingPopup();
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.black, width: 1),
+                      ),
+                      child: Icon(Icons.settings, size: 48, color: Colors.black),
+                    ),
+                  ),
                 ),
                 Positioned(
                   right: 32,
                   bottom: 32,
-                  child: Icon(Icons.diamond, size: 48, color: Colors.blueAccent),
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const InfoPopup();
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black, width: 2),
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.lightBlue[200],
+                      ),
+                      child: const Icon(Icons.info, size: 40, color: Colors.black),
+                    ),
+                  ),
                 ),
               ],
             ),

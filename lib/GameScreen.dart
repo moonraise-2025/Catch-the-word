@@ -488,12 +488,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                               ],
                             ),
                             SizedBox(width: mediumPadding),
-                            IconButton(
-                              icon: const Icon(Icons.backspace, size: 28),
-                              onPressed: _onBackspace,
-                              padding: EdgeInsets.all(smallPadding),
-                              constraints: const BoxConstraints(),
-                            ),
+                            
                           ],
                         ),
                       ),
@@ -510,34 +505,30 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 scale: _scaleAnimation,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
-                  child: Column(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: smallPadding / 2,
+                    runSpacing: smallPadding,
                     children: [
-                      for (int row = 0; row < (charOptions.length + 7) ~/ 8; row++)
+                      for (int i = 0; i < charOptions.length; i++)
                         Padding(
-                          padding: EdgeInsets.only(bottom: smallPadding),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              for (int col = 0; col < 8; col++)
-                                if (row * 8 + col < charOptions.length)
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: smallPadding / 2),
-                                    child: ElevatedButton(
-                                      onPressed: charUsed[row * 8 + col]
-                                          ? null
-                                          : () => _onCharTap(row * 8 + col),
-                                      style: ElevatedButton.styleFrom(
-                                        minimumSize: Size(charButtonSize, charButtonSize),
-                                        backgroundColor: Colors.purpleAccent,
-                                      ),
-                                      child: Text(
-                                        charOptions[row * 8 + col],
-                                        style: TextStyle(fontSize: fontSizeChar, fontWeight: FontWeight.bold, fontFamily: 'Pacifico'),
-                                      ),
-                                    ),
+                          padding: EdgeInsets.symmetric(horizontal: smallPadding / 2),
+                          child: charUsed[i]
+                              ? SizedBox(
+                                  width: charButtonSize,
+                                  height: charButtonSize,
+                                )
+                              : ElevatedButton(
+                                  onPressed: () => _onCharTap(i),
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(charButtonSize, charButtonSize),
+                                    backgroundColor: Colors.purpleAccent,
                                   ),
-                            ],
-                          ),
+                                  child: Text(
+                                    charOptions[i],
+                                    style: TextStyle(fontSize: fontSizeChar, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                         ),
                     ],
                   ),
