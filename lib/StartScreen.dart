@@ -48,10 +48,10 @@ class StartScreen extends StatelessWidget {
                       const SizedBox(height: 60),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                          textStyle: const TextStyle(fontSize: 30),
+                          textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                             side: const BorderSide(color: Colors.black),
@@ -65,7 +65,7 @@ class StartScreen extends StatelessWidget {
                             ),
                           );
                         },
-                        child: const Text('Chơi ngay'),
+                        child: const Text('Bắt đầu'),
                       ),
                     ],
                   ),
