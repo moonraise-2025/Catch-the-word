@@ -90,7 +90,7 @@ class StartScreen extends StatelessWidget {
                               );
                             },
                             child: Column(
-                              mainAxisSize: MainAxisSize.min, // để chiều cao vừa khít nội dung
+                              mainAxisSize: MainAxisSize.min, 
                               children: const [
                                 Text(
                                   'Tiếp tục',
@@ -98,7 +98,7 @@ class StartScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  'Level N', // bạn có thể thay bằng level thực tế sau
+                                  'Level N', 
                                   style: TextStyle(fontSize: 20, color: Colors.white),
                                 ),
                               ],
