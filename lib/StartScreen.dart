@@ -67,6 +67,30 @@ class StartScreen extends StatelessWidget {
                         },
                         child: const Text('Bắt đầu'),
                       ),
+
+                      SizedBox(height: 20),
+
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.lightBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                          textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            side: const BorderSide(color: Colors.black),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const GameScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text('Tiếp tục'),
+                      ),
                     ],
                   ),
                 ),

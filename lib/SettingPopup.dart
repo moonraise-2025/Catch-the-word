@@ -81,7 +81,7 @@ class _SettingPopupState extends State<SettingPopup> {
                     ),
                     Column(
                       children: [
-                        Text('Hiệu Ứng', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                        Text('Rung', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
                         GestureDetector(
                           onTap: () {
