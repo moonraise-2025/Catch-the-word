@@ -1,24 +1,32 @@
-import 'package:flutter/material.dart'; // thư viện giao diện người dùng của Flutter để sử dụng thành phần có sẵn 
+import 'package:duoihinhbatchu/GiftPopup.dart';
+import 'package:flutter/material.dart'; // thư viện giao diện người dùng của Flutter để sử dụng thành phần có sẵn
 import 'dart:math'; // để sử dụng các hàm toán học trong Flutter
 import 'PopupAnswerCorrect.dart';
 
-class Question { // lớp câu hỏi và câu trả lời
+class Question {
+  // lớp câu hỏi và câu trả lời
   final String imageName; // tên file ảnh
   final String answer; // câu trả lời
-  Question({required this.imageName, required this.answer}); // yêu cầu cần có tên file ảnh và câu trả lời của ảnh đó
+  Question(
+      {required this.imageName,
+      required this.answer}); // yêu cầu cần có tên file ảnh và câu trả lời của ảnh đó
 }
 
-class GameScreen extends StatefulWidget { // tạo một màn hình game kế thừa thuộc  tính của StatefulWidget, kế thừa để cập nhật được các thay đổi giao diện khi dữ liệu thay đổi
-                                        // không kế thừa thì không dùng setState() -> game sẽ chạy không như mong muốn
-  const GameScreen({super.key});  // hàm khởi tạo cho class GameScreen, truyền cây cho lớp cha(StatefulWidget) để biết khi nào thay đổi trong cây wibget
+class GameScreen extends StatefulWidget {
+  // tạo một màn hình game kế thừa thuộc  tính của StatefulWidget, kế thừa để cập nhật được các thay đổi giao diện khi dữ liệu thay đổi
+  // không kế thừa thì không dùng setState() -> game sẽ chạy không như mong muốn
+  const GameScreen(
+      {super.key}); // hàm khởi tạo cho class GameScreen, truyền cây cho lớp cha(StatefulWidget) để biết khi nào thay đổi trong cây wibget
 
   @override
-  State<GameScreen> createState() => _GameScreenState(); // bắt buộc phải có khi tạo một StatefulWidget để quản lý trạng thái xây dựng giao diện 
+  State<GameScreen> createState() =>
+      _GameScreenState(); // bắt buộc phải có khi tạo một StatefulWidget để quản lý trạng thái xây dựng giao diện
 }
 
-class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
- { // trộn vào SingleTickerProviderStateMixin để quản lý animation là Ticker, SingleTickerProviderStateMixin cho phép animation controller hoạt động bằng cách cung cấp ticker - cơ chế này giúp Flutter biết khi nào cần cập nhật giao diện 
-  final List<Question> questions = [ // danh sách các câu hỏi và câu trả lời của từng câu
+class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
+  // trộn vào SingleTickerProviderStateMixin để quản lý animation là Ticker, SingleTickerProviderStateMixin cho phép animation controller hoạt động bằng cách cung cấp ticker - cơ chế này giúp Flutter biết khi nào cần cập nhật giao diện
+  final List<Question> questions = [
+    // danh sách các câu hỏi và câu trả lời của từng câu
     Question(imageName: 'cau1.png', answer: 'CƯỚPBIỂN'),
     Question(imageName: 'cau2.png', answer: 'THUỶTINH'),
     //Question(imageName: 'cau3.png', answer: 'GIẤUĐẦULÒIĐUÔI'),
@@ -38,34 +46,48 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
     //Question(imageName: 'cau17.png', answer: 'CHẠYNƯỚCRÚT'),
     Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
   ];
-  int currentQuestion = 0; // khai báo câu hỏi hiện tại 
+
+  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
+  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
+  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
+
+  int currentQuestion = 0; // khai báo câu hỏi hiện tại
   int level = 1; // khai báo cấp độ đầu tiên
   int diamonds = 0; // khai báo số kim cương ban đầu
 
-  late List<String> answerSlots; // khai báo biến danh sách các đáp án - sẽ khởi tạo sau
-  late List<String> charOptions; // khai báo biến danh sách các ký tự lựa chọn - sẽ khởi tạo sau, không khởi tạo ngay khi khai báo
-  late List<bool> charUsed; // khai báo biến danh sách các ký tự đã được chọn - sẽ khởi tạo sau
+  late List<String>
+      answerSlots; // khai báo biến danh sách các đáp án - sẽ khởi tạo sau
+  late List<String>
+      charOptions; // khai báo biến danh sách các ký tự lựa chọn - sẽ khởi tạo sau, không khởi tạo ngay khi khai báo
+  late List<bool>
+      charUsed; // khai báo biến danh sách các ký tự đã được chọn - sẽ khởi tạo sau
   int currentSlot = 0; // khai báo vị trí hiện tại của đáp án
-  bool isCorrect = false; // khai báo biến kiểm tra đúng sai - để mặc định là false
+  bool isCorrect =
+      false; // khai báo biến kiểm tra đúng sai - để mặc định là false
 
-  late AnimationController _controller; // khai báo animation controller - khởi tạo sau  - dùng để quản lý lặp, dừng, chạy của animation
-  late Animation<double> _scaleAnimation; // khai báo biến animation scale - khởi tạo sau - dùng để thay đổi kích thước của một widget
+  late AnimationController
+      _controller; // khai báo animation controller - khởi tạo sau  - dùng để quản lý lặp, dừng, chạy của animation
+  late Animation<double>
+      _scaleAnimation; // khai báo biến animation scale - khởi tạo sau - dùng để thay đổi kích thước của một widget
   late Animation<double> _fadeAnimation;
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
   bool isWrong = false;
- // khai báo biến animation fade - khởi tạo sau - dùng để thay đổi độ mờ/độ trong suốt của một widget
+
+  // khai báo biến animation fade - khởi tạo sau - dùng để thay đổi độ mờ/độ trong suốt của một widget
 
   @override
-  void initState() { // khởi tạo các biến, hàm chạy đầu tiên khi khởi tạo màn hình
+  void initState() {
+    // khởi tạo các biến, hàm chạy đầu tiên khi khởi tạo màn hình
     super.initState();
     _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 500),
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
     );
-     // gọi hàm gốc để đảm bảo Flutter hoạt động bình thường
+    // gọi hàm gốc để đảm bảo Flutter hoạt động bình thường
     _shakeController = AnimationController(
-      duration: const Duration(milliseconds: 1200), // nhanh hơn và lắc nhiều lần
+      duration: const Duration(milliseconds: 1200),
+      // nhanh hơn và lắc nhiều lần
       vsync: this,
     );
 
@@ -73,86 +95,132 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
       CurvedAnimation(parent: _shakeController, curve: Curves.linear),
     );
 
-    _initAnimations(); // hàm khởi tại các animation 
+    _initAnimations(); // hàm khởi tại các animation
     _initGame(); // hàm khởi tạo game - VD: câu hỏi, đáp án, trạng thái,...
   }
 
-  void _initAnimations() { // khởi tạo các animation
+  void _initAnimations() {
+    // khởi tạo các animation
     // _controller = AnimationController( // khởi tạo animation controller
     //   duration: const Duration(milliseconds: 300), // khởi tạo animation - để thiết lập thời gian chạy của animation với thời gian 300ms
-    //   vsync: this, // đồng bộ các animation với tốc độ vẽ khung hình của từng thiết bị - giúp animation mượt hơn và tiết kiệm tài nguyên 
+    //   vsync: this, // đồng bộ các animation với tốc độ vẽ khung hình của từng thiết bị - giúp animation mượt hơn và tiết kiệm tài nguyên
     // );
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(  // khởi tạo animation scale - để thay đổi kích thước của một widget bằng cách dùng Tween<double> kết hợp với AnimationController để chạy theo thời gian quy định
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack), // bọc AnimationController bằng đường cong chuyển đổi "curve" để tạo hiệu ứng mượt và tự nhiên hơn
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      // khởi tạo animation scale - để thay đổi kích thước của một widget bằng cách dùng Tween<double> kết hợp với AnimationController để chạy theo thời gian quy định
+      CurvedAnimation(
+          parent: _controller,
+          curve: Curves
+              .easeOutBack), // bọc AnimationController bằng đường cong chuyển đổi "curve" để tạo hiệu ứng mượt và tự nhiên hơn
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate( // khởi tạo animation fade - để chuyển từ ẩn từ hoàn toàn thành hiện hoàn toàn
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn), // làm hiệu ứng chạy mượt hơn, chạy chậm ở đầu và nhanh hơn ở cuối
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      // khởi tạo animation fade - để chuyển từ ẩn từ hoàn toàn thành hiện hoàn toàn
+      CurvedAnimation(
+          parent: _controller,
+          curve: Curves
+              .easeIn), // làm hiệu ứng chạy mượt hơn, chạy chậm ở đầu và nhanh hơn ở cuối
     );
 
-    _controller.forward(); // lệnh bắt đầu chạy animation do _controller điều khiển - chạy từ giá trị 0.0 đến 1.0 theo như duration và curve đã định nghĩa 
+    _controller
+        .forward(); // lệnh bắt đầu chạy animation do _controller điều khiển - chạy từ giá trị 0.0 đến 1.0 theo như duration và curve đã định nghĩa
   }
 
   @override
-  void dispose() { // hàm huỷ của State - để giải phóng tài nguyên không còn sử dụng nữa 
+  void dispose() {
+    // hàm huỷ của State - để giải phóng tài nguyên không còn sử dụng nữa
     _controller.dispose(); // huỷ AnimationController để tránh rò rỉ bộ nhớ
-    _shakeController.dispose(); 
-    super.dispose(); // gọi hàm dispose mặc định của Flutter để thực hiện các thao tác dọn dẹp khác
+    _shakeController.dispose();
+    super
+        .dispose(); // gọi hàm dispose mặc định của Flutter để thực hiện các thao tác dọn dẹp khác
   }
 
-  void _initGame() { //khởi tạo dữ liệu Game
-    final answer = questions[currentQuestion].answer.toUpperCase(); // để lấy đáp án của câu hỏi hiện tại và chuyển về chữ hoa 
-    answerSlots = List.filled(answer.length, ''); // khởi tạo các ô trong để người chơi điền từ vào ở phần đáp án
-    charOptions = _generateCharOptions(answer); // tạo danh sách ký tự lựa chọn cho đáp án hiện tại
-    charUsed = List.filled(charOptions.length, false); // khởi tạo danh sách trạng thái đã chọn cho từng ký tự ban đầu tất cả là false
+  void _initGame() {
+    //khởi tạo dữ liệu Game
+    final answer = questions[currentQuestion]
+        .answer
+        .toUpperCase(); // để lấy đáp án của câu hỏi hiện tại và chuyển về chữ hoa
+    answerSlots = List.filled(answer.length,
+        ''); // khởi tạo các ô trong để người chơi điền từ vào ở phần đáp án
+    charOptions = _generateCharOptions(
+        answer); // tạo danh sách ký tự lựa chọn cho đáp án hiện tại
+    charUsed = List.filled(charOptions.length,
+        false); // khởi tạo danh sách trạng thái đã chọn cho từng ký tự ban đầu tất cả là false
     currentSlot = 0; // đặt lại vị trí ô đáp án hiện tại về 0
     isCorrect = false; // đặt lại trạng thái đúng sai về false
     _controller.reset(); // đặt lại animation controller về trạng thái ban đầu
     _controller.forward(); // bắt đầu chạy animation
   }
 
-  List<String> _generateCharOptions(String answer) { // tạo danh sách ký tự lựa chọn gồm đáp án và ký tự gây nhiễu
-    const String alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; // bảng chữ cái tiếng Anh để lấy ký tự gây nhiễu
-    List<String> chars = answer.split(''); // tách đáp án thành từng ký tự riêng lẻ
+  List<String> _generateCharOptions(String answer) {
+    // tạo danh sách ký tự lựa chọn gồm đáp án và ký tự gây nhiễu
+    const String alphabet =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; // bảng chữ cái tiếng Anh để lấy ký tự gây nhiễu
+    List<String> chars =
+        answer.split(''); // tách đáp án thành từng ký tự riêng lẻ
     Random rnd = Random(); // tạo đối tượng random để sinh số ngẫu nhiên
-    
+
     // Tính số lượng chữ gây nhiễu dựa vào độ dài đáp án
     int numDistractors; // biến lưu số lượng ký tự gây nhiễu cần thêm
-    if (answer.length <= 5) { // nếu đáp án ngắn hơn hoặc bằng 5 ký tự
-      numDistractors = 2 + rnd.nextInt(2); // random 2 hoặc 3 ký tự gây nhiễu ngẫu nhiên
-    } else if (answer.length <= 10) { // nếu đáp án từ 6 đến 10 ký tự
-      numDistractors = 4 + rnd.nextInt(2); // random 4 hoặc 5 ký tự gây nhiễu ngẫu nhiên
-    } else { // nếu đáp án dài hơn 10 ký tự
-      if (answer.length < 16) { // nếu tổng số ký tự chưa đủ 16
+    if (answer.length <= 5) {
+      // nếu đáp án ngắn hơn hoặc bằng 5 ký tự
+      numDistractors =
+          2 + rnd.nextInt(2); // random 2 hoặc 3 ký tự gây nhiễu ngẫu nhiên
+    } else if (answer.length <= 10) {
+      // nếu đáp án từ 6 đến 10 ký tự
+      numDistractors =
+          4 + rnd.nextInt(2); // random 4 hoặc 5 ký tự gây nhiễu ngẫu nhiên
+    } else {
+      // nếu đáp án dài hơn 10 ký tự
+      if (answer.length < 16) {
+        // nếu tổng số ký tự chưa đủ 16
         numDistractors = 16 - answer.length; // thêm cho đủ 16 ký tự
-      } else { // nếu đã đủ hoặc hơn 16 ký tự
+      } else {
+        // nếu đã đủ hoặc hơn 16 ký tự
         numDistractors = 1 + rnd.nextInt(2); // random 1 hoặc 2 ký tự gây nhiễu
       }
     }
 
-    while (chars.length < answer.length + numDistractors) { // số lượng ký tự trong đáp án và số lượng chữ nhiễu cần thêm
-      String c = alphabet[rnd.nextInt(alphabet.length)]; // lấy ngẫu nhiên 1 chữ từ biến alphabet  
-      if (!answer.contains(c)) { // chỉ thêm chữ vào chars nếu nó không nằm trong đáp án
-        chars.add(c); 
+    while (chars.length < answer.length + numDistractors) {
+      // số lượng ký tự trong đáp án và số lượng chữ nhiễu cần thêm
+      String c = alphabet[rnd
+          .nextInt(alphabet.length)]; // lấy ngẫu nhiên 1 chữ từ biến alphabet
+      if (!answer.contains(c)) {
+        // chỉ thêm chữ vào chars nếu nó không nằm trong đáp án
+        chars.add(c);
       }
     }
     chars.shuffle(); // trộn ngẫu nhiên các chữ trong danh sách chars
     return chars; // trả về chars
   }
 
-  void _onCharTap(int idx) { // hàm xử lý khi người chơi chọn một ký tự
-    if (currentSlot < answerSlots.length && !charUsed[idx]) { // chỉ cho phép chọn nếu còn ô trống và ký tự chưa được dùng
-      setState(() { // cập nhật lại giao diện
-        answerSlots[currentSlot] = charOptions[idx]; // gán ký tự được chọn vào ô đáp án hiện tại
+  void _onCharTap(int idx) {
+    // hàm xử lý khi người chơi chọn một ký tự
+    if (currentSlot < answerSlots.length && !charUsed[idx]) {
+      // chỉ cho phép chọn nếu còn ô trống và ký tự chưa được dùng
+      setState(() {
+        // cập nhật lại giao diện
+        answerSlots[currentSlot] =
+            charOptions[idx]; // gán ký tự được chọn vào ô đáp án hiện tại
         charUsed[idx] = true; // đánh dấu ký tự này đã được sử dụng
         currentSlot++; // chuyển sang ô đáp án tiếp theo
 
-        if (currentSlot == answerSlots.length) { // nếu đã điền hết các ô đáp án
-          String userAnswer = answerSlots.join(''); // ghép các ký tự lại thành đáp án người chơi nhập
-          isCorrect = userAnswer == questions[currentQuestion].answer.toUpperCase(); // kiểm tra đáp án đúng hay sai
+        if (currentSlot == answerSlots.length) {
+          // nếu đã điền hết các ô đáp án
+          String userAnswer = answerSlots
+              .join(''); // ghép các ký tự lại thành đáp án người chơi nhập
+          isCorrect = userAnswer ==
+              questions[currentQuestion]
+                  .answer
+                  .toUpperCase(); // kiểm tra đáp án đúng hay sai
           if (isCorrect) {
-            Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
+            Future.delayed(
+                const Duration(milliseconds: 300), showCorrectDialog);
+            // Cập nhật số lượng câu đã trả lời
+            dailyCount++;
+            daily30Count++;
+            daily50Count++;
+
           } else {
             setState(() {
               isWrong = true;
@@ -172,18 +240,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
               });
             });
           }
-
         }
       });
     }
   }
 
-  void _onAnswerSlotTap(int slotIndex) { // hàm xử lý khi bấm vào ô đáp án để xoá ký tự
-    if (answerSlots[slotIndex].isNotEmpty) { // chỉ xoá nếu ô có ký tự
-      setState(() { // cập nhật lại giao diện
+  void _onAnswerSlotTap(int slotIndex) {
+    // hàm xử lý khi bấm vào ô đáp án để xoá ký tự
+    if (answerSlots[slotIndex].isNotEmpty) {
+      // chỉ xoá nếu ô có ký tự
+      setState(() {
+        // cập nhật lại giao diện
         String char = answerSlots[slotIndex]; // lấy ký tự trong ô
-        int idx = charOptions.indexOf(char); // tìm vị trí ký tự trong danh sách lựa chọn
-        if (idx != -1) { // nếu tìm thấy
+        int idx = charOptions
+            .indexOf(char); // tìm vị trí ký tự trong danh sách lựa chọn
+        if (idx != -1) {
+          // nếu tìm thấy
           charUsed[idx] = false; // đánh dấu ký tự chưa dùng
         }
         answerSlots[slotIndex] = ''; // xoá ký tự khỏi ô
@@ -206,6 +278,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                 currentQuestion++;
                 level++;
                 diamonds += 5;
+
+                // if (dailyCount < 1) dailyCount++;         //  Nhiệm vụ ngày: chỉ cần đúng 1 câu
+                // if (daily30Count < 30) weekly30Count++;  //  Nhiệm vụ tuần 1: đúng tối đa 30 câu
+                // if (daily50Count < 50) weekly50Count++;  //  Nhiệm vụ tuần 2: đúng tối đa 50 câu
+
                 _initGame();
               } else {
                 currentQuestion = 0;
@@ -221,21 +298,28 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
   }
 
   @override
-  Widget build(BuildContext context) { // hàm xây dựng giao diện màn hình game
+  Widget build(BuildContext context) {
+    // hàm xây dựng giao diện màn hình game
     final question = questions[currentQuestion]; // lấy câu hỏi hiện tại
-    final screenWidth = MediaQuery.of(context).size.width; // lấy chiều rộng màn hình
-    final screenHeight = MediaQuery.of(context).size.height; // lấy chiều cao màn hình
+    final screenWidth =
+        MediaQuery.of(context).size.width; // lấy chiều rộng màn hình
+    final screenHeight =
+        MediaQuery.of(context).size.height; // lấy chiều cao màn hình
 
-    final double imageContainerSize = screenWidth * 0.4; // kích thước khung ảnh là 40% chiều rộng màn hình
-    final double answerBoxSize = screenWidth * 0.09; // kích thước mỗi ô đáp án là 9% chiều rộng màn hình
+    final double imageContainerSize =
+        screenWidth * 0.4; // kích thước khung ảnh là 40% chiều rộng màn hình
+    final double answerBoxSize =
+        screenWidth * 0.09; // kích thước mỗi ô đáp án là 9% chiều rộng màn hình
     final double smallPadding = screenWidth * 0.01; // padding nhỏ
     final double mediumPadding = screenWidth * 0.02; // padding vừa
     final double largePadding = screenWidth * 0.08; // padding lớn
     final double fontSizeAnswer = screenWidth * 0.055; // cỡ chữ đáp án
     final double fontSizeChar = screenWidth * 0.055; // cỡ chữ ký tự
 
-    return Scaffold( // khung giao diện chính
-      body: Container( // nền chính
+    return Scaffold(
+      // khung giao diện chính
+      body: Container(
+        // nền chính
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/background2.png'), // ảnh nền
@@ -243,16 +327,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
             repeat: ImageRepeat.noRepeat, // không lặp lại
           ),
         ),
-        child: SafeArea( // đảm bảo không bị che bởi tai thỏ viền màn hình
+        child: SafeArea(
+          // đảm bảo không bị che bởi tai thỏ viền màn hình
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding), // padding cho header
+                padding: EdgeInsets.symmetric(
+                    horizontal: mediumPadding, vertical: smallPadding),
+                // padding cho header
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, size: 32, color: Colors.white), // nút quay lại
-                      onPressed: () => Navigator.pop(context), // quay lại màn hình trước
+                      icon: const Icon(Icons.arrow_back,
+                          size: 32, color: Colors.white),
+                      // nút quay lại
+                      onPressed: () =>
+                          Navigator.pop(context), // quay lại màn hình trước
                     ),
                     SizedBox(width: smallPadding), // khoảng cách
                     Expanded(
@@ -262,46 +352,85 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                           child: FadeTransition(
                             opacity: _fadeAnimation, // hiệu ứng mờ dần
                             child: Row(
-                              mainAxisSize: MainAxisSize.min, // chiều ngang vừa đủ
+                              mainAxisSize: MainAxisSize.min,
+                              // chiều ngang vừa đủ
                               children: [
-                                const Text('Level ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // text level
-                                Text('$level', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // hiển thị level hiện tại
-                                SizedBox(width: largePadding), // khoảng cách
-                                Icon(Icons.diamond, color: Colors.blueAccent, size: 60), // icon kim cương
-                                SizedBox(width: smallPadding), // khoảng cách
-                                Text('$diamonds', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // hiển thị số kim cương
+                                const Text('Level ',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50)),
+                                // text level
+                                Text('$level',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50)),
+                                // hiển thị level hiện tại
+                                SizedBox(width: largePadding),
+                                // khoảng cách
+                                Icon(Icons.diamond,
+                                    color: Colors.blueAccent, size: 60),
+                                // icon kim cương
+                                SizedBox(width: smallPadding),
+                                // khoảng cách
+                                Text('$diamonds',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50)),
+                                // hiển thị số kim cương
                               ],
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const Icon(Icons.lightbulb, color: Colors.amber, size: 60), // icon gợi ý
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) =>
+                              Giftpopup(dailyCount: dailyCount,daily30Count: daily30Count,daily50Count: daily50Count,), // Gọi widget popupGift của bạn
+                        );
+                      },
+                      child: const Icon(
+                        Icons.card_giftcard,
+                        color: Colors.pink,
+                        size: 60,
+                      ),
+                    ),
                   ],
                 ),
               ),
 
               Column(
-                mainAxisAlignment: MainAxisAlignment.center, // căn giữa theo chiều dọc
+                mainAxisAlignment: MainAxisAlignment.center,
+                // căn giữa theo chiều dọc
                 children: [
                   ScaleTransition(
                     scale: _scaleAnimation, // hiệu ứng phóng to thu nhỏ cho ảnh
                     child: FadeTransition(
                       opacity: _fadeAnimation, // hiệu ứng mờ dần cho ảnh
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(screenWidth * 0.12, screenHeight * 0.3, screenWidth * 0.12, screenWidth * 0.05), // padding cho ảnh
+                        padding: EdgeInsets.fromLTRB(
+                            screenWidth * 0.12,
+                            screenHeight * 0.3,
+                            screenWidth * 0.12,
+                            screenWidth * 0.05),
+                        // padding cho ảnh
                         child: Container(
                           width: imageContainerSize, // kích thước khung ảnh
                           height: imageContainerSize,
                           decoration: BoxDecoration(
                             color: Colors.white, // nền trắng cho khung ảnh
-                            border: Border.all(color: Colors.black26), // viền xám nhạt
+                            border: Border.all(
+                                color: Colors.black26), // viền xám nhạt
                           ),
                           child: Image.asset(
-                            'assets/questions/${question.imageName}', // ảnh câu hỏi
+                            'assets/questions/${question.imageName}',
+                            // ảnh câu hỏi
                             fit: BoxFit.contain, // hiển thị vừa khung
                             errorBuilder: (context, error, stackTrace) {
-                              print('Error loading image: $error'); // in lỗi nếu không tải được ảnh
+                              print(
+                                  'Error loading image: $error'); // in lỗi nếu không tải được ảnh
                               return const Center(
                                 child: Text(
                                   'Không thể tải ảnh', // thông báo lỗi
@@ -314,50 +443,73 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                       ),
                     ),
                   ),
-
                   ScaleTransition(
-                    scale: _scaleAnimation, // hiệu ứng phóng to thu nhỏ cho đáp án
+                    scale: _scaleAnimation,
+                    // hiệu ứng phóng to thu nhỏ cho đáp án
                     child: FadeTransition(
                       opacity: _fadeAnimation, // hiệu ứng mờ dần cho đáp án
                       child: Container(
-                        margin: EdgeInsets.only(top: screenHeight * 0.03), // khoảng cách phía trên đáp án
+                        margin: EdgeInsets.only(top: screenHeight * 0.03),
+                        // khoảng cách phía trên đáp án
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // căn giữa đáp án
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          // căn giữa đáp án
                           children: [
                             Column(
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.center, // căn giữa hàng 1 đáp án
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  // căn giữa hàng 1 đáp án
                                   children: [
-                                    for (int i = 0; i < (answerSlots.length + 1) ~/ 2; i++) // lặp qua nửa đầu các ô đáp án
+                                    for (int i = 0;
+                                        i < (answerSlots.length + 1) ~/ 2;
+                                        i++) // lặp qua nửa đầu các ô đáp án
                                       GestureDetector(
-                                        onTap: () => _onAnswerSlotTap(i), // xoá ký tự khi bấm vào ô
+                                        onTap: () => _onAnswerSlotTap(i),
+                                        // xoá ký tự khi bấm vào ô
                                         child: Container(
-                                          width: answerBoxSize, // kích thước ô đáp án
+                                          width: answerBoxSize,
+                                          // kích thước ô đáp án
                                           height: answerBoxSize,
-                                          margin: EdgeInsets.symmetric(horizontal: smallPadding / 2), // khoảng cách giữa các ô
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal: smallPadding / 2),
+                                          // khoảng cách giữa các ô
                                           decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.black, width: 2), // viền đen
+                                            border: Border.all(
+                                                color: Colors.black, width: 2),
+                                            // viền đen
                                             color: Colors.white, // nền trắng
                                           ),
-                                          alignment: Alignment.center, // căn giữa ký tự
+                                          alignment: Alignment.center,
+                                          // căn giữa ký tự
                                           child: AnimatedBuilder(
                                             animation: _shakeController,
                                             builder: (context, child) {
                                               return Transform.rotate(
-                                                angle: isWrong ? 0.25 * (i.isEven ? 1 : -1) * 
-                                                  (sin(_shakeAnimation.value)) : 0,
+                                                angle: isWrong
+                                                    ? 0.25 *
+                                                        (i.isEven ? 1 : -1) *
+                                                        (sin(_shakeAnimation
+                                                            .value))
+                                                    : 0,
                                                 child: child,
                                               );
                                             },
                                             child: Text(
-                                              answerSlots[i], // ký tự trong ô đáp án
+                                              answerSlots[i],
+                                              // ký tự trong ô đáp án
                                               style: TextStyle(
-                                                fontSize: fontSizeAnswer, // cỡ chữ đáp án
-                                                fontWeight: FontWeight.bold, // chữ đậm
-                                                color: currentSlot == answerSlots.length
-                                                    ? (isCorrect ? Colors.green : Colors.red)
-                                                    : Colors.black, // màu xanh nếu đúng đỏ nếu sai mặc định đen
+                                                fontSize: fontSizeAnswer,
+                                                // cỡ chữ đáp án
+                                                fontWeight: FontWeight.bold,
+                                                // chữ đậm
+                                                color: currentSlot ==
+                                                        answerSlots.length
+                                                    ? (isCorrect
+                                                        ? Colors.green
+                                                        : Colors.red)
+                                                    : Colors
+                                                        .black, // màu xanh nếu đúng đỏ nếu sai mặc định đen
                                               ),
                                             ),
                                           ),
@@ -365,39 +517,61 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                                       ),
                                   ],
                                 ),
-                                SizedBox(height: smallPadding), // khoảng cách giữa 2 hàng đáp án
+                                SizedBox(height: smallPadding),
+                                // khoảng cách giữa 2 hàng đáp án
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.center, // căn giữa hàng 2 đáp án
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  // căn giữa hàng 2 đáp án
                                   children: [
-                                    for (int i = (answerSlots.length + 1) ~/ 2; i < answerSlots.length; i++) // lặp qua nửa sau các ô đáp án
+                                    for (int i = (answerSlots.length + 1) ~/ 2;
+                                        i < answerSlots.length;
+                                        i++) // lặp qua nửa sau các ô đáp án
                                       GestureDetector(
-                                        onTap: () => _onAnswerSlotTap(i), // xoá ký tự khi bấm vào ô
+                                        onTap: () => _onAnswerSlotTap(i),
+                                        // xoá ký tự khi bấm vào ô
                                         child: Container(
-                                          width: answerBoxSize, // kích thước ô đáp án
+                                          width: answerBoxSize,
+                                          // kích thước ô đáp án
                                           height: answerBoxSize,
-                                          margin: EdgeInsets.symmetric(horizontal: smallPadding / 2), // khoảng cách giữa các ô
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal: smallPadding / 2),
+                                          // khoảng cách giữa các ô
                                           decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.black, width: 2), // viền đen
+                                            border: Border.all(
+                                                color: Colors.black, width: 2),
+                                            // viền đen
                                             color: Colors.white, // nền trắng
                                           ),
-                                          alignment: Alignment.center, // căn giữa ký tự
+                                          alignment: Alignment.center,
+                                          // căn giữa ký tự
                                           child: AnimatedBuilder(
                                             animation: _shakeController,
                                             builder: (context, child) {
                                               return Transform.rotate(
-                                                angle: isWrong ? 0.25 * (i.isEven ? 1 : -1) * 
-                                                  (sin(_shakeAnimation.value)) : 0,
+                                                angle: isWrong
+                                                    ? 0.25 *
+                                                        (i.isEven ? 1 : -1) *
+                                                        (sin(_shakeAnimation
+                                                            .value))
+                                                    : 0,
                                                 child: child,
                                               );
                                             },
                                             child: Text(
-                                              answerSlots[i], // ký tự trong ô đáp án
+                                              answerSlots[i],
+                                              // ký tự trong ô đáp án
                                               style: TextStyle(
-                                                fontSize: fontSizeAnswer, // cỡ chữ đáp án
-                                                fontWeight: FontWeight.bold, // chữ đậm
-                                                color: currentSlot == answerSlots.length
-                                                    ? (isCorrect ? Colors.green : Colors.red)
-                                                    : Colors.black, // màu xanh nếu đúng đỏ nếu sai mặc định đen
+                                                fontSize: fontSizeAnswer,
+                                                // cỡ chữ đáp án
+                                                fontWeight: FontWeight.bold,
+                                                // chữ đậm
+                                                color: currentSlot ==
+                                                        answerSlots.length
+                                                    ? (isCorrect
+                                                        ? Colors.green
+                                                        : Colors.red)
+                                                    : Colors
+                                                        .black, // màu xanh nếu đúng đỏ nếu sai mặc định đen
                                               ),
                                             ),
                                           ),
@@ -407,8 +581,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                                 ),
                               ],
                             ),
-                            SizedBox(width: mediumPadding), // khoảng cách bên phải đáp án
-                            
+                            SizedBox(width: mediumPadding),
+                            // khoảng cách bên phải đáp án
                           ],
                         ),
                       ),
@@ -424,7 +598,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                   // Số ô tối đa trên một hàng
                   int maxRowLength = ((charOptions.length + 1) / 2).ceil();
                   // Tính lại kích thước ô cho vừa vùng chứa
-                  double dynamicCharButtonSize = (constraints.maxWidth - smallPadding * (maxRowLength - 1)) / maxRowLength;
+                  double dynamicCharButtonSize = (constraints.maxWidth -
+                          smallPadding * (maxRowLength - 1)) /
+                      maxRowLength;
                   return Column(
                     children: [
                       Row(
@@ -434,19 +610,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                             if (i > 0) SizedBox(width: smallPadding),
                             i < charOptions.length
                                 ? (charUsed[i]
-                                    ? SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize)
+                                    ? SizedBox(
+                                        width: dynamicCharButtonSize,
+                                        height: dynamicCharButtonSize)
                                     : ElevatedButton(
                                         onPressed: () => _onCharTap(i),
                                         style: ElevatedButton.styleFrom(
-                                          minimumSize: Size(dynamicCharButtonSize, dynamicCharButtonSize),
+                                          minimumSize: Size(
+                                              dynamicCharButtonSize,
+                                              dynamicCharButtonSize),
                                           backgroundColor: Colors.purpleAccent,
                                         ),
                                         child: Text(
                                           charOptions[i],
-                                          style: TextStyle(fontSize: fontSizeChar, fontWeight: FontWeight.bold),
+                                          style: TextStyle(
+                                              fontSize: fontSizeChar,
+                                              fontWeight: FontWeight.bold),
                                         ),
                                       ))
-                                : SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize),
+                                : SizedBox(
+                                    width: dynamicCharButtonSize,
+                                    height: dynamicCharButtonSize),
                           ],
                         ],
                       ),
@@ -454,23 +638,35 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            for (int i = maxRowLength; i < maxRowLength * 2; i++) ...[
-                              if (i > maxRowLength) SizedBox(width: smallPadding),
+                            for (int i = maxRowLength;
+                                i < maxRowLength * 2;
+                                i++) ...[
+                              if (i > maxRowLength)
+                                SizedBox(width: smallPadding),
                               i < charOptions.length
                                   ? (charUsed[i]
-                                      ? SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize)
+                                      ? SizedBox(
+                                          width: dynamicCharButtonSize,
+                                          height: dynamicCharButtonSize)
                                       : ElevatedButton(
                                           onPressed: () => _onCharTap(i),
                                           style: ElevatedButton.styleFrom(
-                                            minimumSize: Size(dynamicCharButtonSize, dynamicCharButtonSize),
-                                            backgroundColor: Colors.purpleAccent,
+                                            minimumSize: Size(
+                                                dynamicCharButtonSize,
+                                                dynamicCharButtonSize),
+                                            backgroundColor:
+                                                Colors.purpleAccent,
                                           ),
                                           child: Text(
                                             charOptions[i],
-                                            style: TextStyle(fontSize: fontSizeChar, fontWeight: FontWeight.bold),
+                                            style: TextStyle(
+                                                fontSize: fontSizeChar,
+                                                fontWeight: FontWeight.bold),
                                           ),
                                         ))
-                                  : SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize),
+                                  : SizedBox(
+                                      width: dynamicCharButtonSize,
+                                      height: dynamicCharButtonSize),
                             ],
                           ],
                         ),
