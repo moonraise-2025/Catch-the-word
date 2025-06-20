@@ -285,145 +285,165 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin
       );
     }
     
-    return Scaffold( // khung giao diện chính
-      body: Container( // nền chính
-        // decoration: const BoxDecoration(
-        //   image: DecorationImage(
-        //     image: AssetImage('assets/images/background2.png'), // ảnh nền
-        //     fit: BoxFit.cover, // phủ kín
-        //     repeat: ImageRepeat.noRepeat, // không lặp lại
-        //   ),
-        // ),
-        child: SafeArea( // đảm bảo không bị che bởi tai thỏ viền màn hình
+    return Scaffold(
+      body: Container(
+        child: SafeArea(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Header
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding), // padding cho header
+                padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, size: 32, color: Colors.black), // nút quay lại
-                      onPressed: () => Navigator.pop(context), // quay lại màn hình trước
+                      icon: const Icon(Icons.arrow_back, size: 32, color: Colors.black),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    SizedBox(width: smallPadding), // khoảng cách
+                    SizedBox(width: smallPadding),
                     Expanded(
                       child: Center(
                         child: ScaleTransition(
-                          scale: _scaleAnimation, // hiệu ứng phóng to thu nhỏ
+                          scale: _scaleAnimation,
                           child: FadeTransition(
-                            opacity: _fadeAnimation, // hiệu ứng mờ dần
+                            opacity: _fadeAnimation,
                             child: Row(
-                              mainAxisSize: MainAxisSize.min, // chiều ngang vừa đủ
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('Level ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // text level
-                                Text('$level', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // hiển thị level hiện tại
-                                SizedBox(width: largePadding), // khoảng cách
-                                Icon(Icons.diamond, color: Colors.blueAccent, size: 60), // icon kim cương
-                                SizedBox(width: smallPadding), // khoảng cách
-                                Text('$diamonds', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // hiển thị số kim cương
+                                const Text('Level ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50)),
+                                Text('$level', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 50)),
+                                SizedBox(width: largePadding),
+                                Icon(Icons.diamond, color: Colors.blueAccent, size: 60),
+                                SizedBox(width: smallPadding),
+                                Text('$diamonds', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 50)),
                               ],
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const Icon(Icons.lightbulb, color: Colors.amber, size: 60), // icon gợi ý
+                    const Icon(Icons.card_giftcard, color: Colors.amber, size: 60),
                   ],
                 ),
               ),
 
-              // Question Image
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
-                    margin: EdgeInsets.only(top: screenHeight * 0.05, bottom: screenHeight * 0.02),
-                    width: imageContainerSize,
-                    height: imageContainerSize,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.black26),
+              // Centered main content
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    // Image
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Container(
+                          margin: EdgeInsets.only(top: screenHeight * 0.01, bottom: 0),
+                          width: imageContainerSize,
+                          height: imageContainerSize,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.black26),
+                          ),
+                          child: Image.asset(
+                            'assets/questions/${question.imageName}',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(child: Text('Không thể tải ảnh'));
+                            },
+                          ),
+                        ),
+                      ),
                     ),
-                    child: Image.asset(
-                      'assets/questions/${question.imageName}',
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(child: Text('Không thể tải ảnh'));
+                    // Banner ads (no gap)
+                    Container(
+                      width: imageContainerSize,
+                      margin: EdgeInsets.zero,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      color: Colors.grey.shade200,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Banner ads',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black54),
+                      ),
+                    ),
+                    // Answer grid
+                    Padding(
+                      padding: EdgeInsets.only(top: mediumPadding, bottom: smallPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (row1Count > 0) buildAnswerRow(0, row1Count),
+                          if (row2Count > 0) ...[
+                            SizedBox(height: smallPadding),
+                            buildAnswerRow(maxPerRow, row2Count),
+                          ],
+                        ],
+                      ),
+                    ),
+                    // Character grid (always 2 rows, always maxRowLength per row)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        int maxRowLength = 8;
+                        double dynamicCharButtonSize = (constraints.maxWidth - smallPadding * (maxRowLength - 1) - mediumPadding * 2) / maxRowLength;
+                        List<Widget> buildCharRow(int start, int end) {
+                          List<Widget> rowChildren = [];
+                          for (int i = start; i < end; i++) {
+                            if (i > start) rowChildren.add(SizedBox(width: smallPadding));
+                            if (i < charOptions.length) {
+                              rowChildren.add(
+                                charUsed[i]
+                                    ? SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize)
+                                    : ElevatedButton(
+                                        onPressed: () => _onCharTap(i),
+                                        style: ElevatedButton.styleFrom(
+                                          minimumSize: Size(dynamicCharButtonSize, dynamicCharButtonSize),
+                                          backgroundColor: Colors.purpleAccent,
+                                          padding: EdgeInsets.zero,
+                                          shape: const CircleBorder(),
+                                        ),
+                                        child: Text(
+                                          charOptions[i],
+                                          style: TextStyle(fontSize: fontSizeChar, fontWeight: FontWeight.bold),
+                                        ),
+                                      )
+                              );
+                            } else {
+                              rowChildren.add(SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize));
+                            }
+                          }
+                          // Always fill to maxRowLength
+                          while (rowChildren.length < maxRowLength) {
+                            if (rowChildren.length > 0) rowChildren.add(SizedBox(width: smallPadding));
+                            rowChildren.add(SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize));
+                          }
+                          return rowChildren;
+                        }
+                        return Container(
+                          padding: EdgeInsets.symmetric(horizontal: mediumPadding),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: buildCharRow(0, maxRowLength),
+                              ),
+                              SizedBox(height: smallPadding),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: buildCharRow(maxRowLength, maxRowLength * 2),
+                              ),
+                            ],
+                          ),
+                        );
                       },
                     ),
-                  ),
+                  ],
                 ),
               ),
 
-              // Answer grid
-              Column(
-                children: [
-                  if (row1Count > 0) buildAnswerRow(0, row1Count),
-                  if (row2Count > 0) ...[
-                    SizedBox(height: smallPadding),
-                    buildAnswerRow(maxPerRow, row2Count),
-                  ],
-                ],
-              ),
-
-              const Spacer(),
-
-              // Character options
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  int maxRowLength = 8;
-                  double dynamicCharButtonSize = (constraints.maxWidth - smallPadding * (maxRowLength - 1) - mediumPadding * 2) / maxRowLength;
-                  
-                  List<Widget> buildCharRow(int start, int end) {
-                    List<Widget> rowChildren = [];
-                    for (int i = start; i < end; i++) {
-                      if (i > start) rowChildren.add(SizedBox(width: smallPadding));
-                      if (i < charOptions.length) {
-                        rowChildren.add(
-                          charUsed[i]
-                              ? SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize)
-                              : ElevatedButton(
-                                  onPressed: () => _onCharTap(i),
-                                  style: ElevatedButton.styleFrom(
-                                    minimumSize: Size(dynamicCharButtonSize, dynamicCharButtonSize),
-                                    backgroundColor: Colors.purpleAccent,
-                                    padding: EdgeInsets.zero
-                                  ),
-                                  child: Text(
-                                    charOptions[i],
-                                    style: TextStyle(fontSize: fontSizeChar, fontWeight: FontWeight.bold),
-                                  ),
-                                )
-                        );
-                      } else {
-                        rowChildren.add(SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize));
-                      }
-                    }
-                    return rowChildren;
-                  }
-
-                  return Container(
-                    padding: EdgeInsets.symmetric(horizontal: mediumPadding),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: buildCharRow(0, maxRowLength),
-                        ),
-                        SizedBox(height: smallPadding),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: buildCharRow(maxRowLength, maxRowLength * 2),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              
-              SizedBox(height: mediumPadding),
-
+              // Function buttons at the bottom
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: largePadding, vertical: mediumPadding),
                 child: Row(
