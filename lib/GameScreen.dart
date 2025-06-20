@@ -1,6 +1,17 @@
+
 import 'package:flutter/material.dart'; //giải thích: Thư viện giao diện người dùng Flutter
+import 'package:flutter/rendering.dart';
 import 'dart:math'; //giải thích: Thư viện toán học, dùng cho random
-import 'PopupAnswerCorrect.dart'; //giải thích: Import widget popup trả lời đúng
+import 'PopupAnswerCorrect.dart';
+import 'PopupWatchVideo.dart'; //giải thích: Import widget popup trả lời đúng
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:share_plus/share_plus.dart';
+
+
 
 class Question { //giải thích: Lớp đại diện cho một câu hỏi
   final String imageName; //giải thích: Tên file ảnh câu hỏi
@@ -53,6 +64,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late Animation<double> _shakeAnimation; //giải thích: Animation lắc
   bool isWrong = false; //giải thích: Trạng thái trả lời sai
   late final int maxAnswerLength; //giải thích: Độ dài đáp án dài nhất trong tất cả câu hỏi
+
+  final GlobalKey previewContainerKey = GlobalKey();
+  Future<void> captureAndShareWidget() async {
+    try {
+      RenderRepaintBoundary boundary = previewContainerKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 20));
+        return captureAndShareWidget(); // đợi render xong
+      }
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List? pngBytes = byteData?.buffer.asUint8List();
+
+      if (pngBytes != null) {
+        final tempDir = await getTemporaryDirectory();
+        final file = await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
+        await Share.shareFiles([file.path], text: 'Chơi game Đuổi hình bắt chữ nè!');
+      }
+    } catch (e) {
+      debugPrint('Lỗi chụp/chia sẻ widget: $e');
+    }
+  }
+
 
   @override
   void initState() { //giải thích: Hàm khởi tạo state, chạy đầu tiên khi mở màn hình
@@ -342,81 +376,87 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     double dynamicCharButtonSize = (constraints.maxWidth - smallPadding * (maxRowLength - 1) - mediumPadding * 2) / maxRowLength;
                     double answerBoxSize = dynamicCharButtonSize * 1.15;
                     double fontSizeAnswer = dynamicCharButtonSize * 0.45;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center, // Căn giữa dọc
-                      crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa ngang
-                      mainAxisSize: MainAxisSize.max,
-                children: [
-                        
-                  ScaleTransition(
-                          scale: _scaleAnimation, // Hiệu ứng phóng to cho ảnh
-                    child: FadeTransition(
-                            opacity: _fadeAnimation, // Hiệu ứng mờ dần cho ảnh
-                        child: Container(
-                              margin: EdgeInsets.only(top: screenHeight * 0.01, bottom: 0), //giải thích: Khoảng cách trên ảnh
-                              width: imageContainerSize, // Kích thước ảnh
-                          height: imageContainerSize,
-                          decoration: BoxDecoration(
-                                color: Colors.white, // Nền trắng cho khung ảnh
-                                border: Border.all(color: Colors.black26), //Viền xám nhạt
-                          ),
-                          child: Image.asset(
-                                'assets/questions/${question.imageName}', //Ảnh câu hỏi
-                                fit: BoxFit.contain, // Hiển thị vừa khung
-                            errorBuilder: (context, error, stackTrace) {
-                                  return const Center(child: Text('Không thể tải ảnh'));
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                        // Banner ads (no gap)
-                        Container(
-                          width: imageContainerSize, // Banner ads cùng chiều rộng với ảnh
-                          margin: EdgeInsets.zero,
-                          padding: const EdgeInsets.symmetric(vertical: 16), //giải thích: Padding trên dưới cho banner
-                          color: Colors.grey.shade200, // Màu nền banner ads
-                          alignment: Alignment.center, // Căn giữa chữ
-                          child: const Text(
-                            'Banner ads', // Text banner ads (có thể thay bằng gợi ý)
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black54),
-                          ),
-                        ),
-                        // Answer grid
-                        Padding(
-                          padding: EdgeInsets.only(top: mediumPadding, bottom: smallPadding), // Padding trên/dưới đáp án
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center, //Căn giữa đáp án
-                            children: [
-                              if (row1Count > 0) buildAnswerRow(0, row1Count, answerBoxSize, fontSizeAnswer), //giải thích: Hàng 1 đáp án
-                              if (row2Count > 0) ...[
-                                SizedBox(height: smallPadding), // Khoảng cách giữa 2 hàng đáp án
-                                buildAnswerRow(maxPerRow, row2Count, answerBoxSize, fontSizeAnswer), //giải thích: Hàng 2 đáp án
-                              ],
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: mediumPadding), // Padding ngang cho lưới ký tự
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center, // Căn giữa hàng ký tự
-                                children: buildCharRow(0, maxRowLength, dynamicCharButtonSize),
+
+                    return RepaintBoundary(
+                      key: previewContainerKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          // Ảnh
+                          ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: Container(
+                                margin: EdgeInsets.only(top: screenHeight * 0.01, bottom: 0),
+                                width: imageContainerSize,
+                                height: imageContainerSize,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black26),
+                                ),
+                                child: Image.asset(
+                                  'assets/questions/${question.imageName}',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(child: Text('Không thể tải ảnh'));
+                                  },
+                                ),
                               ),
-                              SizedBox(height: smallPadding),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: buildCharRow(maxRowLength, maxRowLength * 2, dynamicCharButtonSize),
+                            ),
+                          ),
+                          // Banner ads
+                          Container(
+                            width: imageContainerSize,
+                            margin: EdgeInsets.zero,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            color: Colors.grey.shade200,
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Banner ads',
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black54),
+                            ),
+                          ),
+                          // Answer grid
+                          Padding(
+                            padding: EdgeInsets.only(top: mediumPadding, bottom: smallPadding),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                if (row1Count > 0) buildAnswerRow(0, row1Count, answerBoxSize, fontSizeAnswer),
+                                if (row2Count > 0) ...[
+                                  SizedBox(height: smallPadding),
+                                  buildAnswerRow(maxRowLength, row2Count, answerBoxSize, fontSizeAnswer),
+                                ],
+                              ],
+                            ),
+                          ),
+                          // Char buttons
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: mediumPadding),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: buildCharRow(0, maxRowLength, dynamicCharButtonSize),
+                                ),
+                                SizedBox(height: smallPadding),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: buildCharRow(maxRowLength, maxRowLength * 2, dynamicCharButtonSize),
                                 ),
                               ],
                             ),
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
               ),
+
 
               // Function buttons at the bottom
               Padding(
@@ -436,7 +476,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       ),
                     ),
                     ElevatedButton.icon(
-                      onPressed: () {}, //giải thích: Nút hỏi bạn bè (chưa có chức năng)
+                      onPressed: captureAndShareWidget,
                       icon: const Icon(Icons.share_outlined),
                       label: const Text("Hỏi bạn bè"),
                       style: ElevatedButton.styleFrom(
@@ -446,6 +486,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
+
                     ElevatedButton.icon(
                       onPressed: () {}, //giải thích: Nút gợi ý (chưa có chức năng)
                       icon: const Icon(Icons.lightbulb_outline),
@@ -455,9 +496,26 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         fixedSize: const Size(170, 70),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                        ),
-                    ],
+                                  ),
+                    ),
+                  ],
+                ),
+              ),
+
+              ElevatedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const PopupWatchVideo(),
+                  );
+                },
+                icon: const Icon(Icons.lightbulb_outline),
+                label: const Text("Qua Màn (5s Quảng Cáo)"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  fixedSize: const Size(270, 70),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
               SizedBox(height: mediumPadding), //giải thích: Khoảng cách dưới cùng
