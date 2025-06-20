@@ -385,7 +385,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rowChildren.add(SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize));
         }
       }
-      // Always fill to maxRowLength
+      
       return rowChildren;
     }
 
@@ -395,7 +395,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Header
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding), //giải thích: Header hiển thị level, kim cương, nút back
                 child: Row(
