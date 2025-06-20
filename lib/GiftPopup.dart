@@ -4,12 +4,15 @@ class Giftpopup extends StatefulWidget {
   final int dailyCount;
   final int daily30Count;
   final int daily50Count;
+  final void Function(int amount)? onReward;
+
 
   const Giftpopup({
     super.key,
     required this.dailyCount,
     required this.daily30Count,
     required this.daily50Count,
+    this.onReward
   });
 
   @override
@@ -21,12 +24,19 @@ class _GiftpopupState extends State<Giftpopup> {
     'daily1': false,
     'weekly30': false,
     'weekly50': false,
+    'playthrough': false,
   };
 
   void _handleTap(String key) {
     setState(() {
       _received[key] = true;
     });
+    if (widget.onReward != null) {
+      if (key == 'daily1') widget.onReward!(5);
+      if (key == 'daily30') widget.onReward!(10);
+      if (key == 'daily50') widget.onReward!(15);
+      if (key == 'playthrough') widget.onReward!(20);
+    }
   }
 
   @override
@@ -85,6 +95,12 @@ class _GiftpopupState extends State<Giftpopup> {
                     current: widget.daily50Count,
                     total: 50,
                   ),
+                  const SizedBox(height: 10),
+                  _buildMissionNoProgress(
+                    keyId: 'playthrough',
+                    title: 'Sử dụng qua màn',
+                    reward: '+20',
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -130,7 +146,7 @@ class _GiftpopupState extends State<Giftpopup> {
     );
   }
 
-  Widget _buildMissionRow({
+  Widget _buildMissionRow({ //nhiệm vụ nhận qua
     required String keyId,
     required String title,
     required String reward,
@@ -156,6 +172,55 @@ class _GiftpopupState extends State<Giftpopup> {
                 : null,
             child: received
                 ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
+                : Row(
+              children: [
+                Text(
+                  reward,
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.diamond,
+                  color: Colors.blueAccent,
+                  size: 50,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //Nhiệm vụ qua màn
+  Widget _buildMissionNoProgress({
+    required String keyId,
+    required String title,
+    required String reward,
+  }) {
+    final bool received = _received[keyId] ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+            ),
+          ),
+          GestureDetector(
+            onTap: received
+                ? null
+                : () => _handleTap(keyId), // click để nhận
+            child: received
+                ? const Icon(Icons.check_circle,
+                color: Colors.green, size: 50)
                 : Row(
               children: [
                 Text(

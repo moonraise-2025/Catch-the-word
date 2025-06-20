@@ -387,8 +387,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       onTap: () {
                         showDialog(
                           context: context,
-                          builder: (context) =>
-                              Giftpopup(dailyCount: dailyCount,daily30Count: daily30Count,daily50Count: daily50Count,), // Gọi widget popupGift của bạn
+                          builder: (context) => Giftpopup(
+                            dailyCount: dailyCount,
+                            daily30Count: daily30Count,
+                            daily50Count: daily50Count,
+                            onReward: (amount) {
+                              setState(() {
+                                diamonds += amount; // Cộng kim cương
+                              });
+                            },
+                          ),
                         );
                       },
                       child: const Icon(
