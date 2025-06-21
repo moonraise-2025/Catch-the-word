@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class Giftpopup extends StatefulWidget {
   final int dailyCount;
@@ -6,13 +8,12 @@ class Giftpopup extends StatefulWidget {
   final int daily50Count;
   final void Function(int amount)? onReward;
 
-
   const Giftpopup({
     super.key,
     required this.dailyCount,
     required this.daily30Count,
     required this.daily50Count,
-    this.onReward
+    this.onReward,
   });
 
   @override
@@ -20,23 +21,47 @@ class Giftpopup extends StatefulWidget {
 }
 
 class _GiftpopupState extends State<Giftpopup> {
-  final Map<String, bool> _received = {
-    'daily1': false,
-    'weekly30': false,
-    'weekly50': false,
-    'playthrough': false,
-  };
+  late SharedPreferences prefs;
+  final String todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-  void _handleTap(String key) {
-    setState(() {
-      _received[key] = true;
-    });
-    if (widget.onReward != null) {
-      if (key == 'daily1') widget.onReward!(5);
-      if (key == 'daily30') widget.onReward!(10);
-      if (key == 'daily50') widget.onReward!(15);
-      if (key == 'playthrough') widget.onReward!(20);
+  @override
+  void initState() {
+    super.initState();
+    _initPrefsAndCheckNewDay();
+  }
+
+  Future<void> _initPrefsAndCheckNewDay() async {
+    prefs = await SharedPreferences.getInstance();
+    final lastDate = prefs.getString('lastRewardDate');
+    final today = todayKey;
+
+    if (lastDate != today) {
+      // ✅ Sang ngày mới → reset
+      await prefs.setString('lastRewardDate', today);
+      await prefs.remove('${today}_daily1');
+      await prefs.remove('${today}_daily30');
+      await prefs.remove('${today}_daily50');
+      await prefs.remove('${today}_playthrough');
     }
+
+    setState(() {}); // cập nhật UI
+  }
+
+  Future<bool> _isReceived(String keyId) async {
+    return prefs.getBool('${todayKey}_$keyId') ?? false;
+  }
+
+  Future<void> _handleTap(String keyId, int rewardAmount) async {
+    final received = await _isReceived(keyId);
+    if (received) return;
+
+    await prefs.setBool('${todayKey}_$keyId', true);
+
+    if (widget.onReward != null) {
+      widget.onReward!(rewardAmount);
+    }
+
+    setState(() {}); // Cập nhật icon sau khi nhận
   }
 
   @override
@@ -62,23 +87,14 @@ class _GiftpopupState extends State<Giftpopup> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 20),
-                  // const Text(
-                  //   'Nhiệm vụ hằng ngày',
-                  //   style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                  // ),
-                  const SizedBox(height: 20),
                   _buildMissionRow(
                     keyId: 'daily1',
                     title: 'Trả lời câu hỏi',
                     reward: '+5',
                     current: widget.dailyCount,
                     total: 1,
+                    amount: 5,
                   ),
-                  // const SizedBox(height: 40),
-                  // const Text(
-                  //   'Nhiệm vụ hằng tuần',
-                  //   style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                  // ),
                   const SizedBox(height: 20),
                   _buildMissionRow(
                     keyId: 'daily30',
@@ -86,6 +102,7 @@ class _GiftpopupState extends State<Giftpopup> {
                     reward: '+10',
                     current: widget.daily30Count,
                     total: 30,
+                    amount: 10,
                   ),
                   const SizedBox(height: 10),
                   _buildMissionRow(
@@ -94,12 +111,14 @@ class _GiftpopupState extends State<Giftpopup> {
                     reward: '+15',
                     current: widget.daily50Count,
                     total: 50,
+                    amount: 15,
                   ),
                   const SizedBox(height: 10),
                   _buildMissionNoProgress(
                     keyId: 'playthrough',
                     title: 'Sử dụng qua màn',
                     reward: '+20',
+                    amount: 20,
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -146,103 +165,111 @@ class _GiftpopupState extends State<Giftpopup> {
     );
   }
 
-  Widget _buildMissionRow({ //nhiệm vụ nhận qua
+  Widget _buildMissionRow({
     required String keyId,
     required String title,
     required String reward,
     required int current,
     required int total,
+    required int amount,
   }) {
-    final bool received = _received[keyId] ?? false;
     final bool isComplete = current >= total;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '$title ($current/$total)',
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-            ),
-          ),
-          GestureDetector(
-            onTap: (!received && isComplete)
-                ? () => _handleTap(keyId)
-                : null,
-            child: received
-                ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
-                : Row(
-              children: [
-                Text(
-                  reward,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
+    return FutureBuilder<bool>(
+      future: _isReceived(keyId),
+      builder: (context, snapshot) {
+        final received = snapshot.data ?? false;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$title ($current/$total)',
+                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.diamond,
-                  color: Colors.blueAccent,
-                  size: 50,
+              ),
+              GestureDetector(
+                onTap: (!received && isComplete)
+                    ? () => _handleTap(keyId, amount)
+                    : null,
+                child: received
+                    ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
+                    : Row(
+                  children: [
+                    Text(
+                      reward,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.diamond,
+                      color: Colors.blueAccent,
+                      size: 50,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  //Nhiệm vụ qua màn
   Widget _buildMissionNoProgress({
     required String keyId,
     required String title,
     required String reward,
+    required int amount,
   }) {
-    final bool received = _received[keyId] ?? false;
+    return FutureBuilder<bool>(
+      future: _isReceived(keyId),
+      builder: (context, snapshot) {
+        final received = snapshot.data ?? false;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-            ),
-          ),
-          GestureDetector(
-            onTap: received
-                ? null
-                : () => _handleTap(keyId), // click để nhận
-            child: received
-                ? const Icon(Icons.check_circle,
-                color: Colors.green, size: 50)
-                : Row(
-              children: [
-                Text(
-                  reward,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.diamond,
-                  color: Colors.blueAccent,
-                  size: 50,
+              ),
+              GestureDetector(
+                onTap: received ? null : () => _handleTap(keyId, amount),
+                child: received
+                    ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
+                    : Row(
+                  children: [
+                    Text(
+                      reward,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.diamond,
+                      color: Colors.blueAccent,
+                      size: 50,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
-
