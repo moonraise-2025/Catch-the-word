@@ -9,7 +9,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:duoihinhbatchu/GiftPopup.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:async';
+
+
 
 
 
@@ -47,6 +51,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     //Question(imageName: 'cau17.png', answer: 'CHẠYNƯỚCRÚT'),
     Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
   ];
+  
+  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
+  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
+  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
+
+  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
+  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
+  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
+    
   int currentQuestion = 0; //giải thích: Chỉ số câu hỏi hiện tại
   int level = 1; //giải thích: Level hiện tại
   int diamonds = 0; //giải thích: Số kim cương hiện có
@@ -56,6 +69,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
   int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
   bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
+  Timer? _hintTimer;
+  int _hintSeconds = 20;
+  bool _hintActive = false;
+  bool _hintUsedOnce = false;
+  String? _hintBanner;
 
   late AnimationController _controller; //giải thích: Điều khiển animation cho hiệu ứng
   late Animation<double> _scaleAnimation; //giải thích: Animation phóng to/thu nhỏ
@@ -93,16 +111,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     super.initState();
     maxAnswerLength = questions.map((q) => q.answer.length).reduce((a, b) => a > b ? a : b); //giải thích: Tìm độ dài đáp án lớn nhất
     _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 500),
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
     );
+
     _shakeController = AnimationController(
       duration: const Duration(milliseconds: 1200),
+
       vsync: this,
     );
     _shakeAnimation = Tween<double>(begin: 0, end: 6 * 2 * 3.1415926535).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.linear),
     );
+
     _initAnimations(); //giải thích: Khởi tạo các animation
     _initGame(); //giải thích: Khởi tạo dữ liệu game cho câu hỏi đầu tiên
   }
@@ -121,6 +142,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void dispose() { //giải thích: Hủy các controller khi không dùng nữa để tránh rò rỉ bộ nhớ
     _controller.dispose();
     _shakeController.dispose(); 
+    _hintTimer?.cancel();
     super.dispose();
   }
 
@@ -133,6 +155,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     isCorrect = false; //giải thích: Đặt lại trạng thái đúng/sai
     _controller.reset(); //giải thích: Reset animation
     _controller.forward(); //giải thích: Chạy lại animation
+    _hintBanner = null;
+    _hintUsedOnce = false;
+    _startHintCountdown(); // Bắt đầu đếm ngược 20s mỗi khi vào câu mới
   }
 
   List<String> _generateCharOptions(String answer) { //giải thích: Sinh ra danh sách ký tự lựa chọn cho đáp án
@@ -161,17 +186,32 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return chars;
   }
 
-  void _onCharTap(int idx) { //giải thích: Xử lý khi người chơi chọn một ký tự
+
+  void _onCharTap(int idx) {
+    // hàm xử lý khi người chơi chọn một ký tự
     if (currentSlot < answerSlots.length && !charUsed[idx]) {
+      // chỉ cho phép chọn nếu còn ô trống và ký tự chưa được dùng
       setState(() {
-        answerSlots[currentSlot] = charOptions[idx]; //giải thích: Gán ký tự vào ô đáp án
-        charUsed[idx] = true; //giải thích: Đánh dấu ký tự đã dùng
-        currentSlot++;
-        if (currentSlot == answerSlots.length) { //giải thích: Nếu đã điền hết đáp án
-          String userAnswer = answerSlots.join('');
-          isCorrect = userAnswer == questions[currentQuestion].answer.toUpperCase(); //giải thích: Kiểm tra đúng/sai
+        // cập nhật lại giao diện
+        answerSlots[currentSlot] = charOptions[idx]; // gán ký tự được chọn vào ô đáp án hiện tại
+        charUsed[idx] = true; // đánh dấu ký tự này đã được sử dụng
+        currentSlot++; // chuyển sang ô đáp án tiếp theo
+
+        if (currentSlot == answerSlots.length) {
+          // nếu đã điền hết các ô đáp án
+          String userAnswer = answerSlots
+              .join(''); // ghép các ký tự lại thành đáp án người chơi nhập
+          isCorrect = userAnswer ==
+              questions[currentQuestion]
+                  .answer
+                  .toUpperCase(); // kiểm tra đáp án đúng hay sai
           if (isCorrect) {
-            Future.delayed(const Duration(milliseconds: 300), showCorrectDialog); //giải thích: Hiện popup đúng sau 0.3s
+            Future.delayed(
+                const Duration(milliseconds: 300), showCorrectDialog);
+            // Cập nhật số lượng câu đã trả lời
+            dailyCount++;
+            daily30Count++;
+            daily50Count++;
           } else {
             setState(() {
               isWrong = true; //giải thích: Đánh dấu trả lời sai để chạy animation lắc
@@ -194,13 +234,36 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _onAnswerSlotTap(int slotIndex) { //giải thích: Xử lý khi bấm vào ô đáp án để xóa ký tự
+
+  void _startHintCountdown() {
+    setState(() {
+      _hintSeconds = 20;
+      _hintActive = true;
+    });
+
+    _hintTimer?.cancel();
+    _hintTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_hintSeconds == 0) {
+        timer.cancel();
+        setState(() => _hintActive = false);
+      } else {
+        setState(() => _hintSeconds--);
+      }
+    });
+  }
+
+  void _onAnswerSlotTap(int slotIndex) {
+    // hàm xử lý khi bấm vào ô đáp án để xoá ký tự
     if (answerSlots[slotIndex].isNotEmpty) {
+      // chỉ xoá nếu ô có ký tự
       setState(() {
-        String char = answerSlots[slotIndex];
-        int idx = charOptions.indexOf(char);
+        // cập nhật lại giao diện
+        String char = answerSlots[slotIndex]; // lấy ký tự trong ô
+        int idx = charOptions
+            .indexOf(char); // tìm vị trí ký tự trong danh sách lựa chọn
         if (idx != -1) {
-          charUsed[idx] = false; //giải thích: Đánh dấu ký tự chưa dùng
+          // nếu tìm thấy
+          charUsed[idx] = false; // đánh dấu ký tự chưa dùng
         }
         answerSlots[slotIndex] = '';
         currentSlot = slotIndex;
@@ -222,6 +285,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 currentQuestion++;
                 level++;
                 diamonds += 5;
+
+                // if (dailyCount < 1) dailyCount++;         //  Nhiệm vụ ngày: chỉ cần đúng 1 câu
+                // if (daily30Count < 30) weekly30Count++;  //  Nhiệm vụ tuần 1: đúng tối đa 30 câu
+                // if (daily50Count < 50) weekly50Count++;  //  Nhiệm vụ tuần 2: đúng tối đa 50 câu
+
                 _initGame();
               } else {
                 currentQuestion = 0;
@@ -236,7 +304,77 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
+  void _showRevealLetterDialog() async {
+    if (diamonds < 10) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Không đủ kim cương'),
+          content: const Text('Bạn không đủ 10 kim cương để mở 1 chữ!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    final shouldReveal = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hiện đáp án'),
+        content: const Text('Bạn có muốn dùng 10 kim cương để mở 1 chữ không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Không'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Đồng ý'),
+                      ),
+                    ],
+                  ),
+    );
+    if (shouldReveal == true) {
+      setState(() {
+        // Trừ kim cương
+        diamonds -= 10;
+        // Tìm ô trống đầu tiên
+        final answer = questions[currentQuestion].answer.toUpperCase();
+        for (int i = 0; i < answerSlots.length; i++) {
+          if (answerSlots[i].isEmpty) {
+            String correctChar = answer[i];
+            // Tìm vị trí ký tự đúng trong charOptions chưa dùng
+            for (int j = 0; j < charOptions.length; j++) {
+              if (charOptions[j] == correctChar && !charUsed[j]) {
+                answerSlots[i] = correctChar;
+                charUsed[j] = true;
+                currentSlot = i + 1;
+                break;
+              }
+            }
+            break;
+          }
+        }
+      });
+    }
+  }
+
+  void _onHint() {
+    final answer = questions[currentQuestion].answer.toUpperCase();
+    int revealCount = answer.length >= 4 ? 4 : answer.length;
+    String hint = answer.substring(0, revealCount);
+    setState(() {
+      _hintBanner = hint;
+      _hintUsedOnce = true;
+    });
+  }
+
   @override
+
   Widget build(BuildContext context) { //giải thích: Xây dựng giao diện màn hình game
     final question = questions[currentQuestion]; //giải thích: Lấy câu hỏi hiện tại
     final screenWidth = MediaQuery.of(context).size.width; //giải thích: Lấy chiều rộng màn hình
@@ -312,7 +450,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       backgroundColor: Colors.purpleAccent,
                       padding: EdgeInsets.zero,
                       shape: const CircleBorder(),
-                    ),
+        ),
+
                     child: Text(
                       charOptions[i],
                       style: TextStyle(fontSize: dynamicCharButtonSize * 0.45, fontWeight: FontWeight.bold),
@@ -323,7 +462,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rowChildren.add(SizedBox(width: dynamicCharButtonSize, height: dynamicCharButtonSize));
         }
       }
-      // Always fill to maxRowLength
+      
       return rowChildren;
     }
 
@@ -333,8 +472,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Header
               Padding(
+
                 padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding), //giải thích: Header hiển thị level, kim cương, nút back
                 child: Row(
                   children: [
@@ -350,6 +489,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           child: FadeTransition(
                             opacity: _fadeAnimation, // Hiệu ứng mờ dần
                             child: Row(
+
                               mainAxisSize: MainAxisSize.min, // Chiều ngang vừa đủ
                               children: [
                                 const Text('Level ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 50)), // Text level
@@ -364,12 +504,33 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    const Icon(Icons.lightbulb, color: Colors.amber, size: 60), // Icon gợi ý
+                   GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => Giftpopup(
+                            dailyCount: dailyCount,
+                            daily30Count: daily30Count,
+                            daily50Count: daily50Count,
+                            onReward: (amount) {
+                              setState(() {
+                                diamonds += amount; // Cộng kim cương
+                              });
+                            },
+                          ),
+                        );
+                      },
+                      child: const Icon(
+                        Icons.card_giftcard,
+                        color: Colors.pink,
+                        size: 60,
+                      ),
+                    ),
                   ],
                 ),
               ),
 
-              Expanded(
+               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     int maxRowLength = 8;
@@ -380,72 +541,69 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     return RepaintBoundary(
                       key: previewContainerKey,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          // Ảnh
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: Container(
-                                margin: EdgeInsets.only(top: screenHeight * 0.01, bottom: 0),
-                                width: imageContainerSize,
-                                height: imageContainerSize,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.black26),
-                                ),
-                                child: Image.asset(
-                                  'assets/questions/${question.imageName}',
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Center(child: Text('Không thể tải ảnh'));
-                                  },
-                                ),
-                              ),
-                            ),
+                      mainAxisAlignment: MainAxisAlignment.center, // Căn giữa dọc
+                      crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa ngang
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                      ScaleTransition(
+                      scale: _scaleAnimation, // Hiệu ứng phóng to cho ảnh
+                      child: FadeTransition(
+                        opacity: _fadeAnimation, // Hiệu ứng mờ dần cho ảnh
+                        child: Container(
+                          margin: EdgeInsets.only(top: screenHeight * 0.01, bottom: 0), //giải thích: Khoảng cách trên ảnh
+                          width: imageContainerSize, // Kích thước ảnh
+                          height: imageContainerSize,
+                          decoration: BoxDecoration(
+                            color: Colors.white, // Nền trắng cho khung ảnh
+                            border: Border.all(color: Colors.black26), //Viền xám nhạt
                           ),
-                          // Banner ads
-                          Container(
-                            width: imageContainerSize,
-                            margin: EdgeInsets.zero,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            color: Colors.grey.shade200,
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Banner ads',
-                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black54),
-                            ),
-                          ),
-                          // Answer grid
-                          Padding(
-                            padding: EdgeInsets.only(top: mediumPadding, bottom: smallPadding),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                if (row1Count > 0) buildAnswerRow(0, row1Count, answerBoxSize, fontSizeAnswer),
-                                if (row2Count > 0) ...[
-                                  SizedBox(height: smallPadding),
-                                  buildAnswerRow(maxRowLength, row2Count, answerBoxSize, fontSizeAnswer),
-                                ],
-                              ],
-                            ),
-                          ),
-                          // Char buttons
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: mediumPadding),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: buildCharRow(0, maxRowLength, dynamicCharButtonSize),
-                                ),
-                                SizedBox(height: smallPadding),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: buildCharRow(maxRowLength, maxRowLength * 2, dynamicCharButtonSize),
+                          child: Image.asset(
+                          'assets/questions/${question.imageName}', //Ảnh câu hỏi
+                          fit: BoxFit.contain, // Hiển thị vừa khung
+                          errorBuilder: (context, error, stackTrace) {
+                        return const Center(child: Text('Không thể tải ảnh'));
+                        },
+                        ),
+                      ),
+                    ),
+                    ),
+                    Container(
+                    width: imageContainerSize,
+                    margin: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    color: Colors.grey.shade200,
+                    alignment: Alignment.center,
+                    child: Text(
+                    _hintBanner ?? 'Banner ads',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black54),
+                    textAlign: TextAlign.center,
+                    ),
+                    ),
+                    Padding(
+                    padding: EdgeInsets.only(top: mediumPadding, bottom: smallPadding), // Padding trên/dưới đáp án
+                    child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center, //Căn giữa đáp án
+                    children: [
+                    if (row1Count > 0) buildAnswerRow(0, row1Count, answerBoxSize, fontSizeAnswer), //giải thích: Hàng 1 đáp án
+                    if (row2Count > 0) ...[
+                    SizedBox(height: smallPadding), // Khoảng cách giữa 2 hàng đáp án
+                    buildAnswerRow(maxPerRow, row2Count, answerBoxSize, fontSizeAnswer), //giải thích: Hàng 2 đáp án
+                    ],
+                    ],
+                    ),
+                    ),
+                    Container(
+                    padding: EdgeInsets.symmetric(horizontal: mediumPadding), // Padding ngang cho lưới ký tự
+                    child: Column(
+                    children: [
+                    Row(
+                    mainAxisAlignment: MainAxisAlignment.center, // Căn giữa hàng ký tự
+                    children: buildCharRow(0, maxRowLength, dynamicCharButtonSize),
+                    ),
+                    SizedBox(height: smallPadding),
+                    Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: buildCharRow(maxRowLength, maxRowLength * 2, dynamicCharButtonSize),
                                 ),
                               ],
                             ),
@@ -459,18 +617,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
 
               // Function buttons at the bottom
+
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: largePadding, vertical: mediumPadding), //giải thích: Padding cho các nút chức năng
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween, //giải thích: Các nút cách đều nhau
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () {}, //giải thích: Nút hiện đáp án (chưa có chức năng)
+                      onPressed: _showRevealLetterDialog,
                       icon: const Icon(Icons.key_outlined),
                       label: const Text("Hiện đáp án"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.greenAccent,
-                        fixedSize: const Size(170, 70),
+                        textStyle: const TextStyle(
+                          fontSize: 22,              // chỉnh kích cỡ chữ
+                          fontWeight: FontWeight.bold // in đậm
+                        ),
+                        fixedSize: const Size(220, 100),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -479,43 +642,42 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       onPressed: captureAndShareWidget,
                       icon: const Icon(Icons.share_outlined),
                       label: const Text("Hỏi bạn bè"),
-                      style: ElevatedButton.styleFrom(
+                                  style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blueAccent,
-                        fixedSize: const Size(170, 70),
+                        textStyle: const TextStyle(
+                          fontSize: 22,              // chỉnh kích cỡ chữ
+                          fontWeight: FontWeight.bold // in đậm
+                        ),
+                        fixedSize: const Size(220, 100),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
 
-                    ElevatedButton.icon(
-                      onPressed: () {}, //giải thích: Nút gợi ý (chưa có chức năng)
-                      icon: const Icon(Icons.lightbulb_outline),
-                      label: const Text("Gợi ý"),
-                                  style: ElevatedButton.styleFrom(
+                    ElevatedButton(
+                      onPressed: (_hintActive || _hintUsedOnce) ? null : () {
+                        _onHint();
+                      },
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orangeAccent,
-                        fixedSize: const Size(170, 70),
+                        fixedSize: const Size(220, 100),
+                        textStyle: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Gợi ý', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          if (_hintActive)
+                            Text('(${_hintSeconds}s)', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal), textAlign: TextAlign.center),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              ),
-
-              ElevatedButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const PopupWatchVideo(),
-                  );
-                },
-                icon: const Icon(Icons.lightbulb_outline),
-                label: const Text("Qua Màn (5s Quảng Cáo)"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  fixedSize: const Size(270, 70),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
               SizedBox(height: mediumPadding), //giải thích: Khoảng cách dưới cùng
