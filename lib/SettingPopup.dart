@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+import 'audio_manager.dart';
+
 
 class SettingPopup extends StatefulWidget {
   const SettingPopup({super.key});
@@ -27,6 +29,12 @@ class _SettingPopupState extends State<SettingPopup> {
   void dispose() {
     _player.dispose(); // giải phóng tài nguyên
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _isMusicOn = AudioManager().isPlaying;
   }
 
   @override
@@ -58,6 +66,11 @@ class _SettingPopupState extends State<SettingPopup> {
                             await _playTickSound(); // 👈 phát âm tick
                             setState(() {
                               _isMusicOn = !_isMusicOn;
+                              if (_isMusicOn) {
+                                AudioManager().playBackgroundMusic();
+                              } else {
+                                AudioManager().stopBackgroundMusic();
+                              }
                             });
                           },
                           child: AnimatedContainer(
