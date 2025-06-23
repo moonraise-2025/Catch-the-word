@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'audio_manager.dart';
 
 class SettingPopup extends StatefulWidget {
   const SettingPopup({super.key});
@@ -10,6 +11,12 @@ class SettingPopup extends StatefulWidget {
 class _SettingPopupState extends State<SettingPopup> {
   bool _isMusicOn = true;
   bool _isSoundEffectOn = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _isMusicOn = AudioManager().isPlaying;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +46,11 @@ class _SettingPopupState extends State<SettingPopup> {
                           onTap: () {
                             setState(() {
                               _isMusicOn = !_isMusicOn;
+                              if (_isMusicOn) {
+                                AudioManager().playBackgroundMusic();
+                              } else {
+                                AudioManager().stopBackgroundMusic();
+                              }
                             });
                           },
                           child: AnimatedContainer(

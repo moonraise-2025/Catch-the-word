@@ -9,6 +9,7 @@ class AudioManager {
   AudioManager._internal();
 
   Future<void> playBackgroundMusic() async {
+    if (_player.playing) return;
     try {
       await _player.setAsset('assets/audio/nhacnen1.mp3');
       _player.setLoopMode(LoopMode.one);
@@ -29,4 +30,6 @@ class AudioManager {
   void resumeBackgroundMusic() {
     _player.play();
   }
+
+  bool get isPlaying => _player.playing;
 } 
