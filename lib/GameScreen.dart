@@ -1,9 +1,21 @@
 
 import 'package:flutter/material.dart'; //giải thích: Thư viện giao diện người dùng Flutter
+import 'package:flutter/rendering.dart';
 import 'dart:math'; //giải thích: Thư viện toán học, dùng cho random
-import 'PopupAnswerCorrect.dart'; //giải thích: Import widget popup trả lời đúng
+import 'PopupAnswerCorrect.dart';
+import 'PopupWatchVideo.dart'; //giải thích: Import widget popup trả lời đúng
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'package:duoihinhbatchu/GiftPopup.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:async';
+
+
+
+
 
 class Question { //giải thích: Lớp đại diện cho một câu hỏi
   final String imageName; //giải thích: Tên file ảnh câu hỏi
@@ -39,6 +51,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     //Question(imageName: 'cau17.png', answer: 'CHẠYNƯỚCRÚT'),
     Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
   ];
+  
+  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
+  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
+  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
 
   int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
   int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
@@ -66,6 +82,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late Animation<double> _shakeAnimation; //giải thích: Animation lắc
   bool isWrong = false; //giải thích: Trạng thái trả lời sai
   late final int maxAnswerLength; //giải thích: Độ dài đáp án dài nhất trong tất cả câu hỏi
+
+  final GlobalKey previewContainerKey = GlobalKey();
+  Future<void> captureAndShareWidget() async {
+    try {
+      RenderRepaintBoundary boundary = previewContainerKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 20));
+        return captureAndShareWidget(); // đợi render xong
+      }
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List? pngBytes = byteData?.buffer.asUint8List();
+
+      if (pngBytes != null) {
+        final tempDir = await getTemporaryDirectory();
+        final file = await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
+        await Share.shareFiles([file.path], text: 'Chơi game Đuổi hình bắt chữ nè!');
+      }
+    } catch (e) {
+      debugPrint('Lỗi chụp/chia sẻ widget: $e');
+    }
+  }
+
 
   @override
   void initState() { //giải thích: Hàm khởi tạo state, chạy đầu tiên khi mở màn hình
@@ -498,7 +537,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     double dynamicCharButtonSize = (constraints.maxWidth - smallPadding * (maxRowLength - 1) - mediumPadding * 2) / maxRowLength;
                     double answerBoxSize = dynamicCharButtonSize * 1.15;
                     double fontSizeAnswer = dynamicCharButtonSize * 0.45;
-                    return Column(
+
+                    return RepaintBoundary(
+                      key: previewContainerKey,
+                      child: Column(
                       mainAxisAlignment: MainAxisAlignment.center, // Căn giữa dọc
                       crossAxisAlignment: CrossAxisAlignment.center, // Căn giữa ngang
                       mainAxisSize: MainAxisSize.max,
@@ -562,16 +604,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: buildCharRow(maxRowLength, maxRowLength * 2, dynamicCharButtonSize),
-                    ),
-                    ],
-                    ),
-                    ),
-                    ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
               ),
 
+
+              // Function buttons at the bottom
 
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: largePadding, vertical: mediumPadding), //giải thích: Padding cho các nút chức năng
@@ -594,7 +639,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       ),
                     ),
                     ElevatedButton.icon(
-                      onPressed: () {}, //giải thích: Nút hỏi bạn bè (chưa có chức năng)
+                      onPressed: captureAndShareWidget,
                       icon: const Icon(Icons.share_outlined),
                       label: const Text("Hỏi bạn bè"),
                                   style: ElevatedButton.styleFrom(
@@ -608,6 +653,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
+
                     ElevatedButton(
                       onPressed: (_hintActive || _hintUsedOnce) ? null : () {
                         _onHint();
