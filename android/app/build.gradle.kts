@@ -9,7 +9,10 @@ android {
     namespace = "com.example.duoihinhbatchu"
     compileSdk = flutter.compileSdkVersion
 //    ndkVersion = flutter.ndkVersion
-    ndkVersion = "27.0.12077973"
+
+//    compileSdk = 34 // ✅ hoặc flutter.compileSdkVersion nếu bạn chắc chắn = 34
+    ndkVersion = "27.0.12077973" // ✅ Ghi đè version NDK để không lỗi
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -27,6 +30,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
+//        minSdk = 23             // ✅ Google Mobile Ads yêu cầu >= 23
+//        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
