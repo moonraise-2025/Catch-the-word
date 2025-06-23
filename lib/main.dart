@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'StartScreen.dart';
+import 'audio_manager.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  AudioManager().playBackgroundMusic();
   runApp(const MyApp());
 }
 

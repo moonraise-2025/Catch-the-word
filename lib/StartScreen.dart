@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'GameScreen.dart';
 import 'SettingPopup.dart';
 import 'InfoPopup.dart';
+import 'audio_manager.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
@@ -58,6 +59,7 @@ class StartScreen extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
+                          AudioManager().playBackgroundMusic();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
