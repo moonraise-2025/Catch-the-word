@@ -9,8 +9,10 @@ android {
     namespace = "com.example.duoihinhbatchu"
     compileSdk = flutter.compileSdkVersion
 //    ndkVersion = flutter.ndkVersion
+
 //    compileSdk = 34 // ✅ hoặc flutter.compileSdkVersion nếu bạn chắc chắn = 34
     ndkVersion = "27.0.12077973" // ✅ Ghi đè version NDK để không lỗi
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

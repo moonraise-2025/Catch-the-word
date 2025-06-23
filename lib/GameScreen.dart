@@ -12,10 +12,8 @@ import 'dart:io';
 import 'package:duoihinhbatchu/GiftPopup.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:async';
-
-
-
-
+import 'package:shared_preferences/shared_preferences.dart'; // để lưu trữ local
+import 'package:intl/intl.dart';
 
 class Question { //giải thích: Lớp đại diện cho một câu hỏi
   final String imageName; //giải thích: Tên file ảnh câu hỏi
@@ -124,8 +122,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       CurvedAnimation(parent: _shakeController, curve: Curves.linear),
     );
 
-    _initAnimations(); //giải thích: Khởi tạo các animation
-    _initGame(); //giải thích: Khởi tạo dữ liệu game cho câu hỏi đầu tiên
+    _initAnimations(); // hàm khởi tại các animation
+    _initGame(); // hàm khởi tạo game - VD: câu hỏi, đáp án, trạng thái,...
+
+    checkAndResetDailyProgress(); //reset nhiệm vụ nếu sang ngày
+
+
   }
 
   void _initAnimations() { //giải thích: Khởi tạo các animation cho hiệu ứng
@@ -186,53 +188,63 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return chars;
   }
 
+  void _onCharTap(int idx) async {
 
-  void _onCharTap(int idx) {
-    // hàm xử lý khi người chơi chọn một ký tự
     if (currentSlot < answerSlots.length && !charUsed[idx]) {
-      // chỉ cho phép chọn nếu còn ô trống và ký tự chưa được dùng
       setState(() {
-        // cập nhật lại giao diện
-        answerSlots[currentSlot] = charOptions[idx]; // gán ký tự được chọn vào ô đáp án hiện tại
-        charUsed[idx] = true; // đánh dấu ký tự này đã được sử dụng
-        currentSlot++; // chuyển sang ô đáp án tiếp theo
-
-        if (currentSlot == answerSlots.length) {
-          // nếu đã điền hết các ô đáp án
-          String userAnswer = answerSlots
-              .join(''); // ghép các ký tự lại thành đáp án người chơi nhập
-          isCorrect = userAnswer ==
-              questions[currentQuestion]
-                  .answer
-                  .toUpperCase(); // kiểm tra đáp án đúng hay sai
-          if (isCorrect) {
-            Future.delayed(
-                const Duration(milliseconds: 300), showCorrectDialog);
-            // Cập nhật số lượng câu đã trả lời
-            dailyCount++;
-            daily30Count++;
-            daily50Count++;
-          } else {
-            setState(() {
-              isWrong = true; //giải thích: Đánh dấu trả lời sai để chạy animation lắc
-            });
-            _shakeController.forward(from: 0); //giải thích: Chạy animation lắc
-            Future.delayed(const Duration(seconds: 2), () {
-              setState(() {
-                isWrong = false;
-                final answer = questions[currentQuestion].answer.toUpperCase();
-                answerSlots = List.filled(answer.length, '');
-                charOptions = _generateCharOptions(answer);
-                charUsed = List.filled(charOptions.length, false);
-                currentSlot = 0;
-                isCorrect = false;
-              });
-            });
-          }
-        }
+        answerSlots[currentSlot] = charOptions[idx];
+        charUsed[idx] = true;
+        currentSlot++;
       });
+
+      if (currentSlot == answerSlots.length) {
+        final userAnswer = answerSlots.join('');
+        final correctAnswer = questions[currentQuestion].answer.toUpperCase();
+        final correct = userAnswer == correctAnswer;
+
+        setState(() {
+          isCorrect = correct;
+        });
+
+        if (correct) {
+          // ✅ Delay nhẹ để hiển thị hiệu ứng đúng
+          Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
+
+          // ✅ Cập nhật các biến nhiệm vụ (ngoài setState để tối ưu)
+          if (dailyCount < 1) dailyCount++;
+          if (daily30Count < 30) daily30Count++;
+          if (daily50Count < 50) daily50Count++;;
+
+          // ✅ Lưu vào SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('dailyCount', dailyCount);
+          await prefs.setInt('daily30Count', daily30Count);
+          await prefs.setInt('daily50Count', daily50Count);
+        } else {
+          // ❌ Trả lời sai
+          setState(() {
+            isWrong = true;
+          });
+
+          _shakeController.forward(from: 0); // hiệu ứng rung
+
+          Future.delayed(const Duration(seconds: 2), () {
+            setState(() {
+              isWrong = false;
+              final answer = correctAnswer;
+              answerSlots = List.filled(answer.length, '');
+              charOptions = _generateCharOptions(answer);
+              charUsed = List.filled(charOptions.length, false);
+              currentSlot = 0;
+              isCorrect = false;
+
+            });
+          });
+        }
+      }
     }
   }
+
 
 
   void _startHintCountdown() {
@@ -304,6 +316,28 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> checkAndResetDailyProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+
+    final lastDate = prefs.getString('lastRewardDate') ?? '';
+    if (lastDate != todayStr) {
+      // 👉 Sang ngày mới: reset nhiệm vụ
+      await prefs.setInt('dailyCount', 0);
+      await prefs.setInt('daily30Count', 0);
+      await prefs.setInt('daily50Count', 0);
+      await prefs.setBool('dailyRewarded', false);
+      await prefs.setBool('daily30Rewarded', false);
+      await prefs.setBool('daily50Rewarded', false);
+      await prefs.setString('lastRewardDate', todayStr);
+    }
+
+    // 👉 Cập nhật lại biến khi khởi tạo màn chơi
+    dailyCount = prefs.getInt('dailyCount') ?? 0;
+    daily30Count = prefs.getInt('daily30Count') ?? 0;
+    daily50Count = prefs.getInt('daily50Count') ?? 0;
+  }
   void _showRevealLetterDialog() async {
     if (diamonds < 10) {
       showDialog(
