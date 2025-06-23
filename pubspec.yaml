@@ -55,6 +55,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  audioplayers: ^5.2.1
+
 
 
 
@@ -73,6 +75,7 @@ flutter:
   assets:
     - assets/images/
     - assets/questions/
+    - assets/tick.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

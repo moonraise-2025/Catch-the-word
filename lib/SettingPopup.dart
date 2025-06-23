@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+
 
 class SettingPopup extends StatefulWidget {
   const SettingPopup({super.key});
@@ -10,6 +12,22 @@ class SettingPopup extends StatefulWidget {
 class _SettingPopupState extends State<SettingPopup> {
   bool _isMusicOn = true;
   bool _isSoundEffectOn = true;
+
+  final AudioPlayer _player = AudioPlayer();
+
+  Future<void> _playTickSound() async {
+    try {
+      await _player.play(AssetSource('tick.mp3'), volume: 0.3); //  phát tick
+    } catch (e) {
+      debugPrint('Lỗi phát âm thanh: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _player.dispose(); // giải phóng tài nguyên
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +54,8 @@ class _SettingPopupState extends State<SettingPopup> {
                         Text('Nhạc Nền', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10), 
                         GestureDetector(
-                          onTap: () {
+                          onTap: () async {
+                            await _playTickSound(); // 👈 phát âm tick
                             setState(() {
                               _isMusicOn = !_isMusicOn;
                             });
@@ -84,7 +103,8 @@ class _SettingPopupState extends State<SettingPopup> {
                         Text('Rung', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
                         GestureDetector(
-                          onTap: () {
+                          onTap: () async {
+                            await _playTickSound(); // 👈 phát âm tick
                             setState(() {
                               _isSoundEffectOn = !_isSoundEffectOn;
                             });

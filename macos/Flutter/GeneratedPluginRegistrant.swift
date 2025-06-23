@@ -5,12 +5,15 @@
 import FlutterMacOS
 import Foundation
 
+import audioplayers_darwin
 import path_provider_foundation
-import share_plus
+import path_provider_foundation
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
-  SharePlusMacosPlugin.register(with: registry.registrar(forPlugin: "SharePlusMacosPlugin"))
+  AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
+  PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
+
 // import shared_preferences_foundation
 
 // func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
