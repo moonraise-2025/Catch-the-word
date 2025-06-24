@@ -130,7 +130,7 @@ class StartScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: Colors.black, width: 1),
                       ),
-                      child: Icon(Icons.settings, size: 48, color: Colors.black),
+                      child: Icon(Icons.settings, size: 50, color: Colors.black),
                     ),
                   ),
                 ),
