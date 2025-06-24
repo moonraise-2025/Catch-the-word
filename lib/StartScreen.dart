@@ -18,7 +18,7 @@ class StartScreen extends StatelessWidget {
             height: size.height,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/background2.png'),
+                image: AssetImage('assets/images/BackgroundDHBC.png'),
                 fit: BoxFit.cover,
                 repeat: ImageRepeat.noRepeat,
               ),
@@ -29,30 +29,20 @@ class StartScreen extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'BẮT CHỮ',
-                        style: TextStyle(
-                          fontSize: 100,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                          letterSpacing: 8,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(3, 3),
-                              blurRadius: 4,
-                              color: Colors.black.withOpacity(0.2),
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.center,
+                      Image.asset(
+                        'assets/images/logodhbc.png',
+                        width: 800, 
+                        height: 400,
+                        fit: BoxFit.contain,
                       ),
+
                       const SizedBox(height: 60),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                          textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                          textStyle: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                             side: const BorderSide(color: Colors.black),
@@ -69,7 +59,7 @@ class StartScreen extends StatelessWidget {
                         },
                         child: const Text('Bắt đầu'),
                       ),
-                      SizedBox(height: 20),
+                      SizedBox(height: 50),
                       Column(
                         children: [
                           ElevatedButton(
@@ -112,49 +102,51 @@ class StartScreen extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  left: 32,
-                  bottom: 32,
-                  child: GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const SettingPopup();
-                        },
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.black, width: 1),
-                      ),
-                      child: Icon(Icons.settings, size: 50, color: Colors.black),
-                    ),
-                  ),
-                ),
-                Positioned(
+                  top: 32,
                   right: 32,
-                  bottom: 32,
-                  child: GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return const InfoPopup();
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return const InfoPopup();
+                            },
+                          );
                         },
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black, width: 2),
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.lightBlue[200],
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black, width: 2),
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.lightBlue[200],
+                          ),
+                          child: const Icon(Icons.info, size: 40, color: Colors.black),
+                        ),
                       ),
-                      child: const Icon(Icons.info, size: 40, color: Colors.black),
-                    ),
+
+                      const SizedBox(width: 16), // khoảng cách giữa hai icon
+                      GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return const SettingPopup();
+                            },
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.black, width: 1),
+                          ),
+                          child: const Icon(Icons.settings, size: 50, color: Colors.black),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
