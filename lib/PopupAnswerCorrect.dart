@@ -20,16 +20,16 @@ class PopupAnswerCorrect extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.star, color: Colors.amber, size: 60),
-                  SizedBox(width: 8),
-                  Icon(Icons.star, color: Colors.amber, size: 60),
-                  SizedBox(width: 8),
-                  Icon(Icons.star, color: Colors.amber, size: 60),
-                ],
-              ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.star, color: Colors.amber, size: 60),
+                    SizedBox(width: 8),
+                    Icon(Icons.star, color: Colors.amber, size: 60),
+                    SizedBox(width: 8),
+                    Icon(Icons.star, color: Colors.amber, size: 60),
+                  ],
+                ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),

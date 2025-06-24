@@ -54,10 +54,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
   int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
 
-  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
-  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
-  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
-    
   int currentQuestion = 0; //giải thích: Chỉ số câu hỏi hiện tại
   int level = 1; //giải thích: Level hiện tại
   int diamonds = 0; //giải thích: Số kim cương hiện có

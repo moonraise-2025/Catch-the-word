@@ -19,7 +19,7 @@ class _SettingPopupState extends State<SettingPopup> {
 
   Future<void> _playTickSound() async {
     try {
-      await _player.play(AssetSource('tick.mp3'), volume: 0.3); //  phát tick
+      await _player.play(AssetSource('audio/tick.mp3'), volume: 0.3); //  phát tick
     } catch (e) {
       debugPrint('Lỗi phát âm thanh: $e');
     }
