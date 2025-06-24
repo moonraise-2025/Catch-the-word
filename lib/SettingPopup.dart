@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+import 'AnimatedButton.dart';
 import 'audio_manager.dart';
 
 class SettingPopup extends StatefulWidget {
@@ -172,31 +173,35 @@ class _SettingPopupState extends State<SettingPopup> {
                 ),
                       const SizedBox(height: 30),
 
-                      Center(
-                        child: GestureDetector(
-                          onTapDown: (_) => _handlePress(true),
-                          onTapUp: (_) => _handlePress(false),
-                          onTapCancel: () => _handlePress(false),
-                        child: ElevatedButton(
-                          onPressed: () {
-
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isPressed ? const Color(0xFF8E61DC) : Colors.white,
-                            foregroundColor: _isPressed ? Colors.white : const Color(0xFF8E61DC),
-                            padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 25), // 👈 Tăng padding
-                            minimumSize: const Size(350, 80),
-                            textStyle: const TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold, ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('Đánh giá'),
-                        ),
+                      // Center(
+                      //   child: GestureDetector(
+                      //     onTapDown: (_) => _handlePress(true),
+                      //     onTapUp: (_) => _handlePress(false),
+                      //     onTapCancel: () => _handlePress(false),
+                      //   child: ElevatedButton(
+                      //     onPressed: () {
+                      //
+                      //     },
+                      //     style: ElevatedButton.styleFrom(
+                      //       backgroundColor: _isPressed ? const Color(0xFF8E61DC) : Colors.white,
+                      //       foregroundColor: _isPressed ? Colors.white : const Color(0xFF8E61DC),
+                      //       padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 25), // 👈 Tăng padding
+                      //       minimumSize: const Size(350, 80),
+                      //       textStyle: const TextStyle(
+                      //         fontSize: 40,
+                      //         fontWeight: FontWeight.bold, ),
+                      //       shape: RoundedRectangleBorder(
+                      //         borderRadius: BorderRadius.circular(10),
+                      //       ),
+                      //     ),
+                      //     child: const Text('Đánh giá'),
+                      //   ),
+                      // )
+                      // ),
+                      AnimatedButton(
+                        text: 'Đánh giá',
+                        onPressed: (){},
                       )
-                      ),
                     ],
                   ),
                 ),
