@@ -3,7 +3,6 @@ import 'package:audioplayers/audioplayers.dart';
 
 import 'audio_manager.dart';
 
-
 class SettingPopup extends StatefulWidget {
   const SettingPopup({super.key});
 
@@ -14,12 +13,15 @@ class SettingPopup extends StatefulWidget {
 class _SettingPopupState extends State<SettingPopup> {
   bool _isMusicOn = true;
   bool _isSoundEffectOn = true;
+  bool _isPressed = false;
+
 
   final AudioPlayer _player = AudioPlayer();
 
   Future<void> _playTickSound() async {
     try {
-      await _player.play(AssetSource('audio/tick.mp3'), volume: 0.3); //  phát tick
+      await _player.play(AssetSource('audio/tick.mp3'),
+          volume: 0.3); //  phát tick
     } catch (e) {
       debugPrint('Lỗi phát âm thanh: $e');
     }
@@ -37,196 +39,211 @@ class _SettingPopupState extends State<SettingPopup> {
     _isMusicOn = AudioManager().isPlaying;
   }
 
+
+  void _handlePress(bool isDown) {
+    setState(() {
+      _isPressed = isDown;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Stack(
-        clipBehavior: Clip.none, 
+        clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 70, 20, 20), 
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30), 
-              border: Border.all(color: Colors.blueAccent, width: 5), 
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        Text('Nhạc Nền', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10), 
-                        GestureDetector(
-                          onTap: () async {
-                            await _playTickSound(); // 👈 phát âm tick
-                            setState(() {
-                              _isMusicOn = !_isMusicOn;
-                              if (_isMusicOn) {
-                                AudioManager().playBackgroundMusic();
-                              } else {
-                                AudioManager().stopBackgroundMusic();
-                              }
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: 50,
-                            width: 100, 
-                            decoration: BoxDecoration(
-                              color: _isMusicOn ? Colors.lightGreen : Colors.grey[300], 
-                              borderRadius: BorderRadius.circular(25),
-                              border: Border.all(color: Colors.black26, width: 2),
-                            ),
-                            child: Stack(
-                              children: [
-                                AnimatedPositioned(
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeIn,
-                                  left: _isMusicOn ? 50 : 0, 
-                                  child: Container(
-                                    height: 50,
-                                    width: 50,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white, 
-                                      borderRadius: BorderRadius.circular(25),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(Icons.music_note, color: _isMusicOn ? Colors.lightGreen : Colors.grey, size: 30), // Icon nhạc
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Text('Rung', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10),
-                        GestureDetector(
-                          onTap: () async {
-                            await _playTickSound(); // 👈 phát âm tick
-                            setState(() {
-                              _isSoundEffectOn = !_isSoundEffectOn;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: 50,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: _isSoundEffectOn ? Colors.lightGreen : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(25),
-                              border: Border.all(color: Colors.black26, width: 2),
-                            ),
-                            child: Stack(
-                              children: [
-                                AnimatedPositioned(
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeIn,
-                                  left: _isSoundEffectOn ? 50 : 0,
-                                  child: Container(
-                                    height: 50,
-                                    width: 50,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(25),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(Icons.volume_up, color: _isSoundEffectOn ? Colors.lightGreen : Colors.grey, size: 30),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () {
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.lightBlueAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: const Text('Đánh Giá'),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: -30, 
-            left: 20,
-            child: Container(
-              padding: const EdgeInsets.all(10),
+              height: 800,
+              width: screenWidth * 0.80,
+              margin: const EdgeInsets.only(top: 200), // để chừa chỗ cho tiêu đề
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30), // padding cân trái/phải
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(50), 
-                border: Border.all(color: Colors.blueAccent, width: 3),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/bg_popup.png'),
+                  fit: BoxFit.fill,
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.settings, size: 50, color: Colors.blueAccent),
-            ),
-          ),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Cài Đặt ',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 60, fontWeight: FontWeight.w900, color: Color(0xFF8E61DC)),
+                      ),
+                      const SizedBox(height: 50),
+                  Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 140), // 👈 thêm padding 2 bên
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Nhạc Nền',
+                              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                          const SizedBox(width: 50),
+                          GestureDetector(
+                            onTap: () async {
+                              await _playTickSound();
+                              setState(() {
+                                _isMusicOn = !_isMusicOn;
+                                if (_isMusicOn) {
+                                  AudioManager().playBackgroundMusic();
+                                } else {
+                                  AudioManager().stopBackgroundMusic();
+                                }
+                              });
+                            },
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.blue, width: 3),
+                              ),
+                              child: Center(
+                                child: AnimatedScale(
+                                  duration: const Duration(milliseconds: 200),
+                                  scale: _isMusicOn ? 1.0 : 0.0,
+                                  curve: Curves.easeOutBack,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF8E61DC),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ),
+                      const SizedBox(height: 20),
+                      Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 140), // 👈 thêm padding 2 bên
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Rung',
+                              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                          const SizedBox(width: 50),
+                          GestureDetector(
+                            onTap: () async {
+                              await _playTickSound(); // 👈 phát âm tick
+                              setState(() {
+                                _isSoundEffectOn = !_isSoundEffectOn;
+                              });
+                            },
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.blue, width: 3),
+                              ),
+                              child: Center(
+                                child: AnimatedScale(
+                                  duration: const Duration(milliseconds: 200),
+                                  scale: _isSoundEffectOn ? 1.0 : 0.0, // to dần khi bật, nhỏ dần khi tắt
+                                  curve: Curves.easeInOut,
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF8E61DC),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                ),
+                      const SizedBox(height: 30),
+
+                      Center(
+                        child: GestureDetector(
+                          onTapDown: (_) => _handlePress(true),
+                          onTapUp: (_) => _handlePress(false),
+                          onTapCancel: () => _handlePress(false),
+                        child: ElevatedButton(
+                          onPressed: () {
+
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isPressed ? const Color(0xFF8E61DC) : Colors.white,
+                            foregroundColor: _isPressed ? Colors.white : const Color(0xFF8E61DC),
+                            padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 25), // 👈 Tăng padding
+                            minimumSize: const Size(350, 80),
+                            textStyle: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold, ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Đánh giá'),
+                        ),
+                      )
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+          // Positioned(
+          //   top: -30,
+          //   left: 20,
+          //   child: Container(
+          //     padding: const EdgeInsets.all(10),
+          //     decoration: BoxDecoration(
+          //       color: Colors.white,
+          //       borderRadius: BorderRadius.circular(50),
+          //       border: Border.all(color: Colors.blueAccent, width: 3),
+          //     ),
+          //     child: const Icon(Icons.settings,
+          //         size: 50, color: Colors.blueAccent),
+          //   ),
+          // ),
+
           Positioned(
-            top: -15, 
+            top: -600,
+            bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 70,
               alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.pinkAccent, 
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.pink, width: 2), 
-              ),
-              child: Text(
-                'Cài Đặt',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 500,
               ),
             ),
           ),
+          // Nút đóng ở góc phải trên
           Positioned(
-            top: 5,
-            right: 20,
-            child: IconButton(
-              icon: const Icon(Icons.close, size: 30, color: Colors.blueAccent),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            top: 100,
+            right: 10,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Image.asset(
+                'assets/images/icon_close.png',
+                width: 40,
+                height: 40,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-} 
+}
