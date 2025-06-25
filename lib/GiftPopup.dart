@@ -24,6 +24,9 @@ class _GiftpopupState extends State<Giftpopup> {
   late SharedPreferences prefs;
   final String todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+  Map<String, bool> _isPressedMap = {};
+
+
   @override
   void initState() {
     super.initState();
@@ -74,90 +77,109 @@ class _GiftpopupState extends State<Giftpopup> {
       child: Stack(
         children: [
           Container(
-            width: screenWidth * 0.95,
-            margin: const EdgeInsets.only(top: 80),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+            height: 800,
+            width: screenWidth * 0.80,
+            margin: const EdgeInsets.only(top: 200), // để chừa chỗ cho tiêu đề
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30), // padding cân trái/phải
             decoration: BoxDecoration(
-              color: Colors.white,
+              image: const DecorationImage(
+                image: AssetImage('assets/images/bg_popup.png'),
+                fit: BoxFit.fill,
+              ),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.black, width: 2),
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildMissionRow(
-                    keyId: 'daily1',
-                    title: 'Trả lời câu hỏi',
-                    reward: '+5',
-                    current: widget.dailyCount,
-                    total: 1,
-                    amount: 5,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildMissionRow(
-                    keyId: 'daily30',
-                    title: 'Trả lời 30 câu hỏi',
-                    reward: '+10',
-                    current: widget.daily30Count,
-                    total: 30,
-                    amount: 10,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildMissionRow(
-                    keyId: 'daily50',
-                    title: 'Trả lời 50 câu hỏi',
-                    reward: '+15',
-                    current: widget.daily50Count,
-                    total: 50,
-                    amount: 15,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildMissionNoProgress(
-                    keyId: 'playthrough',
-                    title: 'Sử dụng qua màn',
-                    reward: '+20',
-                    amount: 20,
-                  ),
-                  const SizedBox(height: 40),
-                ],
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 40),
+                    Text(
+                      'PHẦN THƯỞNG',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 60, fontWeight: FontWeight.w900, color: Color(0xFF8E61DC)),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildMissionRow(
+                      keyId: 'daily1',
+                      title: 'Đoán 1 từ',
+                      reward: '5',
+                      current: widget.dailyCount,
+                      total: 1,
+                      amount: 5,
+                    ),
+                    const SizedBox(height: 10),
+
+                    FutureBuilder<List<bool>>(
+                      future: Future.wait([
+                        _isReceived('daily30'),
+                        _isReceived('daily50'),
+                      ]),
+                      builder: (context, snapshot) {
+                        final isDaily30Received = snapshot.data?[0] ?? false;
+                        final isDaily50Received = snapshot.data?[1] ?? false;
+
+                        return Column(
+                          children: [
+                            if (!isDaily30Received)
+                              _buildMissionRow(
+                                keyId: 'daily30',
+                                title: 'Đoán 30 từ',
+                                reward: '30',
+                                current: widget.daily30Count,
+                                total: 30,
+                                amount: 30,
+                              ),
+                            if (isDaily30Received)
+                              _buildMissionRow(
+                                keyId: 'daily50',
+                                title: 'Đoán 50 từ',
+                                reward: '50',
+                                current: widget.daily50Count,
+                                total: 50,
+                                amount: 50,
+                              ),
+                            const SizedBox(height: 10),
+                            _buildMissionNoProgress(
+                              keyId: 'playthrough',
+                              title: 'Sử dụng qua màn',
+                              reward: '20',
+                              amount: 20,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           Positioned(
-            top: 0,
+            top: -600,
+            bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 80,
               alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.pinkAccent,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                ),
-                border: Border.all(color: Colors.pink, width: 2),
-              ),
-              child: const Text(
-                'Nhiệm Vụ Hằng Ngày',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 500,
               ),
             ),
           ),
+          // Nút đóng ở góc phải trên
           Positioned(
-            top: 10,
+            top: 100,
             right: 10,
-            child: IconButton(
-              icon: const Icon(Icons.close, size: 30, color: Colors.blueAccent),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Image.asset(
+                'assets/images/icon_close.png',
+                width: 40,
+                height: 40,
+              ),
             ),
           ),
         ],
@@ -179,48 +201,93 @@ class _GiftpopupState extends State<Giftpopup> {
       future: _isReceived(keyId),
       builder: (context, snapshot) {
         final received = snapshot.data ?? false;
+        final canClaim = isComplete && !received;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '$title ($current/$total)',
-                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-              ),
-              GestureDetector(
-                onTap: (!received && isComplete)
-                    ? () => _handleTap(keyId, amount)
-                    : null,
-                child: received
-                    ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
-                    : Row(
-                  children: [
-                    Text(
-                      reward,
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
+        return Builder(
+          builder: (context) {
+            final screenWidth = MediaQuery.of(context).size.width;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: SizedBox(
+                width: screenWidth * 0.4,
+                height: 110,
+                child: AnimatedScale(
+                  scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
+                  duration: const Duration(milliseconds: 100),
+                  child: GestureDetector(
+                    onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
+                    onTapUp: (_) => setState(() => _isPressedMap[keyId] = false),
+                    onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
+                    child: ElevatedButton(
+                      onPressed: canClaim ? () => _handleTap(keyId, amount) : null,
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(MaterialState.disabled)) {
+                            return const Color(0xFF43ADED);
+                          }
+                          return Colors.white;
+                        }),
+                        elevation: MaterialStateProperty.all(4),
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: const BorderSide(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '$title ($current/$total)',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: canClaim ? Colors.grey : Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          received
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 40)
+                              : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                reward,
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF8E61DC),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Image.asset(
+                                'images/diamond.png',
+                                width: 40,
+                                height: 40,
+                              ),
+                            ],
+                          )
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.diamond,
-                      color: Colors.blueAccent,
-                      size: 50,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
+
+
+
+
 
   Widget _buildMissionNoProgress({
     required String keyId,
@@ -232,42 +299,85 @@ class _GiftpopupState extends State<Giftpopup> {
       future: _isReceived(keyId),
       builder: (context, snapshot) {
         final received = snapshot.data ?? false;
+        final canClaim = !received;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-              ),
-              GestureDetector(
-                onTap: received ? null : () => _handleTap(keyId, amount),
-                child: received
-                    ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
-                    : Row(
-                  children: [
-                    Text(
-                      reward,
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
+        return Builder(
+          builder: (context) {
+            final screenWidth = MediaQuery.of(context).size.width;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: SizedBox(
+                width: screenWidth * 0.4,
+                height: 110,
+                child: AnimatedScale(
+                  scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
+                  duration: const Duration(milliseconds: 100),
+                  child: GestureDetector(
+                    onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
+                    onTapUp: (_) => setState(() => _isPressedMap[keyId] = false),
+                    onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
+                    child: ElevatedButton(
+                      onPressed: received ? null : () => _handleTap(keyId, amount),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(MaterialState.disabled)) {
+                            return const Color(0xFF43ADED);
+                          }
+                          return Colors.white;
+                        }),
+                        elevation: MaterialStateProperty.all(4),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: const BorderSide(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: canClaim ? Colors.grey : Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          received
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 36)
+                              : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                reward,
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF8E61DC),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Image.asset(
+                                'images/diamond.png',
+                                width: 40,
+                                height: 40,
+                              ),
+                            ],
+                          )
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.diamond,
-                      color: Colors.blueAccent,
-                      size: 50,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
