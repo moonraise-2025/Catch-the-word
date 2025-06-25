@@ -3,12 +3,62 @@ import 'GameScreen.dart';
 import 'SettingPopup.dart';
 import 'InfoPopup.dart';
 import 'audio_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class StartScreen extends StatelessWidget {
+class StartScreen extends StatefulWidget {
   const StartScreen({super.key});
 
   @override
+  State<StartScreen> createState() => _StartScreenState();
+}
+
+class _StartScreenState extends State<StartScreen> {
+  int? lastLevel;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastLevel();
+  }
+
+  Future<void> _loadLastLevel() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      lastLevel = prefs.getInt('lastLevel');
+      loading = false;
+    });
+  }
+
+  void _startNewGame() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('lastLevel', 1);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const GameScreen(),
+      ),
+    );
+  }
+
+  void _continueGame() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GameScreen(
+          initialLevel: lastLevel ?? 1,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       body: Builder(
         builder: (context) {
@@ -29,75 +79,55 @@ class StartScreen extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        'assets/images/logodhbc.png',
-                        width: 800, 
-                        height: 400,
-                        fit: BoxFit.contain,
+                      Padding( 
+                        padding: const EdgeInsets.only(bottom: 350),
+                        child: Image.asset(
+                          'assets/images/logodhbc.png',
+                          width: 800, 
+                          height: 400,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-
                       const SizedBox(height: 60),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                          textStyle: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            side: const BorderSide(color: Colors.black),
+                      if (lastLevel == null || lastLevel == 1) ...[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.blue,
+                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                            textStyle: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          onPressed: _startNewGame,
+                          child: const Text('Chơi ngay'),
+                        ),
+                      ] else ...[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.lightBlue,
+                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                            textStyle: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: const BorderSide(color: Colors.black),
+                            ),
+                          ),
+                          onPressed: _continueGame,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('Tiếp tục', ),
+                              const SizedBox(height: 8),
+                              Text('Level $lastLevel', style: const TextStyle(fontSize: 30, color: Colors.lightBlue)),
+                            ],
                           ),
                         ),
-                        onPressed: () {
-                          AudioManager().playBackgroundMusic();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const GameScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text('Bắt đầu'),
-                      ),
-                      SizedBox(height: 50),
-                      Column(
-                        children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.lightBlue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                              textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                                side: const BorderSide(color: Colors.black),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const GameScreen(),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min, 
-                              children: const [
-                                Text(
-                                  'Tiếp tục',
-                                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Level N', 
-                                  style: TextStyle(fontSize: 20, color: Colors.white),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      ],
+                      SizedBox(height: 100),
                     ],
                   ),
                 ),
