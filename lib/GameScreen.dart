@@ -49,19 +49,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
   ];
   
-  int dailyCount = 0;
-  int daily30Count = 0;
-  int daily50Count = 0;
-  
-  int currentQuestion = 0;
-  int level = 1;
-  int diamonds = 0;
 
-  late List<String> answerSlots;
-  late List<String> charOptions;
-  late List<bool> charUsed;
-  int currentSlot = 0;
-  bool isCorrect = false;
+  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
+  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
+  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
+
+  int currentQuestion = 0; //giải thích: Chỉ số câu hỏi hiện tại
+  int level = 1; //giải thích: Level hiện tại
+  int diamonds = 0; //giải thích: Số kim cương hiện có
+
+  late List<String> answerSlots; //giải thích: Danh sách ký tự đã điền vào đáp án
+  late List<String> charOptions; //giải thích: Danh sách ký tự lựa chọn bên dưới
+  late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
+  int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
+  bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
+
   Timer? _hintTimer;
   int _hintSeconds = 12;
   bool _hintActive = false;
