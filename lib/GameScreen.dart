@@ -124,6 +124,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _initGame();
 
     checkAndResetDailyProgress();
+    _loadDiamonds();
+  }
+
+  Future<void> _loadDiamonds() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      diamonds = prefs.getInt('diamonds') ?? 0;
+    });
   }
 
   void _initAnimations() {
@@ -283,6 +291,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 _initGame();
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setInt('lastLevel', level);
+                await prefs.setInt('diamonds', diamonds);
               } else {
                 currentQuestion = 0;
                 level = 1;
@@ -290,6 +299,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 _initGame();
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setInt('lastLevel', 1);
+                await prefs.setInt('diamonds', diamonds);
               }
             });
           },
@@ -355,6 +365,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (shouldReveal == true) {
       setState(() {
         diamonds -= 10;
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('diamonds', diamonds);
+      setState(() {
         final answer = questions[currentQuestion].answer.toUpperCase();
         for (int i = 0; i < answerSlots.length; i++) {
           if (answerSlots[i].isEmpty) {
@@ -442,10 +456,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             dailyCount: dailyCount,
                             daily30Count: daily30Count,
                             daily50Count: daily50Count,
-                            onReward: (amount) {
+                            onReward: (amount) async {
                               setState(() {
                                 diamonds += amount;
                               });
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setInt('diamonds', diamonds);
                             },
                           ),
                         );
