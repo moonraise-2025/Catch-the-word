@@ -61,7 +61,6 @@ class _GiftpopupState extends State<Giftpopup> {
     if (received) return;
 
     await prefs.setBool('${todayKey}_$keyId', true);
-
     AudioManager().playGiftSound();
 
 

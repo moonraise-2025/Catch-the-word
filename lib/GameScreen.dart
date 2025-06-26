@@ -402,6 +402,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _saveGameProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setInt('lastLevel', currentQuestion + 1);
+    // await prefs.setInt('diamonds', diamonds);
+    // await prefs.setInt('dailyCount', dailyCount);
+    // await prefs.setInt('daily30Count', daily30Count);
+    // await prefs.setInt('daily50Count', daily50Count);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -440,7 +450,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.home, size: 45, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                      // onPressed: () => Navigator.pop(context),
+                      onPressed: () async {
+                        await _saveGameProgress();
+                        Navigator.pop(context);
+                      },
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
