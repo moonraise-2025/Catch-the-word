@@ -13,6 +13,8 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import 'audio_manager.dart';
+
 class Question {
   final String imageName;
   final String answer;
@@ -65,7 +67,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
 
   Timer? _hintTimer;
-  int _hintSeconds = 12;
+  int _hintSeconds = 20;
   bool _hintActive = false;
   bool _hintUsedOnce = false;
   String? _hintBanner;
@@ -247,7 +249,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _startHintCountdown() {
     setState(() {
-      _hintSeconds = 12;
+      _hintSeconds = 20;
       _hintActive = true;
     });
 
@@ -278,6 +280,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void showCorrectDialog() {
+    AudioManager().playNextLevelSound();
     showDialog(
       context: context,
       barrierDismissible: false,

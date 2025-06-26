@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import 'audio_manager.dart';
+
 class Giftpopup extends StatefulWidget {
   final int dailyCount;
   final int daily30Count;
@@ -59,6 +61,9 @@ class _GiftpopupState extends State<Giftpopup> {
     if (received) return;
 
     await prefs.setBool('${todayKey}_$keyId', true);
+
+    AudioManager().playGiftSound();
+
 
     if (widget.onReward != null) {
       widget.onReward!(rewardAmount);
