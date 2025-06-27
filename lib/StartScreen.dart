@@ -65,6 +65,8 @@ class _StartScreenState extends State<StartScreen> {
     final size = MediaQuery.of(context).size;
     final screenWidth = size.width;
     final screenHeight = size.height;
+    final double buttonWidth = screenWidth * 0.7;
+    final double buttonHeight = screenHeight * 0.06;
     return Scaffold(
       body: Builder(
         builder: (context) {
@@ -95,52 +97,52 @@ class _StartScreenState extends State<StartScreen> {
                       ),
                       SizedBox(height: screenHeight * 0.04),
                       if (lastLevel == null || lastLevel == 1) ...[
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.1,
-                              vertical: screenHeight * 0.025,
+                        SizedBox(
+                          width: buttonWidth,
+                          height: buttonHeight,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.blue,
+                              textStyle: TextStyle(
+                                fontSize: screenWidth * 0.05,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
-                            textStyle: TextStyle(
-                              fontSize: screenWidth * 0.06,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              side: const BorderSide(color: Colors.black),
-                            ),
+                            onPressed: _startNewGame,
+                            child: const Text('Chơi ngay', textAlign: TextAlign.center),
                           ),
-                          onPressed: _startNewGame,
-                          child: const Text('Chơi ngay'),
                         ),
                       ] else ...[
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.lightBlue,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.1,
-                              vertical: screenHeight * 0.025,
+                        SizedBox(
+                          width: buttonWidth,
+                          height: buttonHeight,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.lightBlue,
+                              textStyle: TextStyle(
+                                fontSize: screenWidth * 0.05,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
-                            textStyle: TextStyle(
-                              fontSize: screenWidth * 0.07,
-                              fontWeight: FontWeight.bold,
+                            onPressed: _continueGame,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text('Tiếp tục', textAlign: TextAlign.center),
+                                Text('(Level $lastLevel)',
+                                    style: TextStyle(
+                                        fontSize: screenWidth * 0.03,
+                                        color: Color(0xFF4E4E51))),
+                              ],
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              side: const BorderSide(color: Colors.black),
-                            ),
-                          ),
-                          onPressed: _continueGame,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text('Tiếp tục'),
-                              SizedBox(height: screenHeight * 0.01),
-                              Text('Level $lastLevel', style: TextStyle(fontSize: screenWidth * 0.04, color: Colors.lightBlue)),
-                            ],
                           ),
                         ),
                       ],
@@ -162,14 +164,11 @@ class _StartScreenState extends State<StartScreen> {
                             },
                           );
                         },
-                        child: Container(
-                          padding: EdgeInsets.all(screenWidth * 0.025),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black, width: 2),
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.lightBlue[200],
-                          ),
-                          child: Icon(Icons.info, size: screenWidth * 0.07, color: Colors.black),
+                        child: Image.asset(
+                          'assets/images/thongtin.png',
+                          width: screenWidth * 0.07,
+                          height: screenWidth * 0.07,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       SizedBox(width: screenWidth * 0.04),
@@ -182,14 +181,11 @@ class _StartScreenState extends State<StartScreen> {
                             },
                           );
                         },
-                        child: Container(
-                          padding: EdgeInsets.all(screenWidth * 0.02),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.black, width: 1),
-                          ),
-                          child: Icon(Icons.settings, size: screenWidth * 0.08, color: Colors.black),
+                        child: Image.asset(
+                          'assets/images/setting.png',
+                          width: screenWidth * 0.07,
+                          height: screenWidth * 0.07,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ],
