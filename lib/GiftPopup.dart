@@ -289,7 +289,7 @@ class _GiftpopupState extends State<Giftpopup> {
                       ),
                       SizedBox(height: screenHeight * 0.005), // Khoảng trống động
                       received
-                          ? Icon(Icons.check_circle, color: Colors.green, size: screenWidth * 0.05) // Kích thước icon động
+                          ? Icon(Icons.check_circle, color: Color(0xFF07FF11), size: screenWidth * 0.05) // Kích thước icon động
                           : Row(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -387,7 +387,7 @@ class _GiftpopupState extends State<Giftpopup> {
                       ),
                       SizedBox(height: screenHeight * 0.005), // Khoảng trống động
                       received
-                          ? Icon(Icons.check_circle, color: Colors.green, size: screenWidth * 0.05) // Kích thước icon động
+                          ? Icon(Icons.check_circle, color:Color(0xFF0DF316), size: screenWidth * 0.05) // Kích thước icon động
                           : Row(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
