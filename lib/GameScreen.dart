@@ -51,7 +51,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
     Question(imageName: 'cau19.png', answer: 'CÁCHÉP'),
     Question(imageName: 'cau20.png', answer: 'CÂYCẦU'),
-
   ];
   
 
@@ -65,6 +64,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   late List<String> answerSlots; //giải thích: Danh sách ký tự đã điền vào đáp án
   late List<String> charOptions; //giải thích: Danh sách ký tự lựa chọn bên dưới
+  late List<int?> answerCharIndexes; // Lưu chỉ mục của charOptions
   late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
   int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
   bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
@@ -162,6 +162,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _initGame() {
     final answer = questions[currentQuestion].answer.toUpperCase();
     answerSlots = List.filled(answer.length, '');
+    answerCharIndexes = List.filled(answer.length, null); // Khởi tạo chỉ mục là null
     charOptions = _generateCharOptions(answer);
     charUsed = List.filled(charOptions.length, false);
     currentSlot = 0;
@@ -200,54 +201,74 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _onCharTap(int idx) async {
-    if (currentSlot < answerSlots.length && !charUsed[idx]) {
+    // Tìm ô trống đầu tiên để điền vào
+    int targetSlot = answerSlots.indexOf('');
+    // Nếu không còn ô trống nào, không làm gì cả
+    if (targetSlot == -1) {
+      return;
+    }
+    // Nếu ký tự đã được sử dụng, cũng không làm gì cả
+    if (charUsed[idx]) {
+      return;
+    }
+
+    setState(() {
+      answerSlots[targetSlot] = charOptions[idx]; // Điền vào ô trống tìm được
+      answerCharIndexes[targetSlot] = idx; // Lưu chỉ mục
+      charUsed[idx] = true; // Đánh dấu đã sử dụng
+
+      // Sau khi điền, cập nhật currentSlot để trỏ đến ô trống tiếp theo (nếu có)
+      currentSlot = answerSlots.indexOf('');
+      if (currentSlot == -1) { // Nếu tất cả các ô đã điền
+        currentSlot = answerSlots.length; // Đặt về cuối
+      }
+    });
+
+    // Kiểm tra đáp án nếu tất cả các ô đã được điền
+    if (currentSlot == answerSlots.length) { // Dùng currentSlot sau khi cập nhật
+      final userAnswer = answerSlots.join('');
+      final correctAnswer = questions[currentQuestion].answer.toUpperCase();
+      final correct = userAnswer == correctAnswer;
+
       setState(() {
-        answerSlots[currentSlot] = charOptions[idx];
-        charUsed[idx] = true;
-        currentSlot++;
+        isCorrect = correct;
       });
 
-      if (currentSlot == answerSlots.length) {
-        final userAnswer = answerSlots.join('');
-        final correctAnswer = questions[currentQuestion].answer.toUpperCase();
-        final correct = userAnswer == correctAnswer;
+      if (correct) {
+        Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
 
+        if (dailyCount < 1) dailyCount++;
+        if (daily30Count < 30) daily30Count++;
+        if (daily50Count < 50) daily50Count++;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('dailyCount', dailyCount);
+        await prefs.setInt('daily30Count', daily30Count);
+        await prefs.setInt('daily50Count', daily50Count);
+      } else {
         setState(() {
-          isCorrect = correct;
+          isWrong = true;
         });
 
-        if (correct) {
-          Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
+        _shakeController.forward(from: 0);
 
-          if (dailyCount < 1) dailyCount++;
-          if (daily30Count < 30) daily30Count++;
-          if (daily50Count < 50) daily50Count++;
-
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('dailyCount', dailyCount);
-          await prefs.setInt('daily30Count', daily30Count);
-          await prefs.setInt('daily50Count', daily50Count);
-        } else {
+        Future.delayed(const Duration(seconds: 2), () {
           setState(() {
-            isWrong = true;
+            isWrong = false;
+            // Sau khi sai, reset toàn bộ ô đáp án về trống và khởi tạo lại lựa chọn
+            final answer = correctAnswer;
+            answerSlots = List.filled(answer.length, '');
+            answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
+            charOptions = _generateCharOptions(answer);
+            charUsed = List.filled(charOptions.length, false);
+            currentSlot = 0; // Đặt lại về 0
+            isCorrect = false;
           });
-
-          _shakeController.forward(from: 0);
-
-          Future.delayed(const Duration(seconds: 2), () {
-            setState(() {
-              isWrong = false;
-              final answer = correctAnswer;
-              answerSlots = List.filled(answer.length, '');
-              charOptions = _generateCharOptions(answer);
-              charUsed = List.filled(charOptions.length, false);
-              currentSlot = 0;
-              isCorrect = false;
-            });
-          });
-        }
+        });
       }
     }
+    // In ra để kiểm tra
+    print('Sau khi chọn: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
   }
 
   void _startHintCountdown() {
@@ -267,17 +288,42 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
+  // void _onAnswerSlotTap(int slotIndex) {
+  //   if (answerCharIndexes[slotIndex] != null) { // Kiểm tra xem ô có chứa ký tự không
+  //     setState(() {
+  //       int? charIdxToReturn = answerCharIndexes[slotIndex]; // Lấy chỉ mục đã lưu
+  //
+  //       if (charIdxToReturn != null && charIdxToReturn != -1) {
+  //         charUsed[charIdxToReturn] = false; // Đặt lại trạng thái 'đã sử dụng'
+  //       }
+  //       answerSlots[slotIndex] = ''; // Xóa chữ cái hiển thị
+  //       answerCharIndexes[slotIndex] = null; // Xóa chỉ mục
+  //       currentSlot = slotIndex;
+  //       isCorrect = false;
+  //     });
+  //   }
+  // }
+
   void _onAnswerSlotTap(int slotIndex) {
-    if (answerSlots[slotIndex].isNotEmpty) {
+    if (answerCharIndexes[slotIndex] != null) {
       setState(() {
-        String char = answerSlots[slotIndex];
-        int idx = charOptions.indexOf(char);
-        if (idx != -1) {
-          charUsed[idx] = false;
+        int? charIdxToReturn = answerCharIndexes[slotIndex];
+        if (charIdxToReturn != null && charIdxToReturn != -1) {
+          charUsed[charIdxToReturn] = false;
         }
         answerSlots[slotIndex] = '';
-        currentSlot = slotIndex;
+        answerCharIndexes[slotIndex] = null;
         isCorrect = false;
+
+        // Tìm ô trống đầu tiên từ bên trái
+        // Đặt currentSlot về vị trí của ô trống sớm nhất
+        currentSlot = answerSlots.indexOf('');
+        if (currentSlot == -1) { // Nếu không có ô trống nào (tức là tất cả đã điền)
+          currentSlot = answerSlots.length; // Đặt về cuối để tránh lỗi
+        }
+
+        // In ra để kiểm tra
+        print('Sau khi xóa: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
       });
     }
   }
