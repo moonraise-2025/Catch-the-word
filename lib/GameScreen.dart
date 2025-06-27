@@ -13,6 +13,8 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import 'audio_manager.dart';
+
 class Question {
   final String imageName;
   final String answer;
@@ -29,42 +31,48 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final List<Question> questions = [
-    Question(imageName: 'cau1.png', answer: 'CƯỚP BIỂN'),
-    Question(imageName: 'cau2.png', answer: 'THUỶ TINH'),
-    Question(imageName: 'cau3.png', answer: 'GIẤU ĐẦU LÒI ĐUÔI'),
-    Question(imageName: 'cau4.png', answer: 'ĂN NĂN'),
-    Question(imageName: 'cau5.png', answer: 'QUẠT THAN'),
-    Question(imageName: 'cau6.png', answer: 'CẦU HÔN'),
-    Question(imageName: 'cau7.png', answer: 'CHÂN DUNG'),
-    Question(imageName: 'cau8.png', answer: 'GIẢI THƯỞNG'),
-    Question(imageName: 'cau9.png', answer: 'ĐẦU TƯ'),
-    Question(imageName: 'cau10.png', answer: 'BÀN BẠC'),
-    Question(imageName: 'cau11.png', answer: 'RAU MÁ'),
-    Question(imageName: 'cau12.png', answer: 'MẮT NAI'),
-    Question(imageName: 'cau13.png', answer: 'LƯỠI DAO'),
-    Question(imageName: 'cau14.png', answer: 'NÓI DỐI'),
-    Question(imageName: 'cau15.png', answer: 'MỞ LÒNG'),
-    Question(imageName: 'cau16.png', answer: 'HOA MẮT'),
-    Question(imageName: 'cau17.png', answer: 'CHẠY NƯỚC RÚT'),
-    Question(imageName: 'cau18.png', answer: 'TAY CHÂN'),
+
+    Question(imageName: 'cau1.png', answer: 'CƯỚPBIỂN'),
+    Question(imageName: 'cau2.png', answer: 'THUỶTINH'),
+    Question(imageName: 'cau3.png', answer: 'GIẤUĐẦULÒIĐUÔI'),
+    Question(imageName: 'cau4.png', answer: 'ĂNNĂN'),
+    Question(imageName: 'cau5.png', answer: 'QUẠTTHAN'),
+    Question(imageName: 'cau6.png', answer: 'CẦUHÔN'),
+    Question(imageName: 'cau7.png', answer: 'CHÂNDUNG'),
+    Question(imageName: 'cau8.png', answer: 'GIẢITHƯỞNG'),
+    Question(imageName: 'cau9.png', answer: 'ĐẦUTƯ'),
+    Question(imageName: 'cau10.png', answer: 'BÀNBẠC'),
+    Question(imageName: 'cau11.png', answer: 'RAUMÁ'),
+    Question(imageName: 'cau12.png', answer: 'MẮTNAI'),
+    Question(imageName: 'cau13.png', answer: 'LƯỠIDAO'),
+    Question(imageName: 'cau14.png', answer: 'NÓIDỐI'),
+    Question(imageName: 'cau15.png', answer: 'MỞLÒNG'),
+    Question(imageName: 'cau16.png', answer: 'HOAMẮT'),
+    Question(imageName: 'cau17.png', answer: 'CHẠYNƯỚCRÚT'),
+    Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
+    Question(imageName: 'cau19.png', answer: 'CÁCHÉP'),
+    Question(imageName: 'cau20.png', answer: 'CÂYCẦU'),
   ];
   
-  int dailyCount = 0;
-  int daily30Count = 0;
-  int daily50Count = 0;
-  
-  int currentQuestion = 0;
-  int level = 1;
-  int diamonds = 0;
 
-  late List<String> answerSlots;
-  late List<String> charOptions;
-  late List<bool> charUsed;
-  late List<int?> answerSlotToCharOptionIndex;
-  int currentSlot = 0;
-  bool isCorrect = false;
+  int dailyCount = 0; //  Biến đếm nhiệm vụ ngày
+  int daily30Count = 0; //  Biến đếm nhiệm vụ tuần: 30 câu
+  int daily50Count = 0; //  Biến đếm nhiệm vụ tuần: 50 câu
+
+  int currentQuestion = 0; //giải thích: Chỉ số câu hỏi hiện tại
+  int level = 1; //giải thích: Level hiện tại
+  int diamonds = 0; //giải thích: Số kim cương hiện có
+
+  late List<String> answerSlots; //giải thích: Danh sách ký tự đã điền vào đáp án
+  late List<String> charOptions; //giải thích: Danh sách ký tự lựa chọn bên dưới
+  late List<int?> answerCharIndexes; // Lưu chỉ mục của charOptions
+  late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
+  int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
+  bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
+
+
   Timer? _hintTimer;
-  int _hintSeconds = 12;
+  int _hintSeconds = 20;
   bool _hintActive = false;
   bool _hintUsedOnce = false;
   String? _hintBanner;
@@ -158,9 +166,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _initGame() {
     final answer = questions[currentQuestion].answer.toUpperCase();
+
     final answerNoSpace = answer.replaceAll(' ', '');
-    answerSlots = List.filled(answerNoSpace.length, '');
-    charOptions = _generateCharOptions(answerNoSpace);
+    answerSlots = List.filled(answer.length, '');
+    answerCharIndexes = List.filled(answer.length, null); // Khởi tạo chỉ mục là null
+    charOptions = _generateCharOptions(answer);
     charUsed = List.filled(charOptions.length, false);
     answerSlotToCharOptionIndex = List.filled(answerSlots.length, null);
     currentSlot = 0;
@@ -200,38 +210,61 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _onCharTap(int idx) async {
-    // Tìm ô trống đầu tiên từ trái sang phải
-    int firstEmpty = answerSlots.indexWhere((c) => c.isEmpty);
-    if (firstEmpty != -1 && !charUsed[idx]) {
+
+    // Tìm ô trống đầu tiên để điền vào
+    int targetSlot = answerSlots.indexOf('');
+    // Nếu không còn ô trống nào, không làm gì cả
+    if (targetSlot == -1) {
+      return;
+    }
+    // Nếu ký tự đã được sử dụng, cũng không làm gì cả
+    if (charUsed[idx]) {
+      return;
+    }
+
+    setState(() {
+      answerSlots[targetSlot] = charOptions[idx]; // Điền vào ô trống tìm được
+      answerCharIndexes[targetSlot] = idx; // Lưu chỉ mục
+      charUsed[idx] = true; // Đánh dấu đã sử dụng
+
+      // Sau khi điền, cập nhật currentSlot để trỏ đến ô trống tiếp theo (nếu có)
+      currentSlot = answerSlots.indexOf('');
+      if (currentSlot == -1) { // Nếu tất cả các ô đã điền
+        currentSlot = answerSlots.length; // Đặt về cuối
+      }
+    });
+
+    // Kiểm tra đáp án nếu tất cả các ô đã được điền
+    if (currentSlot == answerSlots.length) { // Dùng currentSlot sau khi cập nhật
+      final userAnswer = answerSlots.join('');
+      final correctAnswer = questions[currentQuestion].answer.toUpperCase();
+      final correct = userAnswer == correctAnswer;
+
       setState(() {
-        answerSlots[firstEmpty] = charOptions[idx];
-        charUsed[idx] = true;
-        answerSlotToCharOptionIndex[firstEmpty] = idx;
-        currentSlot = answerSlots.indexWhere((c) => c.isEmpty);
+        isCorrect = correct;
       });
 
-      if (!answerSlots.contains('')) {
-        final userAnswer = answerSlots.join('');
-        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
-        final correct = userAnswer == correctAnswer;
+      if (correct) {
+        Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
 
+        if (dailyCount < 1) dailyCount++;
+        if (daily30Count < 30) daily30Count++;
+        if (daily50Count < 50) daily50Count++;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('dailyCount', dailyCount);
+        await prefs.setInt('daily30Count', daily30Count);
+        await prefs.setInt('daily50Count', daily50Count);
+      } else {
         setState(() {
-          isCorrect = correct;
+          isWrong = true;
         });
 
-        if (correct) {
-          Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
+        _shakeController.forward(from: 0);
 
-          if (dailyCount < 1) dailyCount++;
-          if (daily30Count < 30) daily30Count++;
-          if (daily50Count < 50) daily50Count++;
-
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setInt('dailyCount', dailyCount);
-          await prefs.setInt('daily30Count', daily30Count);
-          await prefs.setInt('daily50Count', daily50Count);
-        } else {
+        Future.delayed(const Duration(seconds: 2), () {
           setState(() {
+//
             isWrong = true;
           });
 
@@ -243,21 +276,35 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               final answer = questions[currentQuestion].answer.toUpperCase();
               final answerNoSpace = answer.replaceAll(' ', '');
               answerSlots = List.filled(answerNoSpace.length, '');
+              answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
               charOptions = _generateCharOptions(answerNoSpace);
               charUsed = List.filled(charOptions.length, false);
               answerSlotToCharOptionIndex = List.filled(answerNoSpace.length, null);
               currentSlot = 0;
               isCorrect = false;
             });
+
+//             isWrong = false;
+//             // Sau khi sai, reset toàn bộ ô đáp án về trống và khởi tạo lại lựa chọn
+//             final answer = correctAnswer;
+//             answerSlots = List.filled(answer.length, '');
+//             answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
+//             charOptions = _generateCharOptions(answer);
+//             charUsed = List.filled(charOptions.length, false);
+//             currentSlot = 0; // Đặt lại về 0
+//             isCorrect = false;
+
           });
-        }
+        });
       }
     }
+    // In ra để kiểm tra
+    print('Sau khi chọn: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
   }
 
   void _startHintCountdown() {
     setState(() {
-      _hintSeconds = 12;
+      _hintSeconds = 20;
       _hintActive = true;
     });
 
@@ -272,24 +319,49 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
+  // void _onAnswerSlotTap(int slotIndex) {
+  //   if (answerCharIndexes[slotIndex] != null) { // Kiểm tra xem ô có chứa ký tự không
+  //     setState(() {
+  //       int? charIdxToReturn = answerCharIndexes[slotIndex]; // Lấy chỉ mục đã lưu
+  //
+  //       if (charIdxToReturn != null && charIdxToReturn != -1) {
+  //         charUsed[charIdxToReturn] = false; // Đặt lại trạng thái 'đã sử dụng'
+  //       }
+  //       answerSlots[slotIndex] = ''; // Xóa chữ cái hiển thị
+  //       answerCharIndexes[slotIndex] = null; // Xóa chỉ mục
+  //       currentSlot = slotIndex;
+  //       isCorrect = false;
+  //     });
+  //   }
+  // }
+
   void _onAnswerSlotTap(int slotIndex) {
-    if (answerSlots[slotIndex].isNotEmpty) {
+    if (answerCharIndexes[slotIndex] != null) {
       setState(() {
-        int? idx = answerSlotToCharOptionIndex[slotIndex];
-        if (idx != null) {
-          charUsed[idx] = false;
+
+        int? charIdxToReturn = answerCharIndexes[slotIndex];
+        if (charIdxToReturn != null && charIdxToReturn != -1) {
+          charUsed[charIdxToReturn] = false;
         }
         answerSlots[slotIndex] = '';
-        answerSlotToCharOptionIndex[slotIndex] = null;
-        currentSlot = slotIndex;
+        answerCharIndexes[slotIndex] = null;
         isCorrect = false;
-        isWrong = false;
-        dummyState++;
+
+        // Tìm ô trống đầu tiên từ bên trái
+        // Đặt currentSlot về vị trí của ô trống sớm nhất
+        currentSlot = answerSlots.indexOf('');
+        if (currentSlot == -1) { // Nếu không có ô trống nào (tức là tất cả đã điền)
+          currentSlot = answerSlots.length; // Đặt về cuối để tránh lỗi
+        }
+
+        // In ra để kiểm tra
+        print('Sau khi xóa: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
       });
     }
   }
 
   void showCorrectDialog() {
+    AudioManager().playNextLevelSound();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -434,6 +506,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _saveGameProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setInt('lastLevel', currentQuestion + 1);
+    // await prefs.setInt('diamonds', diamonds);
+    // await prefs.setInt('dailyCount', dailyCount);
+    // await prefs.setInt('daily30Count', daily30Count);
+    // await prefs.setInt('daily50Count', daily50Count);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -471,8 +553,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: Icon(Icons.home, size: screenWidth * 0.09, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+
+                      icon: const Icon(Icons.home, size: 45, color: Colors.white),
+                      // onPressed: () => Navigator.pop(context),
+                      onPressed: () async {
+                        await _saveGameProgress();
+                        Navigator.pop(context);
+                      },
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -509,6 +596,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
               ),
               // Spacer đẩy riêng cụm ảnh + banner xuống giữa
+              
+//                 Expanded(
+//                 child: RepaintBoundary(
+//                   key: previewContainerKey, bọc vào để ảnh
               SizedBox(height: screenHeight * 0.01),
               // Ảnh
               Container(
@@ -528,15 +619,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             border: Border.all(color: Colors.black26),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/questions/${questions[currentQuestion].imageName}',
+                        ),
+
+                        // Banner
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 8),
+                          width: double.infinity,
+                          height: bannerHeight,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/images/banner.png'),
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(child: Text('Không thể tải ảnh'));
-                              },
                             ),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         );
                       },
@@ -564,12 +659,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             fontSize: bannerHeight * 0.6,
                             fontWeight: FontWeight.bold,
                             color: Colors.deepPurple,
+
                           ),
-                        )
-                      : Image.asset(
-                          'assets/images/logo3-15dhbc.png',
-                          height: bannerHeight * 0.8,
-                          fit: BoxFit.contain,
                         ),
                 ),
               ),
@@ -596,15 +687,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             alignment: WrapAlignment.center,
                             spacing: screenWidth * 0.03,
                             runSpacing: screenWidth * 0.03,
+
                             children: buildCharRow(0, charOptions.length, adjustedSize),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
               SizedBox(height: screenHeight * 0.03),
+
               Padding(
                 padding: EdgeInsets.all(mediumPadding),
                 child: SizedBox(

@@ -33,16 +33,18 @@ class _StartScreenState extends State<StartScreen> {
   void _startNewGame() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('lastLevel', 1);
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const GameScreen(),
       ),
     );
+    _loadLastLevel();
+
   }
 
-  void _continueGame() {
-    Navigator.push(
+  void _continueGame() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => GameScreen(
@@ -50,6 +52,7 @@ class _StartScreenState extends State<StartScreen> {
         ),
       ),
     );
+    _loadLastLevel();
   }
 
   @override

@@ -5,6 +5,8 @@ class AudioManager {
   factory AudioManager() => _instance;
 
   final AudioPlayer _player = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer(); //am thanh ngawns
+
 
   AudioManager._internal();
 
@@ -32,4 +34,26 @@ class AudioManager {
   }
 
   bool get isPlaying => _player.playing;
+
+
+  // Âm thanh nhận quà
+  Future<void> playGiftSound() async {
+    try {
+      await _sfxPlayer.setAsset('assets/audio/nhanthuong.mp3');
+      _sfxPlayer.play();
+    } catch (e) {
+      print('Error playing gift sound: $e');
+    }
+  }
+
+  // Phát âm thanh khi qua màn
+  Future<void> playNextLevelSound() async {
+    try {
+      await _sfxPlayer.setAsset('audio/quaman.mp3');
+      _sfxPlayer.play();
+    } catch (e) {
+      print('Error playing next level sound: $e');
+    }
+  }
+
 } 
