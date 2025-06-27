@@ -49,6 +49,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Question(imageName: 'cau16.png', answer: 'HOAMẮT'),
     Question(imageName: 'cau17.png', answer: 'CHẠYNƯỚCRÚT'),
     Question(imageName: 'cau18.png', answer: 'TAYCHÂN'),
+    Question(imageName: 'cau19.png', answer: 'CÁCHÉP'),
+    Question(imageName: 'cau20.png', answer: 'CÂYCẦU'),
+
   ];
   
 
@@ -491,107 +494,114 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
               ),
               // Spacer đẩy riêng cụm ảnh + banner xuống giữa
-              SizedBox(height: 150),
               // Ảnh
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final double imageBoxSize = constraints.maxWidth;
-                        return Container(
-                          width: imageBoxSize,
-                          height: imageBoxSize, // hình vuông
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: Colors.black26),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/questions/${questions[currentQuestion].imageName}',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(child: Text('Không thể tải ảnh'));
-                              },
+              // Bằng đoạn sau:
+              Expanded(
+                child: RepaintBoundary(
+                  key: previewContainerKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 150),
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                          child: ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final double imageBoxSize = constraints.maxWidth;
+                                  return Container(
+                                    width: imageBoxSize,
+                                    height: imageBoxSize,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(color: Colors.black26),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.asset(
+                                        'assets/questions/${questions[currentQuestion].imageName}',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return const Center(child: Text('Không thể tải ảnh'));
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        );
-                      },
+                        ),
+
+                        // Banner
+                        Container(
+                          margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 8),
+                          width: double.infinity,
+                          height: bannerHeight,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/images/banner.png'),
+                              fit: BoxFit.cover,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: _hintBanner != null
+                                ? Text(
+                              _hintBanner!,
+                              style: TextStyle(
+                                fontSize: bannerHeight * 0.6,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                              ),
+                            )
+                                : Image.asset(
+                              'assets/images/logo3-15dhbc.png',
+                              height: bannerHeight * 0.8,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: 10),
+
+                        // Answer + Char Grid
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: mediumPadding),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              if (row1Count > 0) buildAnswerRow(0, row1Count, adjustedSize),
+                              if (row2Count > 0)
+                                Padding(
+                                  padding: EdgeInsets.only(top: smallPadding),
+                                  child: buildAnswerRow(maxPerRow, row2Count, adjustedSize),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        SizedBox(height: 90),
+
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding),
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: buildCharRow(0, charOptions.length, adjustedSize),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-              // Banner
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 8),
-                width: double.infinity,
-                height: bannerHeight,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/banner.png'),
-                    fit: BoxFit.cover,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: _hintBanner != null
-                      ? Text(
-                          _hintBanner!,
-                          style: TextStyle(
-                            fontSize: bannerHeight * 0.6,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple,
-                          ),
-                        )
-                      : Image.asset(
-                          'assets/images/logo3-15dhbc.png',
-                          height: bannerHeight * 0.8,
-                          fit: BoxFit.contain,
-                        ),
-                ),
-              ),
-              SizedBox(height: 10),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: mediumPadding),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (row1Count > 0) buildAnswerRow(0, row1Count, adjustedSize),
-                            if (row2Count > 0) Padding(
-                              padding: EdgeInsets.only(top: smallPadding),
-                              child: buildAnswerRow(maxPerRow, row2Count, adjustedSize),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 90),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding),
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: buildCharRow(0, charOptions.length, adjustedSize),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+
               SizedBox(height: 50),
               Padding(
                 padding: EdgeInsets.all(mediumPadding),
