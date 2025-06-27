@@ -59,13 +59,15 @@ class _StartScreenState extends State<StartScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+    final screenHeight = size.height;
     return Scaffold(
       body: Builder(
         builder: (context) {
-          final size = MediaQuery.of(context).size;
           return Container(
-            width: size.width,
-            height: size.height,
+            width: screenWidth,
+            height: screenHeight,
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/images/BackgroundDHBC.png'),
@@ -79,23 +81,29 @@ class _StartScreenState extends State<StartScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Padding( 
-                        padding: const EdgeInsets.only(bottom: 350),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: screenHeight * 0.08),
                         child: Image.asset(
                           'assets/images/logodhbc.png',
-                          width: 800, 
-                          height: 400,
+                          width: screenWidth * 0.8,
+                          height: screenHeight * 0.25,
                           fit: BoxFit.contain,
                         ),
                       ),
-                      const SizedBox(height: 60),
+                      SizedBox(height: screenHeight * 0.04),
                       if (lastLevel == null || lastLevel == 1) ...[
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.blue,
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                            textStyle: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.1,
+                              vertical: screenHeight * 0.025,
+                            ),
+                            textStyle: TextStyle(
+                              fontSize: screenWidth * 0.06,
+                              fontWeight: FontWeight.bold,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
                               side: const BorderSide(color: Colors.black),
@@ -109,8 +117,14 @@ class _StartScreenState extends State<StartScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.lightBlue,
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                            textStyle: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.1,
+                              vertical: screenHeight * 0.025,
+                            ),
+                            textStyle: TextStyle(
+                              fontSize: screenWidth * 0.07,
+                              fontWeight: FontWeight.bold,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
                               side: const BorderSide(color: Colors.black),
@@ -120,20 +134,20 @@ class _StartScreenState extends State<StartScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text('Tiếp tục', ),
-                              const SizedBox(height: 8),
-                              Text('Level $lastLevel', style: const TextStyle(fontSize: 30, color: Colors.lightBlue)),
+                              const Text('Tiếp tục'),
+                              SizedBox(height: screenHeight * 0.01),
+                              Text('Level $lastLevel', style: TextStyle(fontSize: screenWidth * 0.04, color: Colors.lightBlue)),
                             ],
                           ),
                         ),
                       ],
-                      SizedBox(height: 100),
+                      SizedBox(height: screenHeight * 0.08),
                     ],
                   ),
                 ),
                 Positioned(
-                  top: 32,
-                  right: 32,
+                  top: screenHeight * 0.04,
+                  right: screenWidth * 0.04,
                   child: Row(
                     children: [
                       GestureDetector(
@@ -146,17 +160,16 @@ class _StartScreenState extends State<StartScreen> {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: EdgeInsets.all(screenWidth * 0.025),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.black, width: 2),
                             borderRadius: BorderRadius.circular(10),
                             color: Colors.lightBlue[200],
                           ),
-                          child: const Icon(Icons.info, size: 40, color: Colors.black),
+                          child: Icon(Icons.info, size: screenWidth * 0.07, color: Colors.black),
                         ),
                       ),
-
-                      const SizedBox(width: 16), // khoảng cách giữa hai icon
+                      SizedBox(width: screenWidth * 0.04),
                       GestureDetector(
                         onTap: () {
                           showDialog(
@@ -167,13 +180,13 @@ class _StartScreenState extends State<StartScreen> {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: EdgeInsets.all(screenWidth * 0.02),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: Colors.black, width: 1),
                           ),
-                          child: const Icon(Icons.settings, size: 50, color: Colors.black),
+                          child: Icon(Icons.settings, size: screenWidth * 0.08, color: Colors.black),
                         ),
                       ),
                     ],
