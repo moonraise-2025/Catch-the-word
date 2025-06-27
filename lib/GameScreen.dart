@@ -31,6 +31,7 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final List<Question> questions = [
+
     Question(imageName: 'cau1.png', answer: 'CƯỚPBIỂN'),
     Question(imageName: 'cau2.png', answer: 'THUỶTINH'),
     Question(imageName: 'cau3.png', answer: 'GIẤUĐẦULÒIĐUÔI'),
@@ -69,11 +70,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
   bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
 
+
   Timer? _hintTimer;
   int _hintSeconds = 20;
   bool _hintActive = false;
   bool _hintUsedOnce = false;
   String? _hintBanner;
+  int _hintWordIndex = 0;
 
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -85,6 +88,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late double bannerHeight;
 
   final GlobalKey previewContainerKey = GlobalKey();
+  int dummyState = 0; // Biến phụ để force rebuild UI nếu cần
+
   Future<void> captureAndShareWidget() async {
     try {
       RenderRepaintBoundary boundary = previewContainerKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
@@ -161,16 +166,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _initGame() {
     final answer = questions[currentQuestion].answer.toUpperCase();
+
+    final answerNoSpace = answer.replaceAll(' ', '');
     answerSlots = List.filled(answer.length, '');
     answerCharIndexes = List.filled(answer.length, null); // Khởi tạo chỉ mục là null
     charOptions = _generateCharOptions(answer);
     charUsed = List.filled(charOptions.length, false);
+    answerSlotToCharOptionIndex = List.filled(answerSlots.length, null);
     currentSlot = 0;
     isCorrect = false;
     _controller.reset();
     _controller.forward();
     _hintBanner = null;
     _hintUsedOnce = false;
+    _hintWordIndex = 0;
     _startHintCountdown();
   }
 
@@ -201,6 +210,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _onCharTap(int idx) async {
+
     // Tìm ô trống đầu tiên để điền vào
     int targetSlot = answerSlots.indexOf('');
     // Nếu không còn ô trống nào, không làm gì cả
@@ -254,15 +264,36 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
         Future.delayed(const Duration(seconds: 2), () {
           setState(() {
-            isWrong = false;
-            // Sau khi sai, reset toàn bộ ô đáp án về trống và khởi tạo lại lựa chọn
-            final answer = correctAnswer;
-            answerSlots = List.filled(answer.length, '');
-            answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
-            charOptions = _generateCharOptions(answer);
-            charUsed = List.filled(charOptions.length, false);
-            currentSlot = 0; // Đặt lại về 0
-            isCorrect = false;
+//
+            isWrong = true;
+          });
+
+          _shakeController.forward(from: 0);
+
+          Future.delayed(const Duration(seconds: 2), () {
+            setState(() {
+              isWrong = false;
+              final answer = questions[currentQuestion].answer.toUpperCase();
+              final answerNoSpace = answer.replaceAll(' ', '');
+              answerSlots = List.filled(answerNoSpace.length, '');
+              answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
+              charOptions = _generateCharOptions(answerNoSpace);
+              charUsed = List.filled(charOptions.length, false);
+              answerSlotToCharOptionIndex = List.filled(answerNoSpace.length, null);
+              currentSlot = 0;
+              isCorrect = false;
+            });
+
+//             isWrong = false;
+//             // Sau khi sai, reset toàn bộ ô đáp án về trống và khởi tạo lại lựa chọn
+//             final answer = correctAnswer;
+//             answerSlots = List.filled(answer.length, '');
+//             answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
+//             charOptions = _generateCharOptions(answer);
+//             charUsed = List.filled(charOptions.length, false);
+//             currentSlot = 0; // Đặt lại về 0
+//             isCorrect = false;
+
           });
         });
       }
@@ -307,6 +338,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
       setState(() {
+
         int? charIdxToReturn = answerCharIndexes[slotIndex];
         if (charIdxToReturn != null && charIdxToReturn != -1) {
           charUsed[charIdxToReturn] = false;
@@ -443,8 +475,31 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _onHint() {
-    final answer = questions[currentQuestion].answer.toUpperCase();
-    String hint = answer.substring(0, 1);
+    if (_hintActive) return;
+    final customHints = [
+      'CƯỚP',    
+      'THUỶ',    
+      'GIẤU',    
+      'ĂN',      
+      'QUẠT',   
+      'CẦU',     
+      'CHÂN',   
+      'THƯỞNG',  
+      'TƯ',     
+      'BÀN',    
+      'MÁ',     
+      'MẮT',     
+      'DAO',    
+      'NÓI',     
+      'MỞ',      
+      'HOA',     
+      'CHẠY',    
+      'TAY',     
+    ];
+    String hint = '';
+    if (currentQuestion >= 0 && currentQuestion < customHints.length) {
+      hint = customHints[currentQuestion];
+    }
     setState(() {
       _hintBanner = hint;
       _hintUsedOnce = true;
@@ -466,17 +521,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final double imageContainerSize = screenWidth;
-    bannerHeight = screenHeight * 0.05;
-    final double smallPadding = screenWidth * 0.02;
-    final double mediumPadding = screenWidth * 0.04;
+    final double imageContainerSize = screenWidth * 0.7;
+    bannerHeight = screenHeight * 0.045;
+    final double smallPadding = screenWidth * 0.025;
+    final double mediumPadding = screenWidth * 0.05;
 
     const int maxPerRow = 8;
     int row1Count = answerSlots.length > maxPerRow ? maxPerRow : answerSlots.length;
     int row2Count = answerSlots.length > maxPerRow ? answerSlots.length - maxPerRow : 0;
 
     // Adjust size to fit screen width, scaled down to 80% of original size
-    final double adjustedSize = (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) / maxPerRow * 0.8;
+    final double adjustedSize = (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) / maxPerRow * 0.85;
 
     return Container(
       decoration: const BoxDecoration(
@@ -498,6 +553,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
+
                       icon: const Icon(Icons.home, size: 45, color: Colors.white),
                       // onPressed: () => Navigator.pop(context),
                       onPressed: () async {
@@ -508,12 +564,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Level ', style: TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: Colors.white)),
-                        Text('$level', style: const TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: Colors.yellow)),
+                        Text('Level ', style: TextStyle(fontSize: screenWidth * 0.06, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text('$level', style: TextStyle(fontSize: screenWidth * 0.06, fontWeight: FontWeight.bold, color: Colors.yellow)),
                         SizedBox(width: mediumPadding),
-                        Icon(Icons.diamond, color: Colors.blue[50], size: 45),
+                        Icon(Icons.diamond, color: Colors.blue[50], size: screenWidth * 0.06),
                         SizedBox(width: smallPadding),
-                        Text('$diamonds', style: const TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text('$diamonds', style: TextStyle(fontSize: screenWidth * 0.06, fontWeight: FontWeight.bold, color: Colors.white)),
                       ],
                     ),
                     GestureDetector(
@@ -534,52 +590,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                         );
                       },
-                      child: const Icon(Icons.card_giftcard, color: Colors.white, size: 45),
+                      child: Icon(Icons.card_giftcard, color: Colors.white, size: screenWidth * 0.06),
                     ),
                   ],
                 ),
               ),
               // Spacer đẩy riêng cụm ảnh + banner xuống giữa
+              
+//                 Expanded(
+//                 child: RepaintBoundary(
+//                   key: previewContainerKey, bọc vào để ảnh
+              SizedBox(height: screenHeight * 0.01),
               // Ảnh
-              // Bằng đoạn sau:
-              Expanded(
-                child: RepaintBoundary(
-                  key: previewContainerKey,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        SizedBox(height: 150),
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                          child: ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: FadeTransition(
-                              opacity: _fadeAnimation,
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final double imageBoxSize = constraints.maxWidth;
-                                  return Container(
-                                    width: imageBoxSize,
-                                    height: imageBoxSize,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(color: Colors.black26),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.asset(
-                                        'assets/questions/${questions[currentQuestion].imageName}',
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Center(child: Text('Không thể tải ảnh'));
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final double imageBoxSize = imageContainerSize;
+                        return Container(
+                          width: imageBoxSize,
+                          height: imageBoxSize, // hình vuông
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.black26),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
 
@@ -595,50 +633,61 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Center(
-                            child: _hintBanner != null
-                                ? Text(
-                              _hintBanner!,
-                              style: TextStyle(
-                                fontSize: bannerHeight * 0.6,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.deepPurple,
-                              ),
-                            )
-                                : Image.asset(
-                              'assets/images/logo3-15dhbc.png',
-                              height: bannerHeight * 0.8,
-                              fit: BoxFit.contain,
-                            ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              // Banner
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 4),
+                width: double.infinity,
+                height: bannerHeight,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/banner.png'),
+                    fit: BoxFit.cover,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: _hintBanner != null
+                      ? Text(
+                          _hintBanner!,
+                          style: TextStyle(
+                            fontSize: bannerHeight * 0.6,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepPurple,
+
                           ),
                         ),
-
-                        SizedBox(height: 10),
-
-                        // Answer + Char Grid
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: mediumPadding),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              if (row1Count > 0) buildAnswerRow(0, row1Count, adjustedSize),
-                              if (row2Count > 0)
-                                Padding(
-                                  padding: EdgeInsets.only(top: smallPadding),
-                                  child: buildAnswerRow(maxPerRow, row2Count, adjustedSize),
-                                ),
-                            ],
-                          ),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.012),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: mediumPadding),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            ..._buildAnswerRows(answerSlots, questions[currentQuestion].answer.toUpperCase(), adjustedSize),
+                          ],
                         ),
-
-                        SizedBox(height: 90),
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding),
+                      ),
+                      SizedBox(height: screenHeight * 0.025),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(left: mediumPadding, right: mediumPadding, bottom: screenHeight * 0.01),
                           child: Wrap(
                             alignment: WrapAlignment.center,
-                            spacing: 12,
-                            runSpacing: 12,
+                            spacing: screenWidth * 0.03,
+                            runSpacing: screenWidth * 0.03,
+
                             children: buildCharRow(0, charOptions.length, adjustedSize),
                           ),
                         ),
@@ -647,58 +696,62 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              SizedBox(height: screenHeight * 0.03),
 
-              SizedBox(height: 50),
               Padding(
                 padding: EdgeInsets.all(mediumPadding),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _showRevealLetterDialog,
-                        icon: const Icon(Icons.key_outlined, size: 40),
-                        label: const Text('Hiện đáp án', style: TextStyle(fontSize: 24)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green[200],
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: SizedBox(
+                  height: screenHeight * 0.08,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _showRevealLetterDialog,
+                          icon: Icon(Icons.key_outlined, size: screenWidth * 0.06),
+                          label: Text('Hiện đáp án', style: TextStyle(fontSize: screenWidth * 0.03)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[200],
+                            padding: EdgeInsets.symmetric(vertical: 0),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: mediumPadding),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: captureAndShareWidget,
-                        icon: const Icon(Icons.share_outlined, size: 40),
-                        label: const Text('Hỏi bạn bè', style: TextStyle(fontSize: 24)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.yellow[200],
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      SizedBox(width: mediumPadding),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: captureAndShareWidget,
+                          icon: Icon(Icons.share_outlined, size: screenWidth * 0.06),
+                          label: Text('Hỏi bạn bè', style: TextStyle(fontSize: screenWidth * 0.03)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.yellow[200],
+                            padding: EdgeInsets.symmetric(vertical: 0),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: mediumPadding),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink[100],
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('Gợi ý', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                            if (_hintActive) Text('(${_hintSeconds}s)', style: const TextStyle(fontSize: 18)),
-                          ],
+                      SizedBox(width: mediumPadding),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.pink[100],
+                            padding: EdgeInsets.symmetric(vertical: 0),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: Column(
+                            //mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Gợi ý', style: TextStyle(fontSize: screenWidth * 0.03, fontWeight: FontWeight.bold)),
+                              if (_hintActive) Text('(${_hintSeconds}s)', style: TextStyle(fontSize: screenWidth * 0.03)),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -709,81 +762,144 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   List<Widget> buildCharRow(int start, int end, double size) {
+    final double bigSize = size * 1.25;
     return List.generate(
       end - start,
-      (i) => i + start < charOptions.length
-          ? charUsed[i + start]
-              ? SizedBox(width: size, height: size)
-              : GestureDetector(
-                  onTap: () => _onCharTap(i + start),
-                  child: Container(
-                    width: size,
-                    height: size,
-                    margin: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 6,
-                          offset: Offset(2, 2),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      charOptions[i + start],
-                      style: TextStyle(
-                        fontSize: size * 0.5,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+      (i) => SizedBox(
+        width: bigSize,
+        height: bigSize,
+        child: charUsed[i + start]
+            ? const SizedBox.shrink()
+            : GestureDetector(
+                onTap: () => _onCharTap(i + start),
+                child: Container(
+                  margin: EdgeInsets.all(bigSize * 0.12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: Offset(2, 2),
                       ),
-                    ),
+                    ],
                   ),
-                )
-          : SizedBox(width: size, height: size),
-    );
-  }
-
-  Widget buildAnswerRow(int start, int count, double size) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        count,
-        (i) => Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: GestureDetector(
-            onTap: () => _onAnswerSlotTap(start + i),
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 2),
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: AnimatedBuilder(
-                animation: _shakeController,
-                builder: (context, child) {
-                  double offset = isWrong ? 10 * sin(_shakeAnimation.value) : 0;
-                  return Transform.translate(
-                    offset: Offset(offset, 0),
-                    child: child,
-                  );
-                },
-                child: Text(
-                  answerSlots[start + i],
-                  style: TextStyle(
-                    fontSize: size * 0.5,
-                    fontWeight: FontWeight.bold,
-                    color: currentSlot == answerSlots.length
-                        ? (isCorrect ? Colors.green : Colors.red)
-                        : Colors.black,
+                  alignment: Alignment.center,
+                  child: Text(
+                    charOptions[i + start],
+                    style: TextStyle(
+                      fontSize: bigSize * 0.5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
               ),
+      ),
+    );
+  }
+
+  List<Widget> _buildAnswerRows(List<String> slots, String answer, double size) {
+    final words = answer.split(' ');
+    List<Widget> rows = [];
+    int slotIdx = 0;
+
+    if (words.length == 4) {
+      // Dòng 1: từ 1, 2
+      List<Widget> row1 = [];
+      for (int w = 0; w < 2; w++) {
+        for (int i = 0; i < words[w].length; i++) {
+          row1.add(_buildAnswerBox(slotIdx++, slots, size));
+        }
+        if (w == 0) row1.add(SizedBox(width: size * 0.5));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
+      rows.add(SizedBox(height: size * 0.5));
+      // Dòng 2: từ 3, 4
+      List<Widget> row2 = [];
+      for (int w = 2; w < 4; w++) {
+        for (int i = 0; i < words[w].length; i++) {
+          row2.add(_buildAnswerBox(slotIdx++, slots, size));
+        }
+        if (w == 2) row2.add(SizedBox(width: size * 0.5));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
+    } else if (words.length == 3) {
+      // Dòng 1: từ 1
+      List<Widget> row1 = [];
+      for (int i = 0; i < words[0].length; i++) {
+        row1.add(_buildAnswerBox(slotIdx++, slots, size));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
+      rows.add(SizedBox(height: size * 0.5));
+      // Dòng 2: từ 2, 3
+      List<Widget> row2 = [];
+      for (int w = 1; w < 3; w++) {
+        for (int i = 0; i < words[w].length; i++) {
+          row2.add(_buildAnswerBox(slotIdx++, slots, size));
+        }
+        if (w == 1) row2.add(SizedBox(width: size * 0.5));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
+    } else if (words.length == 2) {
+      // Dòng 1: từ 1
+      List<Widget> row1 = [];
+      for (int i = 0; i < words[0].length; i++) {
+        row1.add(_buildAnswerBox(slotIdx++, slots, size));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
+      rows.add(SizedBox(height: size * 0.5));
+      // Dòng 2: từ 2
+      List<Widget> row2 = [];
+      for (int i = 0; i < words[1].length; i++) {
+        row2.add(_buildAnswerBox(slotIdx++, slots, size));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
+    } else {
+      // 1 từ: tất cả trên 1 dòng
+      List<Widget> row = [];
+      for (int i = 0; i < words[0].length; i++) {
+        row.add(_buildAnswerBox(slotIdx++, slots, size));
+      }
+      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row));
+    }
+    return rows;
+  }
+
+  Widget _buildAnswerBox(int slotIdx, List<String> slots, double size) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        _onAnswerSlotTap(slotIdx);
+      },
+      child: Container(
+        width: size,
+        height: size,
+        margin: EdgeInsets.symmetric(horizontal: size * 0.08, vertical: size * 0.08),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black, width: 2),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
+            double offset = isWrong ? 10 * sin(_shakeAnimation.value) : 0;
+            return Transform.translate(
+              offset: Offset(offset, 0),
+              child: child,
+            );
+          },
+          child: Text(
+            slots[slotIdx],
+            style: TextStyle(
+              fontSize: size * 0.5,
+              fontWeight: FontWeight.bold,
+              color: (!answerSlots.contains(''))
+                  ? (isCorrect ? Colors.green : (isWrong ? Colors.red : Colors.black))
+                  : Colors.black,
             ),
           ),
         ),
