@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
-import 'audio_manager.dart';
+import 'audio_manager.dart'; // Giả định AudioManager đã được cung cấp
 
 class Giftpopup extends StatefulWidget {
   final int dailyCount;
@@ -26,8 +26,7 @@ class _GiftpopupState extends State<Giftpopup> {
   late SharedPreferences prefs;
   final String todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-  Map<String, bool> _isPressedMap = {};
-
+  Map<String, bool> _isPressedMap = {}; // Để quản lý trạng thái nhấn của từng nút
 
   @override
   void initState() {
@@ -41,7 +40,7 @@ class _GiftpopupState extends State<Giftpopup> {
     final today = todayKey;
 
     if (lastDate != today) {
-      // ✅ Sang ngày mới → reset
+      // Sang ngày mới → reset các trạng thái đã nhận thưởng
       await prefs.setString('lastRewardDate', today);
       await prefs.remove('${today}_daily1');
       await prefs.remove('${today}_daily30');
@@ -49,7 +48,7 @@ class _GiftpopupState extends State<Giftpopup> {
       await prefs.remove('${today}_playthrough');
     }
 
-    setState(() {}); // cập nhật UI
+    setState(() {}); // Cập nhật UI sau khi kiểm tra và reset (nếu cần)
   }
 
   Future<bool> _isReceived(String keyId) async {
@@ -58,140 +57,172 @@ class _GiftpopupState extends State<Giftpopup> {
 
   Future<void> _handleTap(String keyId, int rewardAmount) async {
     final received = await _isReceived(keyId);
-    if (received) return;
+    if (received) return; // Nếu đã nhận rồi thì không làm gì
 
     await prefs.setBool('${todayKey}_$keyId', true);
-    AudioManager().playGiftSound();
-
+    AudioManager().playGiftSound(); // Phát âm thanh nhận thưởng
 
     if (widget.onReward != null) {
-      widget.onReward!(rewardAmount);
+      widget.onReward!(rewardAmount); // Gọi callback để thêm thưởng vào tiền của người chơi
     }
 
-    setState(() {}); // Cập nhật icon sau khi nhận
+    setState(() {}); // Cập nhật UI để hiển thị icon đã nhận
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Dialog(
       backgroundColor: Colors.transparent,
+      // Đảm bảo không có padding mặc định từ Dialog
       insetPadding: EdgeInsets.zero,
-      child: Stack(
-        children: [
-          Container(
-            height: 800,
-            width: screenWidth * 0.80,
-            margin: const EdgeInsets.only(top: 200), // để chừa chỗ cho tiêu đề
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30), // padding cân trái/phải
-            decoration: BoxDecoration(
-              image: const DecorationImage(
-                image: AssetImage('assets/images/bg_popup.png'),
-                fit: BoxFit.fill,
+      // Sử dụng ConstrainedBox để đặt kích thước tối đa cho nội dung popup.
+      // Điều này giúp popup không quá lớn trên màn hình rộng.
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: screenWidth * 0.9, // Chiều rộng tối đa 90% màn hình
+          maxHeight: screenHeight * 0.6, // Chiều cao tối đa 80% màn hình
+        ),
+        child: Stack(
+          // Clip.none để cho phép logo và nút đóng nằm ngoài container chính nếu cần
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              // Điều chỉnh chiều cao và chiều rộng dựa trên kích thước màn hình
+              height: screenHeight * 0.7, // Chiếm 70% chiều cao màn hình
+              width: screenWidth * 0.85, // Chiếm 85% chiều rộng màn hình
+              // Margin động để chừa chỗ cho tiêu đề/logo
+              margin: EdgeInsets.only(top: screenHeight * 0.1),
+              padding: EdgeInsets.symmetric(
+                // Padding cân đối dựa trên kích thước màn hình
+                horizontal: screenWidth * 0.05, // 5% chiều rộng màn hình cho padding ngang
+                vertical: screenHeight * 0.03, // 3% chiều cao màn hình cho padding dọc
               ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
-                    Text(
-                      'PHẦN THƯỞNG',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 60, fontWeight: FontWeight.w900, color: Color(0xFF8E61DC)),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildMissionRow(
-                      keyId: 'daily1',
-                      title: 'Đoán 1 từ',
-                      reward: '5',
-                      current: widget.dailyCount,
-                      total: 1,
-                      amount: 5,
-                    ),
-                    const SizedBox(height: 10),
+              decoration: BoxDecoration(
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/bg_popup.png'),
+                  fit: BoxFit.fill,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(height: screenHeight * 0.085), // Khoảng trống động cho logo
+                      Text(
+                        'PHẦN THƯỞNG',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.08, // Kích thước chữ động
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF8E61DC),
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.01), // Khoảng trống nhỏ động
+                      _buildMissionRow(
+                        context: context, // Truyền context
+                        keyId: 'daily1',
+                        title: 'Đoán 1 từ',
+                        reward: '5',
+                        current: widget.dailyCount,
+                        total: 1,
+                        amount: 5,
+                      ),
+                      SizedBox(height: screenHeight * 0.01), // Khoảng trống nhỏ động
 
-                    FutureBuilder<List<bool>>(
-                      future: Future.wait([
-                        _isReceived('daily30'),
-                        _isReceived('daily50'),
-                      ]),
-                      builder: (context, snapshot) {
-                        final isDaily30Received = snapshot.data?[0] ?? false;
-                        final isDaily50Received = snapshot.data?[1] ?? false;
+                      // FutureBuilder để xử lý hiển thị nhiệm vụ dựa trên trạng thái đã nhận
+                      FutureBuilder<List<bool>>(
+                        future: Future.wait([
+                          _isReceived('daily30'),
+                          _isReceived('daily50'),
+                        ]),
+                        builder: (context, snapshot) {
+                          // Lấy trạng thái đã nhận của daily30 và daily50
+                          final isDaily30Received = snapshot.data?[0] ?? false;
+                          final isDaily50Received = snapshot.data?[1] ?? false;
 
-                        return Column(
-                          children: [
-                            if (!isDaily30Received)
-                              _buildMissionRow(
-                                keyId: 'daily30',
-                                title: 'Đoán 30 từ',
-                                reward: '30',
-                                current: widget.daily30Count,
-                                total: 30,
-                                amount: 30,
+                          return Column(
+                            children: [
+                              // Nếu daily30 chưa nhận, hiển thị nó
+                              if (!isDaily30Received)
+                                _buildMissionRow(
+                                  context: context, // Truyền context
+                                  keyId: 'daily30',
+                                  title: 'Đoán 30 từ',
+                                  reward: '30',
+                                  current: widget.daily30Count,
+                                  total: 30,
+                                  amount: 30,
+                                ),
+                              // Nếu daily30 đã nhận, hiển thị daily50 (nếu chưa nhận)
+                              if (isDaily30Received && !isDaily50Received)
+                                _buildMissionRow(
+                                  context: context, // Truyền context
+                                  keyId: 'daily50',
+                                  title: 'Đoán 50 từ',
+                                  reward: '50',
+                                  current: widget.daily50Count,
+                                  total: 50,
+                                  amount: 50,
+                                ),
+                              // Luôn hiển thị nhiệm vụ không có tiến độ
+                              SizedBox(height: screenHeight * 0.01),
+                              _buildMissionNoProgress(
+                                context: context, // Truyền context
+                                keyId: 'playthrough',
+                                title: 'Phần thưởng ngày mới',
+                                reward: '20',
+                                amount: 20,
                               ),
-                            if (isDaily30Received)
-                              _buildMissionRow(
-                                keyId: 'daily50',
-                                title: 'Đoán 50 từ',
-                                reward: '50',
-                                current: widget.daily50Count,
-                                total: 50,
-                                amount: 50,
-                              ),
-                            const SizedBox(height: 10),
-                            _buildMissionNoProgress(
-                              keyId: 'playthrough',
-                              title: 'Sử dụng qua màn',
-                              reward: '20',
-                              amount: 20,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            top: -600,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              alignment: Alignment.center,
-              child: Image.asset(
-                'assets/images/logo.png',
-                width: 500,
+            // Định vị logo tương đối với kích thước màn hình
+            Positioned(
+              top: screenHeight * 0.02, // Điều chỉnh giá trị này cẩn thận
+              left: 0,
+              right: 0,
+              child: Align(
+                alignment: Alignment.center,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: screenWidth * 0.7, // Chiều rộng logo theo chiều rộng màn hình
+                ),
               ),
             ),
-          ),
-          // Nút đóng ở góc phải trên
-          Positioned(
-            top: 100,
-            right: 10,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Image.asset(
-                'assets/images/icon_close.png',
-                width: 40,
-                height: 40,
+            // Nút đóng ở góc phải trên
+            Positioned(
+              top: screenHeight * 0.05, // Vị trí theo chiều cao màn hình
+              right: screenWidth * 0.02, // Vị trí theo chiều rộng màn hình
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Image.asset(
+                  'assets/images/icon_close.png',
+                  width: screenWidth * 0.06, // Kích thước theo chiều rộng màn hình
+                  height: screenWidth * 0.06, // Kích thước theo chiều rộng màn hình
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  // Widget để xây dựng hàng nhiệm vụ có tiến độ
   Widget _buildMissionRow({
+    required BuildContext context, // Thêm context vào tham số
     required String keyId,
     required String title,
     required String reward,
@@ -200,100 +231,99 @@ class _GiftpopupState extends State<Giftpopup> {
     required int amount,
   }) {
     final bool isComplete = current >= total;
+    final screenWidth = MediaQuery.of(context).size.width; // Lấy screenWidth tại đây
+    final screenHeight = MediaQuery.of(context).size.height; // Lấy screenHeight tại đây
 
     return FutureBuilder<bool>(
       future: _isReceived(keyId),
       builder: (context, snapshot) {
         final received = snapshot.data ?? false;
-        final canClaim = isComplete && !received;
+        final canClaim = isComplete && !received; // Có thể nhận nếu hoàn thành và chưa nhận
 
-        return Builder(
-          builder: (context) {
-            final screenWidth = MediaQuery.of(context).size.width;
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: SizedBox(
-                width: screenWidth * 0.4,
-                height: 110,
-                child: AnimatedScale(
-                  scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
-                  duration: const Duration(milliseconds: 100),
-                  child: GestureDetector(
-                    onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
-                    onTapUp: (_) => setState(() => _isPressedMap[keyId] = false),
-                    onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
-                    child: ElevatedButton(
-                      onPressed: canClaim ? () => _handleTap(keyId, amount) : null,
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(MaterialState.disabled)) {
-                            return const Color(0xFF43ADED);
-                          }
-                          return Colors.white;
-                        }),
-                        elevation: MaterialStateProperty.all(4),
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: const BorderSide(color: Colors.white, width: 2),
-                          ),
-                        ),
-                        padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$title ($current/$total)',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: canClaim ? Colors.grey : Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          received
-                              ? const Icon(Icons.check_circle, color: Colors.green, size: 40)
-                              : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                reward,
-                                style: const TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF8E61DC),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Image.asset(
-                                'images/diamond.png',
-                                width: 40,
-                                height: 40,
-                              ),
-                            ],
-                          )
-                        ],
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: screenWidth * 0.01), // Padding động
+          child: SizedBox(
+            width: screenWidth * 0.5, // Chiều rộng tương đối
+            height: screenHeight * 0.08, // Chiều cao tương đối
+            child: AnimatedScale(
+              scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
+              duration: const Duration(milliseconds: 100),
+              child: GestureDetector(
+                onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
+                onTapUp: (_) {
+                  setState(() => _isPressedMap[keyId] = false);
+                  if (canClaim) {
+                    _handleTap(keyId, amount);
+                  }
+                },
+                onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
+                child: ElevatedButton(
+                  onPressed: canClaim ? () => _handleTap(keyId, amount) : null, // Gán null nếu không thể nhấn
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return const Color(0xFF43ADED); // Màu khi không thể nhấn
+                      }
+                      return Colors.white; // Màu khi có thể nhấn
+                    }),
+                    elevation: MaterialStateProperty.all(4),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(screenWidth * 0.04), // Bo góc động
+                        side: BorderSide(color: Colors.white, width: screenWidth * 0.005), // Độ dày viền động
                       ),
                     ),
+                    padding: MaterialStateProperty.all(EdgeInsets.all(screenWidth * 0.01)), // Padding động
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$title ($current/$total)',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.03, // Kích thước chữ động
+                          fontWeight: FontWeight.bold,
+                          color: canClaim ? const Color(0xFF8E61DC) : Colors.grey, // Màu chữ động
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.005), // Khoảng trống động
+                      received
+                          ? Icon(Icons.check_circle, color: Colors.green, size: screenWidth * 0.05) // Kích thước icon động
+                          : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            reward,
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.065, // Kích thước chữ động
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF8E61DC),
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.005), // Khoảng cách động
+                          Image.asset(
+                            'assets/images/diamond.png',
+                            width: screenWidth * 0.07, // Kích thước hình ảnh động
+                            height: screenWidth * 0.07, // Kích thước hình ảnh động
+                          ),
+                        ],
+                      )
+                    ],
                   ),
                 ),
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );
   }
 
-
-
-
-
+  // Widget để xây dựng hàng nhiệm vụ không có tiến độ
   Widget _buildMissionNoProgress({
+    required BuildContext context, // Thêm context vào tham số
     required String keyId,
     required String title,
     required String reward,
@@ -303,85 +333,87 @@ class _GiftpopupState extends State<Giftpopup> {
       future: _isReceived(keyId),
       builder: (context, snapshot) {
         final received = snapshot.data ?? false;
-        final canClaim = !received;
+        final canClaim = !received; // Có thể nhận nếu chưa nhận
 
-        return Builder(
-          builder: (context) {
-            final screenWidth = MediaQuery.of(context).size.width;
+        final screenWidth = MediaQuery.of(context).size.width; // Lấy screenWidth tại đây
+        final screenHeight = MediaQuery.of(context).size.height; // Lấy screenHeight tại đây
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: SizedBox(
-                width: screenWidth * 0.4,
-                height: 110,
-                child: AnimatedScale(
-                  scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
-                  duration: const Duration(milliseconds: 100),
-                  child: GestureDetector(
-                    onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
-                    onTapUp: (_) => setState(() => _isPressedMap[keyId] = false),
-                    onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
-                    child: ElevatedButton(
-                      onPressed: received ? null : () => _handleTap(keyId, amount),
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                          if (states.contains(MaterialState.disabled)) {
-                            return const Color(0xFF43ADED);
-                          }
-                          return Colors.white;
-                        }),
-                        elevation: MaterialStateProperty.all(4),
-                        shape: MaterialStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: const BorderSide(color: Colors.white, width: 2),
-                          ),
-                        ),
-                        padding: MaterialStateProperty.all(const EdgeInsets.all(5)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            title,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: canClaim ? Colors.grey : Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          received
-                              ? const Icon(Icons.check_circle, color: Colors.green, size: 36)
-                              : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                reward,
-                                style: const TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF8E61DC),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Image.asset(
-                                'images/diamond.png',
-                                width: 40,
-                                height: 40,
-                              ),
-                            ],
-                          )
-                        ],
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: screenWidth * 0.01), // Padding động
+          child: SizedBox(
+            width: screenWidth * 0.5, // Chiều rộng tương đối
+            height: screenHeight * 0.08, // Chiều cao tương đối
+            child: AnimatedScale(
+              scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
+              duration: const Duration(milliseconds: 100),
+              child: GestureDetector(
+                onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
+                onTapUp: (_) {
+                  setState(() => _isPressedMap[keyId] = false);
+                  if (canClaim) {
+                    _handleTap(keyId, amount);
+                  }
+                },
+                onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
+                child: ElevatedButton(
+                  onPressed: received ? null : () => _handleTap(keyId, amount), // Gán null nếu đã nhận
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return const Color(0xFF43ADED); // Màu khi không thể nhấn
+                      }
+                      return Colors.white; // Màu khi có thể nhấn
+                    }),
+                    elevation: MaterialStateProperty.all(4),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(screenWidth * 0.04), // Bo góc động
+                        side: BorderSide(color: Colors.white, width: screenWidth * 0.005), // Độ dày viền động
                       ),
                     ),
+                    padding: MaterialStateProperty.all(EdgeInsets.all(screenWidth * 0.01)), // Padding động
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.03, // Kích thước chữ động
+                          fontWeight: FontWeight.bold,
+                          color: canClaim ? const Color(0xFF8E61DC) : Colors.grey, // Màu chữ động
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.005), // Khoảng trống động
+                      received
+                          ? Icon(Icons.check_circle, color: Colors.green, size: screenWidth * 0.05) // Kích thước icon động
+                          : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            reward,
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.065, // Kích thước chữ động
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF8E61DC),
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.005), // Khoảng cách động
+                          Image.asset(
+                            'assets/images/diamond.png',
+                            width: screenWidth * 0.07, // Kích thước hình ảnh động
+                            height: screenWidth * 0.07, // Kích thước hình ảnh động
+                          ),
+                        ],
+                      )
+                    ],
                   ),
                 ),
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );

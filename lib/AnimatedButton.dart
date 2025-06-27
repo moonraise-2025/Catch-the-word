@@ -50,6 +50,9 @@ class _AnimatedButtonState extends State<AnimatedButton>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -58,15 +61,15 @@ class _AnimatedButtonState extends State<AnimatedButton>
         animation: _animation,
         builder: (context, child) {
           return Container(
-            width: 350,
-            height: 80,
+            width: screenWidth * 0.5, // Chiều rộng tương đối (65% chiều rộng màn hình)
+            height: screenHeight * 0.07, // Chiều cao tương đối (9% chiều cao màn hình)
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(screenWidth * 0.02), // Bo góc động
               gradient: RadialGradient(
                 center: Alignment.center,
                 radius: _animation.value * 2,
                 colors: _isPressed
-                    ? [Color(0xFF8E61DC), Color(0xFF8E61DC).withOpacity(0.5)]
+                    ? [const Color(0xFF8E61DC), const Color(0xFF8E61DC).withOpacity(0.5)]
                     : [Colors.white, Colors.white],
               ),
             ),
@@ -74,7 +77,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
               child: Text(
                 widget.text,
                 style: TextStyle(
-                  fontSize: 40,
+                  fontSize: screenWidth * 0.06, // Cỡ chữ động
                   fontWeight: FontWeight.bold,
                   color: _isPressed ? Colors.white : const Color(0xFF8E61DC),
                 ),
