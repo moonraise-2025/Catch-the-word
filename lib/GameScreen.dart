@@ -166,13 +166,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _initGame() {
     final answer = questions[currentQuestion].answer.toUpperCase();
-
-    final answerNoSpace = answer.replaceAll(' ', '');
     answerSlots = List.filled(answer.length, '');
     answerCharIndexes = List.filled(answer.length, null); // Khởi tạo chỉ mục là null
     charOptions = _generateCharOptions(answer);
     charUsed = List.filled(charOptions.length, false);
-    answerSlotToCharOptionIndex = List.filled(answerSlots.length, null);
     currentSlot = 0;
     isCorrect = false;
     _controller.reset();
@@ -264,36 +261,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
         Future.delayed(const Duration(seconds: 2), () {
           setState(() {
-//
-            isWrong = true;
-          });
-
-          _shakeController.forward(from: 0);
-
-          Future.delayed(const Duration(seconds: 2), () {
-            setState(() {
-              isWrong = false;
-              final answer = questions[currentQuestion].answer.toUpperCase();
-              final answerNoSpace = answer.replaceAll(' ', '');
-              answerSlots = List.filled(answerNoSpace.length, '');
-              answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
-              charOptions = _generateCharOptions(answerNoSpace);
-              charUsed = List.filled(charOptions.length, false);
-              answerSlotToCharOptionIndex = List.filled(answerNoSpace.length, null);
-              currentSlot = 0;
-              isCorrect = false;
-            });
-
-//             isWrong = false;
-//             // Sau khi sai, reset toàn bộ ô đáp án về trống và khởi tạo lại lựa chọn
-//             final answer = correctAnswer;
-//             answerSlots = List.filled(answer.length, '');
-//             answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
-//             charOptions = _generateCharOptions(answer);
-//             charUsed = List.filled(charOptions.length, false);
-//             currentSlot = 0; // Đặt lại về 0
-//             isCorrect = false;
-
+            isWrong = false;
+            final answer = questions[currentQuestion].answer.toUpperCase();
+            answerSlots = List.filled(answer.length, '');
+            answerCharIndexes = List.filled(answer.length, null); // Đảm bảo reset cả cái này
+            charOptions = _generateCharOptions(answer);
+            charUsed = List.filled(charOptions.length, false);
+            currentSlot = 0;
+            isCorrect = false;
           });
         });
       }
@@ -601,37 +576,31 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 //                 child: RepaintBoundary(
 //                   key: previewContainerKey, bọc vào để ảnh
               SizedBox(height: screenHeight * 0.01),
-              // Ảnh
               Container(
                 margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                width: double.infinity,
                 child: ScaleTransition(
                   scale: _scaleAnimation,
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final double imageBoxSize = imageContainerSize;
+                        final double imageBoxSize = constraints.maxWidth;
                         return Container(
                           width: imageBoxSize,
-                          height: imageBoxSize, // hình vuông
+                          height: imageBoxSize * 0.6,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(color: Colors.black26),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ),
 
-                        // Banner
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 8),
-                          width: double.infinity,
-                          height: bannerHeight,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/images/banner.png'),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/questions/${questions[currentQuestion].imageName}',
                               fit: BoxFit.cover,
                             ),
-                            borderRadius: BorderRadius.circular(10),
                           ),
                         );
                       },
@@ -639,7 +608,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              // Banner
               Container(
                 margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 4),
                 width: double.infinity,
@@ -649,7 +617,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     image: AssetImage('assets/images/banner.png'),
                     fit: BoxFit.cover,
                   ),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: _hintBanner != null
@@ -661,6 +629,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             color: Colors.deepPurple,
 
                           ),
+
+                        )
+                      : Image.asset(
+                          'assets/images/logo3-15dhbc.png',
+                          height: bannerHeight * 2.5,
+                          fit: BoxFit.contain,
                         ),
                 ),
               ),
@@ -691,8 +665,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             children: buildCharRow(0, charOptions.length, adjustedSize),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -876,7 +850,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: Container(
         width: size,
         height: size,
-        margin: EdgeInsets.symmetric(horizontal: size * 0.08, vertical: size * 0.08),
+        margin: EdgeInsets.symmetric(horizontal: size * 0.02, vertical: size * 0.02),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black, width: 2),
           color: Colors.white,
