@@ -810,46 +810,52 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         width: screenWidth * 0.30,
                         child: ElevatedButton.icon(
                           onPressed: _showRevealLetterDialog,
-                          // icon: Icon(Icons.key_outlined,
-                          //     size: screenWidth * 0.06),
                           label: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            mainAxisSize: MainAxisSize.max,
                             children: [
-                              Text('Hiện đáp án',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.03)),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '10',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.03,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                              Text(
+                                'Hiện đáp án',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.05,
+                                ),
+                              ),
+                              SizedBox(
+                                height: screenHeight * 0.025, // ép chiều cao giống 2 nút kia
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '10',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.03,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.01),
-                                  Image.asset(
-                                    'assets/images/diamond.png',
-                                    width: screenWidth * 0.025,
-                                    height: screenHeight * 0.025,
-                                  ),
-                                ],
+                                    // SizedBox(width: screenWidth * 0.01),
+                                    // Image.asset(
+                                    //   'assets/images/diamond.png',
+                                    //   width: screenWidth * 0.025,
+                                    //   height: screenWidth * 0.025,
+                                    // ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF90C240),
+                            backgroundColor: const Color(0xFF90C240),
+                            disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
-                                  color: Colors.black,
-                                  width: screenWidth * 0.002),
+                                color: Colors.black,
+                                width: screenWidth * 0.002,
+                              ),
                             ),
                           ),
                         ),
@@ -866,14 +872,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Hỏi bạn bè',
+                              Text('Hỏi bạn ',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: (_askFriendInitialActive ||
                                           _askFriendUsedOnce)
                                           ? Colors.grey!.withOpacity(0.5)
                                           : Colors.white,
-                                      fontSize: screenWidth * 0.03)),
+                                      fontSize: screenWidth * 0.05)),
                               if (_askFriendInitialActive)
                                 Text('${_askFriendInitialSeconds}s',
                                     style: TextStyle(
@@ -882,10 +888,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: (_askFriendInitialActive ||
-                                _askFriendUsedOnce)
-                                ? Color(0xFFF8B52E)!.withOpacity(0.5)
-                                : Color(0xFFF8B52E),
+                            backgroundColor:  Color(0xFFF8B52E),
+                            disabledBackgroundColor: Color(0xFFF8B52E).withOpacity(0.6),
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -907,9 +911,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               ? null
                               : () => _onHint(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: (_hintActive || _hintUsedOnce)
-                                ? Color(0xFFF3A3C5).withOpacity(0.5)
-                                : Color(0xFFF3A3C5),
+                            backgroundColor: Color(0xFFF3A3C5),
+                            disabledBackgroundColor: Color(0xFFF3A3C5).withOpacity(0.6),
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -930,7 +933,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     color: (_hintActive || _hintUsedOnce)
                                         ? Colors.grey!.withOpacity(0.5)
                                         : Colors.white,
-                                    fontSize: screenWidth * 0.03,
+                                    fontSize: screenWidth * 0.05,
                                   )),
                               if (_hintActive)
                                 Text('${_hintSeconds}s',
@@ -944,7 +947,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
                 SizedBox(height: smallPadding,),
                 Visibility(
-                    visible: false,
+                    visible: true,
                     maintainSize: true,
                     maintainAnimation: true,
                     maintainState: true,
