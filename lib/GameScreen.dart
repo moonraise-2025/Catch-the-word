@@ -633,7 +633,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     color: Colors.white)),
                             SizedBox(width: screenWidth * 0.0015),
                             Image.asset(
-                              'assets/images/diamond.png',
+                              'assets/images/Diamond_Borderless.png',
                               width: screenWidth * 0.06,
                               height: screenWidth * 0.06,
                               fit: BoxFit.contain,
@@ -797,7 +797,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               SizedBox(height: screenHeight * 0.03),
 
               Padding(
-                padding: EdgeInsets.all(smallPadding),
+                padding: EdgeInsets.all(screenWidth * 0.027),
                 child: Column(
                   children: [
                   SizedBox(
@@ -830,7 +830,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
-                                    fontSize: screenWidth * 0.05,
+                                    fontSize: screenWidth * 0.045,
                                   )),
                               RichText(
                                 text: TextSpan(
@@ -838,7 +838,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     TextSpan(
                                       text: '10 ',
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.035,
+                                        fontSize: screenWidth * 0.03,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
@@ -846,7 +846,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     WidgetSpan(
                                       alignment: PlaceholderAlignment.middle,
                                       child: Image.asset(
-                                        'assets/images/diamond.png',
+                                        'assets/images/Diamond_Borderless.png',
                                         width: screenWidth * 0.04,
                                         height: screenWidth * 0.04,
                                       ),
@@ -878,11 +878,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                           _askFriendUsedOnce)
                                           ? Colors.white70
                                           : Colors.white,
-                                      fontSize: screenWidth * 0.05)),
+                                      fontSize: screenWidth * 0.045)),
                               if (_askFriendInitialActive)
                                 Text('${_askFriendInitialSeconds}s',
                                     style: TextStyle(
-                                        fontSize: screenWidth * 0.025,
+                                        fontSize: screenWidth * 0.03,
                                         color: Colors.white70)),
                             ],
                           ),
@@ -932,11 +932,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     color: (_hintActive || _hintUsedOnce)
                                         ? Colors.white70
                                         : Colors.white,
-                                    fontSize: screenWidth * 0.05,
+                                    fontSize: screenWidth * 0.045,
                                   )),
                               if (_hintActive)
                                 Text('${_hintSeconds}s',
-                                    style: TextStyle( color: Colors.white70,fontSize: screenWidth * 0.025)),
+                                    style: TextStyle( color: Colors.white70,fontSize: screenWidth * 0.03)),
                             ],
                           ),
                         ),
@@ -963,27 +963,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ),
                           ),
 
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
                               children: [
-                                Text(
-                                  "QUA MÀN",
+                                TextSpan(
+                                  text: "QUA MÀN\n",
                                   style: TextStyle(
                                     color: Color(0xFF616FD3),
                                     fontSize: screenWidth * 0.07,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                SizedBox(height: screenHeight * 0.001),
-                                Text(
-                                  "(Quảng cáo 15s ~ 30s)",
+                                TextSpan(
+                                  text: "(Quảng cáo 15s~30s)",
                                   style: TextStyle(
                                     color: Color(0xFF43ADED),
-                                    fontSize: screenWidth * 0.025,
+                                    fontSize: screenWidth * 0.03,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ])
+                              ],
+                            ),
+                          ),
                       ),
                     )
                 )
