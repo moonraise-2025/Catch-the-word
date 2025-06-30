@@ -801,51 +801,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 child: Column(
                   children: [
                   SizedBox(
-                  height: screenHeight * 0.06,
+                  height: screenHeight * 0.07,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        width: screenWidth * 0.30,
-                        child: ElevatedButton.icon(
+                        width: screenWidth * 0.31,
+                        child: ElevatedButton(
                           onPressed: _showRevealLetterDialog,
-                          label: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Text(
-                                'Hiện đáp án',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: screenWidth * 0.05,
-                                ),
-                              ),
-                              SizedBox(
-                                height: screenHeight * 0.025, // ép chiều cao giống 2 nút kia
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      '10',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.03,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    // SizedBox(width: screenWidth * 0.01),
-                                    // Image.asset(
-                                    //   'assets/images/diamond.png',
-                                    //   width: screenWidth * 0.025,
-                                    //   height: screenWidth * 0.025,
-                                    // ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF90C240),
                             disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
@@ -858,11 +822,46 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               ),
                             ),
                           ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Hiện Đáp Án',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.05,
+                                  )),
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '10 ',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.035,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Image.asset(
+                                        'assets/images/diamond.png',
+                                        width: screenWidth * 0.04,
+                                        height: screenWidth * 0.04,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      SizedBox(width: smallPadding),
+
+                      SizedBox(width: screenWidth * 0.001),
                       SizedBox(
-                        width: screenWidth * 0.30,
+                        width: screenWidth * 0.31,
                         child: ElevatedButton.icon(
                           onPressed:
                           (_askFriendInitialActive || _askFriendUsedOnce)
@@ -872,19 +871,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Hỏi bạn ',
+                              Text('Hỏi Bạn ',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: (_askFriendInitialActive ||
                                           _askFriendUsedOnce)
-                                          ? Colors.grey!.withOpacity(0.5)
+                                          ? Colors.white70
                                           : Colors.white,
                                       fontSize: screenWidth * 0.05)),
                               if (_askFriendInitialActive)
                                 Text('${_askFriendInitialSeconds}s',
                                     style: TextStyle(
                                         fontSize: screenWidth * 0.025,
-                                        color: Colors.grey)),
+                                        color: Colors.white70)),
                             ],
                           ),
                           style: ElevatedButton.styleFrom(
@@ -903,9 +902,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      SizedBox(width: smallPadding),
+                      SizedBox(width: screenWidth * 0.001),
                       SizedBox(
-                        width: screenWidth * 0.30,
+                        width: screenWidth * 0.31,
                         child: ElevatedButton(
                           onPressed: (_hintActive || _hintUsedOnce)
                               ? null
@@ -927,17 +926,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             //mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Gợi ý',
+                              Text('Gợi Ý',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: (_hintActive || _hintUsedOnce)
-                                        ? Colors.grey!.withOpacity(0.5)
+                                        ? Colors.white70
                                         : Colors.white,
                                     fontSize: screenWidth * 0.05,
                                   )),
                               if (_hintActive)
                                 Text('${_hintSeconds}s',
-                                    style: TextStyle( color: Colors.grey,fontSize: screenWidth * 0.025)),
+                                    style: TextStyle( color: Colors.white70,fontSize: screenWidth * 0.025)),
                             ],
                           ),
                         ),
@@ -953,7 +952,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     maintainState: true,
                     child: SizedBox(
                       width: double.infinity,
-                      height: screenHeight * 0.065,
+                      height: screenHeight * 0.07,
                       child: ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
@@ -968,10 +967,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Qua Màn",
+                                  "QUA MÀN",
                                   style: TextStyle(
                                     color: Color(0xFF616FD3),
-                                    fontSize: screenWidth * 0.05,
+                                    fontSize: screenWidth * 0.07,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -980,7 +979,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   "(Quảng cáo 15s ~ 30s)",
                                   style: TextStyle(
                                     color: Color(0xFF43ADED),
-                                    fontSize: screenWidth * 0.035,
+                                    fontSize: screenWidth * 0.025,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
