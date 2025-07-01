@@ -26,7 +26,8 @@ class _GiftpopupState extends State<Giftpopup> {
   late SharedPreferences prefs;
   final String todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-  Map<String, bool> _isPressedMap = {}; // Để quản lý trạng thái nhấn của từng nút
+  Map<String, bool> _isPressedMap =
+      {}; // Để quản lý trạng thái nhấn của từng nút
 
   @override
   void initState() {
@@ -63,7 +64,8 @@ class _GiftpopupState extends State<Giftpopup> {
     AudioManager().playGiftSound(); // Phát âm thanh nhận thưởng
 
     if (widget.onReward != null) {
-      widget.onReward!(rewardAmount); // Gọi callback để thêm thưởng vào tiền của người chơi
+      widget.onReward!(
+          rewardAmount); // Gọi callback để thêm thưởng vào tiền của người chơi
     }
 
     setState(() {}); // Cập nhật UI để hiển thị icon đã nhận
@@ -91,14 +93,18 @@ class _GiftpopupState extends State<Giftpopup> {
           children: [
             Container(
               // Điều chỉnh chiều cao và chiều rộng dựa trên kích thước màn hình
-              height: screenHeight * 0.7, // Chiếm 70% chiều cao màn hình
-              width: screenWidth * 0.85, // Chiếm 85% chiều rộng màn hình
+              height: screenHeight * 0.7,
+              // Chiếm 70% chiều cao màn hình
+              width: screenWidth * 0.85,
+              // Chiếm 85% chiều rộng màn hình
               // Margin động để chừa chỗ cho tiêu đề/logo
               margin: EdgeInsets.only(top: screenHeight * 0.1),
               padding: EdgeInsets.symmetric(
                 // Padding cân đối dựa trên kích thước màn hình
-                horizontal: screenWidth * 0.05, // 5% chiều rộng màn hình cho padding ngang
-                vertical: screenHeight * 0.03, // 3% chiều cao màn hình cho padding dọc
+                horizontal: screenWidth * 0.05,
+                // 5% chiều rộng màn hình cho padding ngang
+                vertical: screenHeight *
+                    0.03, // 3% chiều cao màn hình cho padding dọc
               ),
               decoration: BoxDecoration(
                 image: const DecorationImage(
@@ -113,7 +119,8 @@ class _GiftpopupState extends State<Giftpopup> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(height: screenHeight * 0.085), // Khoảng trống động cho logo
+                      SizedBox(height: screenHeight * 0.02),
+                      // Khoảng trống động cho logo
                       Text(
                         'PHẦN THƯỞNG',
                         textAlign: TextAlign.center,
@@ -123,9 +130,11 @@ class _GiftpopupState extends State<Giftpopup> {
                           color: const Color(0xFF8E61DC),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.01), // Khoảng trống nhỏ động
+                      SizedBox(height: screenHeight * 0.01),
+                      // Khoảng trống nhỏ động
                       _buildMissionRow(
-                        context: context, // Truyền context
+                        context: context,
+                        // Truyền context
                         keyId: 'daily1',
                         title: 'Đoán 1 từ',
                         reward: '5',
@@ -133,7 +142,8 @@ class _GiftpopupState extends State<Giftpopup> {
                         total: 1,
                         amount: 5,
                       ),
-                      SizedBox(height: screenHeight * 0.01), // Khoảng trống nhỏ động
+                      SizedBox(height: screenHeight * 0.01),
+                      // Khoảng trống nhỏ động
 
                       // FutureBuilder để xử lý hiển thị nhiệm vụ dựa trên trạng thái đã nhận
                       FutureBuilder<List<bool>>(
@@ -151,7 +161,8 @@ class _GiftpopupState extends State<Giftpopup> {
                               // Nếu daily30 chưa nhận, hiển thị nó
                               if (!isDaily30Received)
                                 _buildMissionRow(
-                                  context: context, // Truyền context
+                                  context: context,
+                                  // Truyền context
                                   keyId: 'daily30',
                                   title: 'Đoán 30 từ',
                                   reward: '30',
@@ -162,7 +173,8 @@ class _GiftpopupState extends State<Giftpopup> {
                               // Nếu daily30 đã nhận, hiển thị daily50 (nếu chưa nhận)
                               if (isDaily30Received && !isDaily50Received)
                                 _buildMissionRow(
-                                  context: context, // Truyền context
+                                  context: context,
+                                  // Truyền context
                                   keyId: 'daily50',
                                   title: 'Đoán 50 từ',
                                   reward: '50',
@@ -173,7 +185,8 @@ class _GiftpopupState extends State<Giftpopup> {
                               // Luôn hiển thị nhiệm vụ không có tiến độ
                               SizedBox(height: screenHeight * 0.01),
                               _buildMissionNoProgress(
-                                context: context, // Truyền context
+                                context: context,
+                                // Truyền context
                                 keyId: 'playthrough',
                                 title: 'Phần thưởng ngày mới',
                                 reward: '20',
@@ -197,7 +210,8 @@ class _GiftpopupState extends State<Giftpopup> {
                 alignment: Alignment.center,
                 child: Image.asset(
                   'assets/images/logo.png',
-                  width: screenWidth * 0.7, // Chiều rộng logo theo chiều rộng màn hình
+                  width: screenWidth *
+                      0.7, // Chiều rộng logo theo chiều rộng màn hình
                 ),
               ),
             ),
@@ -209,8 +223,10 @@ class _GiftpopupState extends State<Giftpopup> {
                 onTap: () => Navigator.of(context).pop(),
                 child: Image.asset(
                   'assets/images/icon_close.png',
-                  width: screenWidth * 0.06, // Kích thước theo chiều rộng màn hình
-                  height: screenWidth * 0.06, // Kích thước theo chiều rộng màn hình
+                  width: screenWidth * 0.06,
+                  // Kích thước theo chiều rộng màn hình
+                  height:
+                      screenWidth * 0.06, // Kích thước theo chiều rộng màn hình
                 ),
               ),
             ),
@@ -222,7 +238,7 @@ class _GiftpopupState extends State<Giftpopup> {
 
   // Widget để xây dựng hàng nhiệm vụ có tiến độ
   Widget _buildMissionRow({
-    required BuildContext context, // Thêm context vào tham số
+    required BuildContext context,
     required String keyId,
     required String title,
     required String reward,
@@ -230,89 +246,135 @@ class _GiftpopupState extends State<Giftpopup> {
     required int total,
     required int amount,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final bool isComplete = current >= total;
-    final screenWidth = MediaQuery.of(context).size.width; // Lấy screenWidth tại đây
-    final screenHeight = MediaQuery.of(context).size.height; // Lấy screenHeight tại đây
 
     return FutureBuilder<bool>(
       future: _isReceived(keyId),
       builder: (context, snapshot) {
         final received = snapshot.data ?? false;
-        final canClaim = isComplete && !received; // Có thể nhận nếu hoàn thành và chưa nhận
+        final canClaim = isComplete && !received;
+
+        // Xác định màu nền, viền, màu chữ title dựa theo trạng thái
+        Color containerBg;
+        Border? containerBorder;
+        Color titleColor;
+
+        if (received) {
+          containerBg =  Color(0xff0fd89f);
+          containerBorder =
+              Border.all(color: Colors.white70, width: screenWidth * 0.003);
+          titleColor = Colors.white70;
+        } else if (canClaim) {
+          containerBg = Colors.white; // Đủ điều kiện nhận
+          containerBorder = null; // Không có viền
+          titleColor = const Color(0xFF8E61DC);
+        } else {
+          containerBg = const Color(0xFFB1B7BB); // Chưa đủ điều kiện nhận
+          containerBorder =
+              Border.all(color: Colors.black45, width: screenWidth * 0.003);
+          titleColor = Colors.black45;
+        }
 
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: screenWidth * 0.01), // Padding động
-          child: SizedBox(
-            width: screenWidth * 0.5, // Chiều rộng tương đối
-            height: screenHeight * 0.08, // Chiều cao tương đối
-            child: AnimatedScale(
-              scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
-              duration: const Duration(milliseconds: 100),
-              child: GestureDetector(
-                onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
-                onTapUp: (_) {
-                  setState(() => _isPressedMap[keyId] = false);
-                  if (canClaim) {
-                    _handleTap(keyId, amount);
-                  }
-                },
-                onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
-                child: ElevatedButton(
-                  onPressed: canClaim ? () => _handleTap(keyId, amount) : null, // Gán null nếu không thể nhấn
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(MaterialState.disabled)) {
-                        return const Color(0xFF43ADED); // Màu khi không thể nhấn
-                      }
-                      return Colors.white; // Màu khi có thể nhấn
-                    }),
-                    elevation: MaterialStateProperty.all(4),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(screenWidth * 0.04), // Bo góc động
-                        side: BorderSide(color: Colors.white, width: screenWidth * 0.005), // Độ dày viền động
-                      ),
-                    ),
-                    padding: MaterialStateProperty.all(EdgeInsets.all(screenWidth * 0.01)), // Padding động
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.02,
+            vertical: screenWidth * 0.01,
+          ),
+          child: Container(
+            height: screenHeight * 0.065,
+            decoration: BoxDecoration(
+              color: containerBg,
+              borderRadius: BorderRadius.circular(screenWidth * 0.1),
+              border: containerBorder,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(2, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+              child: Row(
+                children: [
+                  // Bên trái: Tiêu đề nhiệm vụ
+                  Expanded(
+                    child: Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+                      child: Text(
                         '$title ($current/$total)',
-                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: screenWidth * 0.03, // Kích thước chữ động
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.bold,
-                          color: canClaim ? const Color(0xFF8E61DC) : Colors.grey, // Màu chữ động
+                          color: titleColor,
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.005), // Khoảng trống động
-                      received
-                          ? Icon(Icons.check_circle, color: Color(0xFF07FF11), size: screenWidth * 0.05) // Kích thước icon động
-                          : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            reward,
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.065, // Kích thước chữ động
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF8E61DC),
-                            ),
-                          ),
-                          SizedBox(width: screenWidth * 0.005), // Khoảng cách động
-                          Image.asset(
-                            'assets/images/diamond.png',
-                            width: screenWidth * 0.07, // Kích thước hình ảnh động
-                            height: screenWidth * 0.07, // Kích thước hình ảnh động
-                          ),
-                        ],
-                      )
-                    ],
+                    ),
                   ),
-                ),
+
+                  AnimatedScale(
+                    scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
+                    duration: const Duration(milliseconds: 100),
+                    child: GestureDetector(
+                      onTapDown: (_) =>
+                          setState(() => _isPressedMap[keyId] = true),
+                      onTapUp: (_) {
+                        setState(() => _isPressedMap[keyId] = false);
+                        if (canClaim) _handleTap(keyId, amount);
+                      },
+                      onTapCancel: () =>
+                          setState(() => _isPressedMap[keyId] = false),
+                      child: Container(
+                        width: screenWidth * 0.17,
+                        height: screenWidth * 0.1,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.025,
+                          vertical: screenHeight * 0.008,
+                        ),
+                        margin: EdgeInsets.only(right: screenWidth * 0.02),
+                        decoration: BoxDecoration(
+                          color: received
+                              ? const Color(0xFF5ce1e6)
+                              : (canClaim
+                                  ? const Color(0xffec9035)
+                                  : const Color(0xFFebecec)),
+                          borderRadius:
+                              BorderRadius.circular(screenWidth * 0.1),
+                        ),
+                        child: received
+                            ? Image.asset(
+                                'images/true.png',
+                                width: screenWidth * 0.05,
+                                height: screenWidth * 0.05,
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    reward,
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black45,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.01),
+                                  Image.asset(
+                                    'assets/images/diamond.png',
+                                    width: screenWidth * 0.045,
+                                    height: screenWidth * 0.045,
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -323,94 +385,138 @@ class _GiftpopupState extends State<Giftpopup> {
 
   // Widget để xây dựng hàng nhiệm vụ không có tiến độ
   Widget _buildMissionNoProgress({
-    required BuildContext context, // Thêm context vào tham số
+    required BuildContext context,
     required String keyId,
     required String title,
     required String reward,
     required int amount,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return FutureBuilder<bool>(
       future: _isReceived(keyId),
       builder: (context, snapshot) {
         final received = snapshot.data ?? false;
-        final canClaim = !received; // Có thể nhận nếu chưa nhận
+        final canClaim = !received;
 
-        final screenWidth = MediaQuery.of(context).size.width; // Lấy screenWidth tại đây
-        final screenHeight = MediaQuery.of(context).size.height; // Lấy screenHeight tại đây
+        // Xác định màu nền, viền, màu chữ title dựa theo trạng thái
+        Color containerBg;
+        Border? containerBorder;
+        Color titleColor;
+
+        if (received) {
+          containerBg = const Color(0xff6bac5f);
+          containerBorder =
+              Border.all(color: Colors.white70, width: screenWidth * 0.003);
+          titleColor = Colors.white70;
+        } else if (canClaim) {
+          containerBg = Colors.white;
+          containerBorder = null;
+          titleColor = const Color(0xFF8E61DC);
+        } else {
+          containerBg = const Color(0xFFB1B7BB);
+          containerBorder =
+              Border.all(color: Colors.black45, width: screenWidth * 0.003);
+          titleColor = Colors.black45;
+        }
 
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: screenWidth * 0.01), // Padding động
-          child: SizedBox(
-            width: screenWidth * 0.5, // Chiều rộng tương đối
-            height: screenHeight * 0.08, // Chiều cao tương đối
-            child: AnimatedScale(
-              scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
-              duration: const Duration(milliseconds: 100),
-              child: GestureDetector(
-                onTapDown: (_) => setState(() => _isPressedMap[keyId] = true),
-                onTapUp: (_) {
-                  setState(() => _isPressedMap[keyId] = false);
-                  if (canClaim) {
-                    _handleTap(keyId, amount);
-                  }
-                },
-                onTapCancel: () => setState(() => _isPressedMap[keyId] = false),
-                child: ElevatedButton(
-                  onPressed: received ? null : () => _handleTap(keyId, amount), // Gán null nếu đã nhận
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(MaterialState.disabled)) {
-                        return const Color(0xFF43ADED); // Màu khi không thể nhấn
-                      }
-                      return Colors.white; // Màu khi có thể nhấn
-                    }),
-                    elevation: MaterialStateProperty.all(4),
-                    shape: MaterialStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(screenWidth * 0.04), // Bo góc động
-                        side: BorderSide(color: Colors.white, width: screenWidth * 0.005), // Độ dày viền động
-                      ),
-                    ),
-                    padding: MaterialStateProperty.all(EdgeInsets.all(screenWidth * 0.01)), // Padding động
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.02,
+            vertical: screenWidth * 0.01,
+          ),
+          child: Container(
+            height: screenHeight * 0.065,
+            decoration: BoxDecoration(
+              color: containerBg,
+              borderRadius: BorderRadius.circular(screenWidth * 0.1),
+              border: containerBorder,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 4,
+                  offset: Offset(2, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: screenWidth * 0.03),
+                      child: Text(
                         title,
-                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: screenWidth * 0.03, // Kích thước chữ động
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.bold,
-                          color: canClaim ? const Color(0xFF8E61DC) : Colors.grey, // Màu chữ động
+                          color: titleColor,
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.005), // Khoảng trống động
-                      received
-                          ? Icon(Icons.check_circle, color:Color(0xFF0DF316), size: screenWidth * 0.05) // Kích thước icon động
-                          : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            reward,
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.065, // Kích thước chữ động
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF8E61DC),
-                            ),
-                          ),
-                          SizedBox(width: screenWidth * 0.005), // Khoảng cách động
-                          Image.asset(
-                            'assets/images/diamond.png',
-                            width: screenWidth * 0.07, // Kích thước hình ảnh động
-                            height: screenWidth * 0.07, // Kích thước hình ảnh động
-                          ),
-                        ],
-                      )
-                    ],
+                    ),
                   ),
-                ),
+                  AnimatedScale(
+                    scale: _isPressedMap[keyId] == true ? 0.95 : 1.0,
+                    duration: const Duration(milliseconds: 100),
+                    child: GestureDetector(
+                      onTapDown: (_) =>
+                          setState(() => _isPressedMap[keyId] = true),
+                      onTapUp: (_) {
+                        setState(() => _isPressedMap[keyId] = false);
+                        if (canClaim) _handleTap(keyId, amount);
+                      },
+                      onTapCancel: () =>
+                          setState(() => _isPressedMap[keyId] = false),
+                      child: Container(
+                        width: screenWidth * 0.17,
+                        height: screenWidth * 0.1,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.025,
+                          vertical: screenHeight * 0.008,
+                        ),
+                        margin: EdgeInsets.only(right: screenWidth * 0.02),
+                        decoration: BoxDecoration(
+                          color: received
+                              ? const Color(0xFF5ce1e6)
+                              : (canClaim
+                                  ? const Color(0xffec9035)
+                                  : const Color(0xFFebecec)),
+                          borderRadius:
+                              BorderRadius.circular(screenWidth * 0.1),
+                        ),
+                        child: received
+                            ? Image.asset(
+                                'images/true.png',
+                                width: screenWidth * 0.05,
+                                height: screenWidth * 0.05,
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    reward,
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black45,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.01),
+                                  Image.asset(
+                                    'assets/images/diamond.png',
+                                    width: screenWidth * 0.045,
+                                    height: screenWidth * 0.045,
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
