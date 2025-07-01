@@ -123,6 +123,7 @@ class _StartScreenState extends State<StartScreen> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
+
                               foregroundColor: Color(0xFF616FD3),
                               textStyle: TextStyle(
                                 fontSize: screenWidth * 0.05,
@@ -136,7 +137,7 @@ class _StartScreenState extends State<StartScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text('TIẾP TỤC', textAlign: TextAlign.center),
+                    const Text('TIẾP TỤC', textAlign: TextAlign.center),
                                 Text('(Level $lastLevel)',
                                     style: TextStyle(
                                         fontSize: screenWidth * 0.03,
