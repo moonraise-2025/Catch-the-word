@@ -259,7 +259,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
 
       if (correct) {
-        Future.delayed(const Duration(milliseconds: 300), showCorrectDialog);
+        // Bắt đầu hiệu ứng rung lắc khi đúng
+        _shakeController.forward(from: 0);
+        await Future.delayed(const Duration(seconds: 2));
+        showCorrectDialog();
 
         if (dailyCount < 1) dailyCount++;
         if (daily30Count < 30) daily30Count++;
@@ -414,35 +417,94 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (diamonds < 10) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Không đủ kim cương'),
-          content: const Text('Bạn không đủ 10 kim cương để mở 1 chữ!'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+        builder: (context) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          return AlertDialog(
+            title: Text(
+              'Không đủ kim cương',
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                fontWeight: FontWeight.bold,
+                color: Colors.redAccent,
+                letterSpacing: 1.0,
+              ),
             ),
-          ],
-        ),
+            content: Text(
+              'Bạn không đủ 10 kim cương để mở 1 chữ!',
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                letterSpacing: 0.4,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'OK',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.04,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       );
       return;
     }
     final shouldReveal = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hiện đáp án'),
-        content: const Text('Bạn có muốn dùng 10 kim cương để mở 1 chữ không?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Không'),
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        return AlertDialog(
+          title: Text(
+            'Hiện đáp án',
+            style: TextStyle(
+              fontSize: screenWidth * 0.06,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+              letterSpacing: 1.2,
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Đồng ý'),
+          content: Text(
+            'Bạn có muốn dùng 10 kim cương để mở 1 chữ không?',
+            style: TextStyle(
+              fontSize: screenWidth * 0.05,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+              letterSpacing: 0.5,
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Không',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.05,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                'Đồng ý',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.05,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
     if (shouldReveal == true) {
       setState(() {
@@ -624,7 +686,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 0),
                         width: double.infinity,
-                        height: screenWidth * 0.16,
+                        height: screenWidth * 0.15,
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/banner.png'),
@@ -644,7 +706,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 )
                               : Image.asset(
                                   'assets/images/logo3-15dhbc.png',
-                                  height: screenWidth * 0.1,
+                                  height: screenWidth * 0.5,
                                   fit: BoxFit.contain,
                                 ),
                         ),
@@ -655,33 +717,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: mediumPadding),
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                                padding: EdgeInsets.all(8.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.white, width: 4),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                height: adjustedSize * 4.0, // Độ cao đủ cho 3 hàng
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(answerSlots, answer, adjustedSize),
                                 ),
                               ),
-                              SizedBox(height: screenHeight * 0.012),
+                              SizedBox(height: screenHeight * 0.008), // Reduced spacing
                               Expanded(
-                                child: SingleChildScrollView(
-                                  padding: EdgeInsets.only(
-                                    left: mediumPadding,
-                                    right: mediumPadding,
-                                    bottom: screenHeight * 0.01),
-                                  child: Wrap(
-                                    alignment: WrapAlignment.center,
-                                    spacing: screenWidth * 0.03,
-                                    runSpacing: screenWidth * 0.03,
-                                    children: buildCharRow(0, charOptions.length, adjustedSize),
-                                  ),
+                                child: Column(
+                                  children: buildCharRows(adjustedSize * 1.05),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.03),
+                      SizedBox(height: screenHeight * 0.02), // Adjusted spacing to be closer
                       Padding(
                         padding: EdgeInsets.all(screenWidth * 0.027),
                         child: Column(
@@ -844,7 +903,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       TextSpan(
                                         text: "QUA MÀN\n",
                                         style: TextStyle(
-                                          color: Color(0xFF616FD3),
+                                          color: Color(0xFF616FD7),
                                           fontSize: screenWidth * 0.07,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -876,152 +935,132 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
-  List<Widget> buildCharRow(int start, int end, double size) {
-    final double bigSize = size * 1.25;
-    return List.generate(
-      end - start,
-      (i) => SizedBox(
-        width: bigSize,
-        height: bigSize,
-        child: charUsed[i + start]
-            ? const SizedBox.shrink()
-            : GestureDetector(
-          onTap: () => _onCharTap(i + start),
-          child: Container(
-            margin: EdgeInsets.all(bigSize * 0.12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 6,
-                  offset: Offset(2, 2),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                charOptions[i + start],
-                style: TextStyle(
-                  fontSize: bigSize * 0.4,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+  List<Widget> buildCharRows(double size) {
+    const int maxPerRow = 7;
+    List<Widget> rows = [];
+    int total = charOptions.length;
+    int idx = 0;
+    while (idx < total) {
+      int count = (total - idx) >= maxPerRow ? maxPerRow : (total - idx);
+      List<Widget> row = [];
+      for (int i = 0; i < count; i++) {
+        int charIdx = idx + i;
+        row.add(
+          SizedBox(
+            width: size,
+            height: size,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+              child: charUsed[charIdx]
+                  ? const SizedBox.shrink(key: ValueKey('empty'))
+                  : GestureDetector(
+                      key: ValueKey('char_$charIdx'),
+                      onTap: () => _onCharTap(charIdx),
+                      child: Container(
+                        margin: EdgeInsets.all(1.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 4,
+                              offset: Offset(1, 1),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            charOptions[charIdx],
+                            style: TextStyle(
+                              fontSize: size * 0.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
             ),
           ),
-        ),
-      ),
-    );
+        );
+      }
+      rows.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: row,
+      ));
+      rows.add(SizedBox(height: size * 0.15));
+      idx += count;
+    }
+    return rows;
   }
 
   List<Widget> _buildAnswerRows(List<String> slots, String answer, double size) {
-  List<Widget> rows = [];
-  int slotIdx = 0;
-  final words = answer.split(' ');
-  const int maxCharsPerRow = 7; // Giới hạn tối đa 7 ký tự trên mỗi hàng
+    List<Widget> rows = [];
+    int slotIdx = 0;
+    final words = answer.split(' ');
+    const int maxCharsPerRow = 7;
 
-  if (words.length == 1) {
-    // Trường hợp 1 từ, chia dòng nếu vượt quá maxCharsPerRow
-    List<Widget> currentRow = [];
-    for (int i = 0; i < words[0].length; i++) {
-      currentRow.add(_buildAnswerBox(slotIdx++, slots, size));
-      if (currentRow.length == maxCharsPerRow && i < words[0].length - 1) {
+    if (words.length == 2) {
+      // Nếu có đúng 1 khoảng trắng, luôn chia thành 2 dòng, mỗi dòng 1 từ
+      for (var word in words) {
+        List<Widget> row = List.generate(word.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
+        rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row));
+        rows.add(SizedBox(height: size * 0.2));
+      }
+      // Xoá SizedBox cuối cùng nếu có
+      if (rows.isNotEmpty) rows.removeLast();
+    } else if (words.length > 2) {
+      // Nếu có nhiều hơn 1 khoảng trắng, áp dụng logic thông minh
+      List<Widget> currentRow = [];
+      int currentLength = 0;
+      for (int i = 0; i < words.length; i++) {
+        int wordLen = words[i].length;
+        if (currentLength + wordLen > maxCharsPerRow && currentRow.isNotEmpty) {
+          rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+          rows.add(SizedBox(height: size * 0.2));
+          currentRow = [];
+          currentLength = 0;
+        }
+        currentRow.addAll(List.generate(wordLen, (j) => _buildAnswerBox(slotIdx++, slots, size)));
+        currentLength += wordLen;
+        if (i < words.length - 1) {
+          if (currentLength <= maxCharsPerRow) {
+            // Thêm khoảng cách giữa các từ trong cùng dòng
+            currentRow.add(SizedBox(width: size * 0.2));
+            currentLength += 1;
+          } else {
+            // Nếu vượt quá, xuống dòng tại khoảng trắng này
+            rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+            rows.add(SizedBox(height: size * 0.2));
+            currentRow = [];
+            currentLength = 0;
+          }
+        }
+      }
+      if (currentRow.isNotEmpty) {
         rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
-        currentRow = [];
-        rows.add(SizedBox(height: size * 0.2)); // Khoảng cách giữa các hàng
       }
-    }
-    if (currentRow.isNotEmpty) {
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
-    }
-  } else if (words.length == 2) {
-    // Trường hợp 2 từ
-    List<Widget> row = [];
-    for (int i = 0; i < words[0].length + words[1].length; i++) {
-      row.add(_buildAnswerBox(slotIdx++, slots, size));
-    }
-    rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row));
-  } else if (words.length == 3) {
-    // Trường hợp 3 từ
-    int totalFirstTwo = words[0].length + words[1].length;
-    if (totalFirstTwo <= 7) {
-      List<Widget> row1 = [];
-      for (int i = 0; i < totalFirstTwo; i++) {
-        row1.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
-      rows.add(SizedBox(height: size * 0.5));
-      List<Widget> row2 = [];
-      for (int i = totalFirstTwo; i < totalFirstTwo + words[2].length; i++) {
-        row2.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
     } else {
-      List<Widget> row1 = [];
-      for (int i = 0; i < words[0].length; i++) {
-        row1.add(_buildAnswerBox(slotIdx++, slots, size));
+      // Trường hợp 1 từ
+      String currentWord = words[0];
+      if (currentWord.length <= maxCharsPerRow) {
+        List<Widget> currentRow = List.generate(currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
+        rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+      } else {
+        for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
+          int endIdx = (i + maxCharsPerRow < currentWord.length) ? i + maxCharsPerRow : currentWord.length;
+          List<Widget> wordRow = List.generate(endIdx - i, (j) => _buildAnswerBox(slotIdx++, slots, size));
+          rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: wordRow));
+          if (endIdx < currentWord.length) {
+            rows.add(SizedBox(height: size * 0.2));
+          }
+        }
       }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
-      rows.add(SizedBox(height: size * 0.5));
-      List<Widget> row2 = [];
-      for (int i = words[0].length; i < words[0].length + words[1].length; i++) {
-        row2.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
-      rows.add(SizedBox(height: size * 0.5));
-      List<Widget> row3 = [];
-      for (int i = words[0].length + words[1].length; i < words[0].length + words[1].length + words[2].length; i++) {
-        row3.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row3));
     }
-  } else if (words.length == 4) {
-    // Trường hợp 4 từ
-    int totalFirstTwo = words[0].length + words[1].length;
-    if (totalFirstTwo <= 7) {
-      List<Widget> row1 = [];
-      for (int i = 0; i < totalFirstTwo; i++) {
-        row1.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
-      rows.add(SizedBox(height: size * 0.5));
-      int totalLastTwo = words[2].length + words[3].length;
-      List<Widget> row2 = [];
-      for (int i = totalFirstTwo; i < totalFirstTwo + totalLastTwo; i++) {
-        row2.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
-    } else {
-      List<Widget> row1 = [];
-      for (int i = 0; i < words[0].length; i++) {
-        row1.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row1));
-      rows.add(SizedBox(height: size * 0.5));
-      List<Widget> row2 = [];
-      for (int i = words[0].length; i < words[0].length + words[1].length; i++) {
-        row2.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row2));
-      rows.add(SizedBox(height: size * 0.5));
-      List<Widget> row3 = [];
-      for (int i = words[0].length + words[1].length; i < words[0].length + words[1].length + words[2].length; i++) {
-        row3.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row3));
-      rows.add(SizedBox(height: size * 0.5));
-      List<Widget> row4 = [];
-      for (int i = words[0].length + words[1].length + words[2].length; i < words[0].length + words[1].length + words[2].length + words[3].length; i++) {
-        row4.add(_buildAnswerBox(slotIdx++, slots, size));
-      }
-      rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row4));
-    }
+    return rows;
   }
-
-  return rows;
-}
 
   Widget _buildAnswerBox(int slotIdx, List<String> slots, double size) {
     return GestureDetector(
@@ -1029,34 +1068,47 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       onTap: () {
         _onAnswerSlotTap(slotIdx);
       },
-      child: Container(
-        width: size,
-        height: size,
-        margin: EdgeInsets.symmetric(horizontal: size * 0.005, vertical: size * 0.005),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black, width: 2),
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: AnimatedBuilder(
-          animation: _shakeController,
-          builder: (context, child) {
-            double offset = isWrong ? 10 * sin(_shakeAnimation.value) : 0;
-            return Transform.translate(
-              offset: Offset(offset, 0),
-              child: Text(
-                slots[slotIdx].isNotEmpty ? slots[slotIdx] : '', // Display character if present
-                style: TextStyle(
-                  fontSize: size * 0.6, // Increased font size for better visibility
-                  fontWeight: FontWeight.bold,
-                  color: isCorrect ? Colors.green : (isWrong ? Colors.red : Colors.black),
-                ),
-                textAlign: TextAlign.center, // Ensure text is centered
+      child: AnimatedBuilder(
+        animation: _shakeController,
+        builder: (context, child) {
+          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          Color boxColor = Colors.white;
+          if (isCorrect) {
+            boxColor = Colors.green;
+          } else if (isWrong) {
+            boxColor = Colors.red;
+          }
+          return Transform.translate(
+            offset: Offset(offset, 0),
+            child: Container(
+              width: size,
+              height: size,
+              margin: EdgeInsets.all(1.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: 2),
+                color: boxColor,
+                borderRadius: BorderRadius.circular(8),
               ),
-            );
-          },
-        ),
+              alignment: Alignment.center,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                child: slots[slotIdx].isNotEmpty
+                    ? Text(
+                        slots[slotIdx],
+                        key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                        style: TextStyle(
+                          fontSize: size * 0.6,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black, // Luôn giữ màu chữ là đen
+                        ),
+                        textAlign: TextAlign.center,
+                      )
+                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
