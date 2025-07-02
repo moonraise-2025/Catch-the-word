@@ -774,7 +774,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 ),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.012),
+                      SizedBox(height: screenHeight * 0.005),
 
                       Expanded(
                         child: Center(
@@ -784,10 +784,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               Container(
                                 margin: EdgeInsets.symmetric(
                                     horizontal: mediumPadding),
-                                padding: EdgeInsets.all(8.0),
+                                padding: EdgeInsets.all(5.0),
                                 decoration: BoxDecoration(
                                   border:
-                                      Border.all(color: Colors.white, width: 4),
+                                      Border.all(color: Colors.white, width: 3),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 height: adjustedSize * 4.0,
@@ -797,7 +797,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       answerSlots, answer, adjustedSize),
                                 ),
                               ),
-                              SizedBox(height: screenHeight * 0.008),
+
+                              SizedBox(height: screenHeight * 0.005),
+
                               Expanded(
                                 child: Column(
                                   children: buildCharRows(adjustedSize * 1.05),
@@ -807,7 +809,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.02),
+
                       Padding(
                         padding: EdgeInsets.all(screenWidth * 0.027),
                         child: Column(
