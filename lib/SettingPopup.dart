@@ -49,33 +49,24 @@ class _SettingPopupState extends State<SettingPopup> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    return Dialog(
-        backgroundColor: Colors.transparent,
-        // Sử dụng ConstrainedBox để đặt kích thước tối đa cho nội dung popup.
-        // Điều này giúp popup không quá lớn trên màn hình rộng (ví dụ: máy tính bảng).
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: screenWidth * 0.9, // Chiều rộng tối đa 90% màn hình
-            maxHeight: screenHeight * 0.6, // Chiều cao tối đa 90% màn hình
+    return Center(
+      child: Stack(
+        children: [
+        Container(
+        width: screenWidth * 0.90,
+        height: screenHeight * 0.50,
+        margin: EdgeInsets.only(top: screenHeight * 0.1), // Margin động để chừa chỗ cho tiêu đề/logo
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.03,
+          vertical: screenHeight * 0.025,
+        ),
+        decoration: BoxDecoration(
+          image: const DecorationImage(
+            image: AssetImage('assets/images/bg_popup.png'),
+            fit: BoxFit.fill,
           ),
-          child: Stack(
-            children: [
-              Container(// Điều chỉnh chiều cao và chiều rộng dựa trên kích thước màn hình
-
-                  height: screenHeight * 0.7,// Chiếm 70% chiều cao màn hình
-                  width: screenWidth * 0.85, // Chiếm 85% chiều rộng màn hình
-                  margin: EdgeInsets.only(top: screenHeight * 0.1), // Margin động để chừa chỗ cho tiêu đề/logo
-                  padding: EdgeInsets.symmetric(// Padding cân đối dựa trên kích thước màn hình
-                    horizontal: screenWidth * 0.05,// 5% chiều rộng màn hình cho padding ngang
-                    vertical: screenHeight *0.03 // 3% chiều cao màn hình cho padding dọc,
-                  ),
-                  decoration: BoxDecoration(
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/bg_popup.png'),
-                      fit: BoxFit.fill,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+          borderRadius: BorderRadius.circular(10),
+        ),
                   child: Center(
                     child: SingleChildScrollView(
                       child: Column(
@@ -86,21 +77,21 @@ class _SettingPopupState extends State<SettingPopup> {
                             'Cài Đặt ',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: screenWidth * 0.08,
+                                fontSize: screenWidth * 0.1,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF8E61DC)),
+                                color: Color(0xFF626DD2)),
                           ),
                            SizedBox(height: screenHeight *0.01 ),
                           Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.1),
+                                horizontal: screenWidth * 0.18),
                             // 👈 thêm padding 2 bên
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Nhạc Nền',
+                                Text('Nhạc nền',
                                     style: TextStyle(
-                                        fontSize: screenWidth * 0.05,
+                                        fontSize: screenWidth * 0.06,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white)),
                                 SizedBox(width: screenWidth * 0.04),
@@ -117,14 +108,13 @@ class _SettingPopupState extends State<SettingPopup> {
                                     });
                                   },
                                   child: Container(
-                                    width: screenWidth * 0.08,
-                                    height: screenWidth * 0.08,
+                                    width: screenWidth * 0.12,
+                                    height: screenWidth * 0.12,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(
                                           screenWidth * 0.02),
-                                      border: Border.all(
-                                          color: Colors.blue, width: 3),
+
                                     ),
                                     child: Center(
                                       child: AnimatedScale(
@@ -133,10 +123,10 @@ class _SettingPopupState extends State<SettingPopup> {
                                         scale: _isMusicOn ? 1.0 : 0.0,
                                         curve: Curves.easeOutBack,
                                         child: Container(
-                                          width: screenWidth * 0.05,
-                                          height: screenWidth * 0.05,
+                                          width: screenWidth * 0.1,
+                                          height: screenWidth * 0.1,
                                           decoration: BoxDecoration(
-                                            color: Color(0xFF8E61DC),
+                                            color: Color(0xFF626DD2),
                                             borderRadius: BorderRadius.circular(
                                                 screenWidth * 0.01),
                                           ),
@@ -151,14 +141,13 @@ class _SettingPopupState extends State<SettingPopup> {
                            SizedBox(height: screenHeight * 0.02),
                           Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.1),
-                            // 👈 thêm padding 2 bên
+                                horizontal: screenWidth * 0.18),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('Rung',
                                     style: TextStyle(
-                                        fontSize: screenWidth * 0.05,
+                                        fontSize: screenWidth * 0.06,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white)),
                                 SizedBox(width: screenWidth * 0.04),
@@ -170,14 +159,13 @@ class _SettingPopupState extends State<SettingPopup> {
                                     });
                                   },
                                   child: Container(
-                                    width: screenWidth * 0.08,
-                                    height: screenWidth * 0.08,
+                                    width: screenWidth * 0.12,
+                                    height: screenWidth * 0.12,
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(
                                           screenWidth * 0.02),
-                                      border: Border.all(
-                                          color: Colors.blue, width: 3),
+
                                     ),
                                     child: Center(
                                       child: AnimatedScale(
@@ -187,10 +175,10 @@ class _SettingPopupState extends State<SettingPopup> {
                                         // to dần khi bật, nhỏ dần khi tắt
                                         curve: Curves.easeInOut,
                                         child: Container(
-                                          width: screenWidth * 0.05,
-                                          height: screenWidth * 0.05,
+                                          width: screenWidth * 0.1,
+                                          height: screenWidth * 0.1,
                                           decoration: BoxDecoration(
-                                            color: Color(0xFF8E61DC),
+                                            color: Color(0xFF626DD2),
                                             borderRadius: BorderRadius.circular(
                                                 screenWidth * 0.01),
                                           ),
@@ -236,7 +224,9 @@ class _SettingPopupState extends State<SettingPopup> {
                         ],
                       ),
                     ),
-                  )),
+                  )
+
+              ),
               // Positioned(
               //   top: -30,
               //   left: 20,
@@ -280,8 +270,10 @@ class _SettingPopupState extends State<SettingPopup> {
                   ),
                 ),
               ),
-            ],
-          ),
-        ));
+
+        ],
+      ),
+    );
+
   }
 }
