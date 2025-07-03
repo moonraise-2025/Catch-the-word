@@ -18,11 +18,13 @@ import 'audio_manager.dart';
 class Question {
   final String imageName;
   final String answer;
+
   Question({required this.imageName, required this.answer});
 }
 
 class GameScreen extends StatefulWidget {
   final int initialLevel;
+
   const GameScreen({super.key, this.initialLevel = 1});
 
   @override
@@ -33,12 +35,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final List<Question> questions = [
     Question(imageName: 'cau1.png', answer: 'CƯỚP BIỂN'),
     Question(imageName: 'cau2.png', answer: 'THUỶ TINH'),
-    Question(imageName: 'cau3.png', answer: 'GIẤU ĐẦU LÒI ĐUÔI'),
+    Question(imageName: 'cau3.png', answer: 'GIẤU ĐẦULÒI ĐUÔI'),
     Question(imageName: 'cau4.png', answer: 'ĂN NĂN'),
     Question(imageName: 'cau5.png', answer: 'QUẠT THAN'),
     Question(imageName: 'cau6.png', answer: 'CẦU HÔN'),
     Question(imageName: 'cau7.png', answer: 'CHÂN DUNG'),
-    //Question(imageName: 'cau8.png', answer: 'GIẢI THƯỞNG'),
     Question(imageName: 'cau9.png', answer: 'ĐẦU TƯ'),
     Question(imageName: 'cau10.png', answer: 'BÀN BẠC'),
     Question(imageName: 'cau11.png', answer: 'RAU MÁ'),
@@ -53,20 +54,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Question(imageName: 'cau20.png', answer: 'CÂY CẦU'),
   ];
 
-  int dailyCount = 0; // Biến đếm nhiệm vụ ngày
-  int daily30Count = 0; // Biến đếm nhiệm vụ tuần: 30 câu
-  int daily50Count = 0; // Biến đếm nhiệm vụ tuần: 50 câu
+  int dailyCount = 0;
+  int daily30Count = 0;
+  int daily50Count = 0;
 
-  int currentQuestion = 0; //giải thích: Chỉ số câu hỏi hiện tại
-  int level = 1; //giải thích: Level hiện tại
-  int diamonds = 0; //giải thích: Số kim cương hiện có
+  int currentQuestion = 0;
+  int level = 1;
+  int diamonds = 0;
 
-  late List<String> answerSlots; //giải thích: Danh sách ký tự đã điền vào đáp án
-  late List<String> charOptions; //giải thích: Danh sách ký tự lựa chọn bên dưới
-  late List<int?> answerCharIndexes; // Lưu chỉ mục của charOptions
-  late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
-  int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
-  bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
+  late List<String> answerSlots;
+  late List<String> charOptions;
+  late List<int?> answerCharIndexes;
+  late List<bool> charUsed;
+  int currentSlot = 0;
+  bool isCorrect = false;
 
   Timer? _hintTimer;
   int _hintSeconds = 20;
@@ -90,7 +91,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late double bannerHeight;
 
   final GlobalKey previewContainerKey = GlobalKey();
-  int dummyState = 0; // Biến phụ để force rebuild UI nếu cần
+  int dummyState = 0;
 
   Future<void> captureAndShareWidget() async {
     if (_askFriendInitialActive || _askFriendUsedOnce) {
@@ -105,13 +106,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         return captureAndShareWidget();
       }
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List? pngBytes = byteData?.buffer.asUint8List();
 
       if (pngBytes != null) {
         final tempDir = await getTemporaryDirectory();
         final file =
-        await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
+            await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
         await Share.shareFiles([file.path],
             text: 'Chơi game Đuổi hình bắt chữ nè!');
         setState(() {
@@ -130,7 +132,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       level = widget.initialLevel;
       currentQuestion = widget.initialLevel - 1;
     }
-    maxAnswerLength = questions.map((q) => q.answer.length).reduce((a, b) => a > b ? a : b);
+    maxAnswerLength =
+        questions.map((q) => q.answer.length).reduce((a, b) => a > b ? a : b);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -140,7 +143,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _shakeAnimation = Tween<double>(begin: 0, end: 6 * 2 * 3.1415926535).animate(
+    _shakeAnimation =
+        Tween<double>(begin: 0, end: 6 * 2 * 3.1415926535).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.linear),
     );
 
@@ -179,9 +183,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void _initGame() {
     final answer = questions[currentQuestion].answer.toUpperCase();
-    answerSlots = List.filled(answer.replaceAll(' ', '').length, ''); // Chỉ đếm ký tự, bỏ khoảng trống
-    answerCharIndexes = List.filled(answer.replaceAll(' ', '').length, null); // Khởi tạo chỉ mục là null
-    charOptions = _generateCharOptions(answer.replaceAll(' ', '')); // Tạo charOptions từ chuỗi liền
+    answerSlots = List.filled(answer.replaceAll(' ', '').length, '');
+    answerCharIndexes = List.filled(
+        answer.replaceAll(' ', '').length, null);
+    charOptions = _generateCharOptions(
+        answer.replaceAll(' ', ''));
     charUsed = List.filled(charOptions.length, false);
     currentSlot = 0;
     isCorrect = false;
@@ -225,33 +231,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _onCharTap(int idx) async {
-    // Tìm ô trống đầu tiên để điền vào
     int targetSlot = answerSlots.indexOf('');
-    // Nếu không còn ô trống nào, không làm gì cả
     if (targetSlot == -1) {
       return;
     }
-    // Nếu ký tự đã được sử dụng, cũng không làm gì cả
     if (charUsed[idx]) {
       return;
     }
 
     setState(() {
-      answerSlots[targetSlot] = charOptions[idx]; // Điền vào ô trống tìm được
-      answerCharIndexes[targetSlot] = idx; // Lưu chỉ mục
-      charUsed[idx] = true; // Đánh dấu đã sử dụng
-
-      // Sau khi điền, cập nhật currentSlot để trỏ đến ô trống tiếp theo (nếu có)
+      answerSlots[targetSlot] = charOptions[idx];
+      answerCharIndexes[targetSlot] = idx;
+      charUsed[idx] = true;
       currentSlot = answerSlots.indexOf('');
-      if (currentSlot == -1) { // Nếu tất cả các ô đã điền
-        currentSlot = answerSlots.length; // Đặt về cuối
+      if (currentSlot == -1) {
+        currentSlot = answerSlots.length;
       }
     });
 
-    // Kiểm tra đáp án nếu tất cả các ô đã được điền
-    if (currentSlot == answerSlots.length) { // Dùng currentSlot sau khi cập nhật
+    if (currentSlot == answerSlots.length) {
       final userAnswer = answerSlots.join('');
-      final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', ''); // So sánh chuỗi liền
+      final correctAnswer = questions[currentQuestion]
+          .answer
+          .toUpperCase()
+          .replaceAll(' ', '');
       final correct = userAnswer == correctAnswer;
 
       setState(() {
@@ -259,7 +262,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
 
       if (correct) {
-        // Bắt đầu hiệu ứng rung lắc khi đúng
         _shakeController.forward(from: 0);
         await Future.delayed(const Duration(seconds: 2));
         showCorrectDialog();
@@ -284,7 +286,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             isWrong = false;
             final answer = questions[currentQuestion].answer.toUpperCase();
             answerSlots = List.filled(answer.replaceAll(' ', '').length, '');
-            answerCharIndexes = List.filled(answer.replaceAll(' ', '').length, null);
+            answerCharIndexes =
+                List.filled(answer.replaceAll(' ', '').length, null);
             charOptions = _generateCharOptions(answer.replaceAll(' ', ''));
             charUsed = List.filled(charOptions.length, false);
             currentSlot = 0;
@@ -293,8 +296,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         });
       }
     }
-    // In ra để kiểm tra
-    print('Sau khi chọn: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
+    print(
+        'Sau khi chọn: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
   }
 
   void _startHintCountdown() {
@@ -323,17 +326,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _askFriendInitialTimer?.cancel();
     _askFriendInitialTimer =
         Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_askFriendInitialSeconds == 0) {
-            timer.cancel();
-            setState(() {
-              _askFriendInitialActive = false;
-            });
-          } else {
-            setState(() {
-              _askFriendInitialSeconds--;
-            });
-          }
+      if (_askFriendInitialSeconds == 0) {
+        timer.cancel();
+        setState(() {
+          _askFriendInitialActive = false;
         });
+      } else {
+        setState(() {
+          _askFriendInitialSeconds--;
+        });
+      }
+    });
   }
 
   void _onAnswerSlotTap(int slotIndex) {
@@ -347,14 +350,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         answerCharIndexes[slotIndex] = null;
         isCorrect = false;
 
-        // Tìm ô trống đầu tiên từ bên trái
         currentSlot = answerSlots.indexOf('');
-        if (currentSlot == -1) { // Nếu không có ô trống nào (tức là tất cả đã điền)
-          currentSlot = answerSlots.length; // Đặt về cuối để tránh lỗi
+        if (currentSlot == -1) {
+          currentSlot = answerSlots.length;
         }
 
-        // In ra để kiểm tra
-        print('Sau khi xóa: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
+        print(
+            'Sau khi xóa: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
       });
     }
   }
@@ -413,6 +415,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     daily30Count = prefs.getInt('daily30Count') ?? 0;
     daily50Count = prefs.getInt('daily50Count') ?? 0;
   }
+
   void _showRevealLetterDialog() async {
     if (diamonds < 10) {
       showDialog(
@@ -516,7 +519,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         final answer = questions[currentQuestion].answer.toUpperCase();
         for (int i = 0; i < answerSlots.length; i++) {
           if (answerSlots[i].isEmpty) {
-            String correctChar = answer.replaceAll(' ', '')[i]; // Lấy ký tự từ chuỗi liền
+            String correctChar =
+                answer.replaceAll(' ', '')[i];
             for (int j = 0; j < charOptions.length; j++) {
               if (charOptions[j] == correctChar && !charUsed[j]) {
                 answerSlots[i] = correctChar;
@@ -536,7 +540,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (_hintActive) return;
     final answer = questions[currentQuestion].answer.toUpperCase();
     final words = answer.split(' ');
-    String hint = words[0]; // Luôn lấy từ đầu tiên làm gợi ý
+    String hint = words[0];
+
     setState(() {
       _hintBanner = hint;
       _hintUsedOnce = true;
@@ -560,7 +565,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     const int maxPerRow = 7;
     final answer = questions[currentQuestion].answer.toUpperCase();
-    final double adjustedSize = (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) / maxPerRow * 0.85;
+    final double adjustedSize =
+        (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
+            maxPerRow *
+            0.9;
 
     return Container(
       decoration: const BoxDecoration(
@@ -576,7 +584,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: smallPadding),
+                padding: EdgeInsets.symmetric(
+                    horizontal: mediumPadding, vertical: smallPadding),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -632,20 +641,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           onTap: () {
                             showDialog(
                               context: context,
-                              builder: (context) =>
-                                  Giftpopup(
-                                    dailyCount: dailyCount,
-                                    daily30Count: daily30Count,
-                                    daily50Count: daily50Count,
-                                    onReward: (amount) async {
-                                      setState(() {
-                                        diamonds += amount;
-                                      });
-                                      final prefs =
+                              builder: (context) => Giftpopup(
+                                dailyCount: dailyCount,
+                                daily30Count: daily30Count,
+                                daily50Count: daily50Count,
+                                onReward: (amount) async {
+                                  setState(() {
+                                    diamonds += amount;
+                                  });
+                                  final prefs =
                                       await SharedPreferences.getInstance();
-                                      await prefs.setInt('diamonds', diamonds);
-                                    },
-                                  ),
+                                  await prefs.setInt('diamonds', diamonds);
+                                },
+                              ),
                             );
                           },
                           child: Image.asset(
@@ -660,33 +668,51 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ],
                 ),
               ),
-              SizedBox(height: screenHeight * 0.01),
+
+              SizedBox(height: screenHeight * 0.001),
               Expanded(
                 child: RepaintBoundary(
                   key: previewContainerKey,
                   child: Column(
                     children: [
-                      SizedBox(height: screenHeight * 0.01),
+                      SizedBox(height: screenHeight * 0.005),
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 0),
+                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
-                        height: screenWidth * 0.55,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.transparent),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Image.asset(
-                          'assets/questions/${questions[currentQuestion].imageName}',
-                          fit: BoxFit.cover,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final double imageBoxSize =
+                                    constraints.maxWidth;
+                                return Container(
+                                  width: imageBoxSize,
+                                  height: imageBoxSize * 0.6,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: Colors.black26),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.asset(
+                                      'assets/questions/${questions[currentQuestion].imageName}',
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
-                      SizedBox(height: screenWidth * 0.01),
+                      SizedBox(height: screenWidth * 0.005),
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding, vertical: 0),
+                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
-                        height: screenWidth * 0.15,
+                        height: screenWidth * 0.10,
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/banner.png'),
@@ -699,48 +725,53 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               ? Text(
                                   _hintBanner!,
                                   style: TextStyle(
-                                    fontSize: screenWidth * 0.08,
+                                    fontSize: bannerHeight * 0.4,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.deepPurple,
                                   ),
                                 )
                               : Image.asset(
                                   'assets/images/logo3-15dhbc.png',
-                                  height: screenWidth * 0.5,
+                                  height: bannerHeight * 2.0,
                                   fit: BoxFit.contain,
                                 ),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.012),
+                      SizedBox(height: screenHeight * 0.005),
                       Expanded(
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                                padding: EdgeInsets.all(8.0),
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: mediumPadding),
+                                padding: EdgeInsets.all(4.0),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.white, width: 4),
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 4.0, // Độ cao đủ cho 3 hàng
+                                height: adjustedSize * 3.5,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: _buildAnswerRows(answerSlots, answer, adjustedSize),
+                                  children: _buildAnswerRows(
+                                      answerSlots, answer, adjustedSize),
                                 ),
                               ),
-                              SizedBox(height: screenHeight * 0.008), // Reduced spacing
+
+                              SizedBox(height: screenHeight * 0.01),
+
                               Expanded(
                                 child: Column(
-                                  children: buildCharRows(adjustedSize * 1.05),
+                                  children: buildCharRows(adjustedSize * 1.1),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.02), // Adjusted spacing to be closer
+
                       Padding(
                         padding: EdgeInsets.all(screenWidth * 0.027),
                         child: Column(
@@ -748,7 +779,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             SizedBox(
                               height: screenHeight * 0.07,
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   SizedBox(
@@ -756,11 +788,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     child: ElevatedButton(
                                       onPressed: _showRevealLetterDialog,
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF90C240),
-                                        disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
+                                        backgroundColor:
+                                            const Color(0xFF90C240),
+                                        disabledBackgroundColor:
+                                            const Color(0xFF90C240)
+                                                .withOpacity(0.6),
                                         padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           side: BorderSide(
                                             color: Colors.black,
                                             width: screenWidth * 0.002,
@@ -768,28 +804,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                         ),
                                       ),
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text('Hiện Đáp Án',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                                fontSize: screenWidth * 0.045,
-                                              )),
+                                          Text(
+                                            'Hiện Đáp Án',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontSize: screenWidth * 0.045,
+                                            ),
+                                          ),
                                           RichText(
                                             text: TextSpan(
                                               children: [
                                                 TextSpan(
                                                   text: '10 ',
                                                   style: TextStyle(
-                                                    fontSize: screenWidth * 0.03,
+                                                    fontSize:
+                                                        screenWidth * 0.03,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
                                                   ),
                                                 ),
                                                 WidgetSpan(
-                                                  alignment: PlaceholderAlignment.middle,
+                                                  alignment:
+                                                      PlaceholderAlignment
+                                                          .middle,
                                                   child: Image.asset(
                                                     'assets/images/Diamond_Borderless.png',
                                                     width: screenWidth * 0.04,
@@ -803,62 +845,77 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       ),
                                     ),
                                   ),
+                                  SizedBox(width: screenWidth * 0.001),
                                   SizedBox(
                                     width: screenWidth * 0.31,
                                     child: ElevatedButton.icon(
-                                      onPressed: (_askFriendInitialActive || _askFriendUsedOnce)
+                                      onPressed: (_askFriendInitialActive ||
+                                              _askFriendUsedOnce)
                                           ? null
                                           : captureAndShareWidget,
-                                      icon: const Icon(Icons.share, color: Colors.white),
                                       label: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text('Hỏi Bạn',
+                                          Text('Hỏi Bạn ',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  color: (_askFriendInitialActive ||
-                                                      _askFriendUsedOnce)
-                                                      ? Colors.white70
-                                                      : Colors.white,
-                                                  fontSize: screenWidth * 0.045)),
+                                                  color:
+                                                      (_askFriendInitialActive ||
+                                                              _askFriendUsedOnce)
+                                                          ? Colors.white70
+                                                          : Colors.white,
+                                                  fontSize:
+                                                      screenWidth * 0.045)),
                                           if (_askFriendInitialActive)
                                             Text('${_askFriendInitialSeconds}s',
                                                 style: TextStyle(
-                                                    fontSize: screenWidth * 0.03,
+                                                    fontSize:
+                                                        screenWidth * 0.03,
                                                     color: Colors.white70)),
                                         ],
                                       ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFFF8B52E),
-                                        disabledBackgroundColor: Color(0xFFF8B52E).withOpacity(0.6),
+                                        disabledBackgroundColor:
+                                            Color(0xFFF8B52E).withOpacity(0.6),
                                         padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           side: BorderSide(
                                               color: (_askFriendInitialActive ||
-                                                  _askFriendUsedOnce)
-                                                  ? Colors.black.withOpacity(0.5)
+                                                      _askFriendUsedOnce)
+                                                  ? Colors.black
+                                                      .withOpacity(0.5)
                                                   : Colors.black,
                                               width: screenWidth * 0.002),
                                         ),
                                       ),
                                     ),
                                   ),
+                                  SizedBox(width: screenWidth * 0.001),
                                   SizedBox(
                                     width: screenWidth * 0.31,
                                     child: ElevatedButton(
-                                      onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
+                                      onPressed: (_hintActive || _hintUsedOnce)
+                                          ? null
+                                          : () => _onHint(),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFFF3A3C5),
-                                        disabledBackgroundColor: Color(0xFFF3A3C5).withOpacity(0.6),
+                                        disabledBackgroundColor:
+                                            Color(0xFFF3A3C5).withOpacity(0.6),
                                         padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           side: BorderSide(
-                                              color: (_hintActive || _hintUsedOnce)
-                                                  ? Colors.black.withOpacity(0.5)
-                                                  : Colors.black,
+                                              color:
+                                                  (_hintActive || _hintUsedOnce)
+                                                      ? Colors.black
+                                                          .withOpacity(0.5)
+                                                      : Colors.black,
                                               width: screenWidth * 0.002),
                                         ),
                                       ),
@@ -868,14 +925,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                           Text('Gợi Ý',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                                color: (_hintActive || _hintUsedOnce)
+                                                color: (_hintActive ||
+                                                        _hintUsedOnce)
                                                     ? Colors.white70
                                                     : Colors.white,
                                                 fontSize: screenWidth * 0.045,
                                               )),
                                           if (_hintActive)
                                             Text('${_hintSeconds}s',
-                                                style: TextStyle(color: Colors.white70, fontSize: screenWidth * 0.03)),
+                                                style: TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize:
+                                                        screenWidth * 0.03)),
                                         ],
                                       ),
                                     ),
@@ -883,47 +944,55 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                            SizedBox(height: smallPadding),
                             SizedBox(
-                              width: double.infinity,
-                              height: screenHeight * 0.07,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                              height: smallPadding,
+                            ),
+                            Visibility(
+                              visible: true,
+                              maintainSize: true,
+                              maintainAnimation: true,
+                              maintainState: true,
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: screenHeight * 0.07,
+                                child: ElevatedButton(
+                                  onPressed: () {},
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: EdgeInsets.zero,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
-                                ),
-                                child: RichText(
-                                  textAlign: TextAlign.center,
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: "QUA MÀN\n",
-                                        style: TextStyle(
-                                          color: Color(0xFF616FD7),
-                                          fontSize: screenWidth * 0.07,
-                                          fontWeight: FontWeight.bold,
+                                  child: RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: "QUA MÀN\n",
+                                          style: TextStyle(
+                                            color: Color(0xFF616FD3),
+                                            fontSize: screenWidth * 0.07,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                      TextSpan(
-                                        text: "(Quảng cáo 15s~30s)",
-                                        style: TextStyle(
-                                          color: Color(0xFF43ADED),
-                                          fontSize: screenWidth * 0.03,
-                                          fontWeight: FontWeight.bold,
+                                        TextSpan(
+                                          text: "(Quảng cáo 15s~30s)",
+                                          style: TextStyle(
+                                            color: Color(0xFF43ADED),
+                                            fontSize: screenWidth * 0.03,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ),
@@ -951,14 +1020,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             height: size,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+              transitionBuilder: (child, animation) =>
+                  ScaleTransition(scale: animation, child: child),
               child: charUsed[charIdx]
                   ? const SizedBox.shrink(key: ValueKey('empty'))
                   : GestureDetector(
                       key: ValueKey('char_$charIdx'),
                       onTap: () => _onCharTap(charIdx),
                       child: Container(
-                        margin: EdgeInsets.all(1.0),
+                        margin: EdgeInsets.all(1.5),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
@@ -974,7 +1044,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           child: Text(
                             charOptions[charIdx],
                             style: TextStyle(
-                              fontSize: size * 0.5,
+                              fontSize: size * 0.55,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
@@ -990,71 +1060,101 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.center,
         children: row,
       ));
-      rows.add(SizedBox(height: size * 0.15));
+      rows.add(SizedBox(height: size * 0.3));
       idx += count;
     }
     return rows;
   }
 
-  List<Widget> _buildAnswerRows(List<String> slots, String answer, double size) {
+  List<Widget> _buildAnswerRows(
+      List<String> slots, String answer, double size) {
     List<Widget> rows = [];
     int slotIdx = 0;
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
-
     if (words.length == 2) {
-      // Nếu có đúng 1 khoảng trắng, luôn chia thành 2 dòng, mỗi dòng 1 từ
       for (var word in words) {
-        List<Widget> row = List.generate(word.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: row));
-        rows.add(SizedBox(height: size * 0.2));
+        List<Widget> row = List.generate(
+            word.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
+        rows.add(Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: row.map((widget) => Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                  child: widget,
+                )).toList()));
+        rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
       }
-      // Xoá SizedBox cuối cùng nếu có
       if (rows.isNotEmpty) rows.removeLast();
     } else if (words.length > 2) {
-      // Nếu có nhiều hơn 1 khoảng trắng, áp dụng logic thông minh
       List<Widget> currentRow = [];
       int currentLength = 0;
       for (int i = 0; i < words.length; i++) {
         int wordLen = words[i].length;
         if (currentLength + wordLen > maxCharsPerRow && currentRow.isNotEmpty) {
-          rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
-          rows.add(SizedBox(height: size * 0.2));
+          rows.add(Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: currentRow.map((widget) => Padding(
+                    padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                    child: widget,
+                  )).toList()));
+          rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
           currentRow = [];
           currentLength = 0;
         }
-        currentRow.addAll(List.generate(wordLen, (j) => _buildAnswerBox(slotIdx++, slots, size)));
+        currentRow.addAll(List.generate(
+            wordLen, (j) => _buildAnswerBox(slotIdx++, slots, size)));
         currentLength += wordLen;
         if (i < words.length - 1) {
           if (currentLength <= maxCharsPerRow) {
-            // Thêm khoảng cách giữa các từ trong cùng dòng
-            currentRow.add(SizedBox(width: size * 0.2));
+            currentRow.add(SizedBox(width: size * 0.1));
             currentLength += 1;
           } else {
-            // Nếu vượt quá, xuống dòng tại khoảng trắng này
-            rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
-            rows.add(SizedBox(height: size * 0.2));
+            rows.add(Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: currentRow.map((widget) => Padding(
+                      padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                      child: widget,
+                    )).toList()));
+            rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
             currentRow = [];
             currentLength = 0;
           }
         }
       }
       if (currentRow.isNotEmpty) {
-        rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+        rows.add(Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: currentRow.map((widget) => Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                  child: widget,
+                )).toList()));
       }
     } else {
-      // Trường hợp 1 từ
       String currentWord = words[0];
       if (currentWord.length <= maxCharsPerRow) {
-        List<Widget> currentRow = List.generate(currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+        List<Widget> currentRow = List.generate(
+            currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
+        rows.add(Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: currentRow.map((widget) => Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                  child: widget,
+                )).toList()));
       } else {
         for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
-          int endIdx = (i + maxCharsPerRow < currentWord.length) ? i + maxCharsPerRow : currentWord.length;
-          List<Widget> wordRow = List.generate(endIdx - i, (j) => _buildAnswerBox(slotIdx++, slots, size));
-          rows.add(Row(mainAxisAlignment: MainAxisAlignment.center, children: wordRow));
+          int endIdx = (i + maxCharsPerRow < currentWord.length)
+              ? i + maxCharsPerRow
+              : currentWord.length;
+          List<Widget> wordRow = List.generate(
+              endIdx - i, (j) => _buildAnswerBox(slotIdx++, slots, size));
+          rows.add(Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: wordRow.map((widget) => Padding(
+                    padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                    child: widget,
+                  )).toList()));
           if (endIdx < currentWord.length) {
-            rows.add(SizedBox(height: size * 0.2));
+            rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
           }
         }
       }
@@ -1071,7 +1171,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          double offset =
+              (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
           Color boxColor = Colors.white;
           if (isCorrect) {
             boxColor = Colors.green;
@@ -1083,7 +1184,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             child: Container(
               width: size,
               height: size,
-              margin: EdgeInsets.all(1.0),
+              margin: EdgeInsets.all(2.0),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white, width: 2),
                 color: boxColor,
@@ -1092,15 +1193,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               alignment: Alignment.center,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
                 child: slots[slotIdx].isNotEmpty
                     ? Text(
                         slots[slotIdx],
                         key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
                         style: TextStyle(
-                          fontSize: size * 0.6,
+                          fontSize: size * 0.65,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black, // Luôn giữ màu chữ là đen
+                          color: Colors.black,
                         ),
                         textAlign: TextAlign.center,
                       )

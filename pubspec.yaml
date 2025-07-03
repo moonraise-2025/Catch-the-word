@@ -85,7 +85,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/icondhbc.png"
+  image_path: "assets/images/icondhbc2.png"
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
