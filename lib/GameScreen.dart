@@ -676,34 +676,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.005),
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                        width: double.infinity,
-                        child: ScaleTransition(
-                          scale: _scaleAnimation,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final double imageBoxSize =
-                                    constraints.maxWidth;
-                                return Container(
-                                  width: imageBoxSize,
-                                  height: imageBoxSize * 0.6,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(color: Colors.black26),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Image.asset(
-                                      'assets/questions/${questions[currentQuestion].imageName}',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                );
-                              },
+                      Center(
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.55,
+                          height: MediaQuery.of(context).size.width * 0.55,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/questions/${questions[currentQuestion].imageName}',
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -732,7 +713,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 )
                               : Image.asset(
                                   'assets/images/logo3-15dhbc.png',
-                                  height: bannerHeight * 3.0,
+                                  height: bannerHeight * 4.0,
                                   fit: BoxFit.contain,
                                 ),
                         ),
@@ -752,7 +733,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 3.5,
+                                height: adjustedSize * 3.2,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
@@ -1029,7 +1010,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       key: ValueKey('char_$charIdx'),
                       onTap: () => _onCharTap(charIdx),
                       child: Container(
-                        margin: EdgeInsets.all(7.0),
+                        margin: EdgeInsets.all(6.0),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
@@ -1206,28 +1187,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           return Transform.translate(
             offset: Offset(offset, 0),
             child: Container(
-              width: size,
-              height: size,
-              margin: EdgeInsets.all(2.0),
+              width: size * 0.8,
+              height: size * 0.8,
+              margin: EdgeInsets.all(1.2),
               decoration: boxDecoration,
               alignment: Alignment.center,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) =>
-                    ScaleTransition(scale: animation, child: child),
-                child: slots[slotIdx].isNotEmpty
-                    ? Text(
-                        slots[slotIdx],
-                        key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
-                        style: TextStyle(
-                          fontSize: size * 0.55,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
-                        textAlign: TextAlign.center,
-                      )
-                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
-              ),
+              child: slots[slotIdx].isNotEmpty
+                  ? Text(
+                      slots[slotIdx],
+                      key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                      style: TextStyle(
+                        fontSize: size * 0.55,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    )
+                  : const SizedBox.shrink(key: ValueKey('empty_answer')),
             ),
           );
         },
