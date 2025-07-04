@@ -35,7 +35,7 @@ class InfoPopup extends StatelessWidget {
                       'Thông Tin',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: screenWidth * 0.08,
+                          fontSize: screenWidth * 0.1,
                           fontWeight: FontWeight.w900,
                           color: const Color(0xFF626DD2)),
                     ),
@@ -105,14 +105,16 @@ class InfoPopup extends StatelessWidget {
 
           // Nút đóng
           Positioned(
-            top: screenHeight * 0.09,
-            right: screenWidth * 0.025,
+            top: screenHeight * 0.05,
+            right: screenWidth * 0.02,
             child: GestureDetector(
               onTap: () => Navigator.of(context).pop(),
               child: Image.asset(
                 'assets/images/icon_close.png',
-                width: screenWidth * 0.06,
-                height: screenWidth * 0.06,
+                width: screenWidth * 0.08,
+                // Kích thước theo chiều rộng màn hình
+                height: screenWidth *
+                    0.08, // Kích thước theo chiều rộng màn hình
               ),
             ),
           ),

@@ -250,23 +250,21 @@ class _SettingPopupState extends State<SettingPopup> {
                   alignment: Alignment.center,
                   child: Image.asset(
                     'assets/images/logo.png',
-                    width: screenWidth *
-                        0.7, // Chiều rộng logo theo chiều rộng màn hình
+                    width: screenWidth * 0.7,
                   ),
                 ),
               ),
               // Nút đóng ở góc phải trên
               Positioned(
-                top: screenHeight * 0.05, // Vị trí theo chiều cao màn hình
-                right: screenWidth * 0.02, // Vị trí theo chiều rộng màn hình
+                top: screenHeight * 0.05,
+                right: screenWidth * 0.02,
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
                   child: Image.asset(
                     'assets/images/icon_close.png',
-                    width: screenWidth * 0.06,
-                    // Kích thước theo chiều rộng màn hình
+                    width: screenWidth * 0.08,
                     height: screenWidth *
-                        0.06, // Kích thước theo chiều rộng màn hình
+                        0.08,
                   ),
                 ),
               ),

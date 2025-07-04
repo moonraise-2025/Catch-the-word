@@ -286,8 +286,8 @@ class _GiftpopupState extends State<Giftpopup> {
               onTap: () => Navigator.of(context).pop(),
               child: Image.asset(
                 'assets/images/icon_close.png',
-                width: screenWidth * 0.06,
-                height: screenWidth * 0.06,
+                width: screenWidth * 0.08,
+                height: screenWidth * 0.08,
               ),
             ),
           ),
