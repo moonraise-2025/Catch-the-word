@@ -239,7 +239,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     final answer = questions[currentQuestion].answer.toUpperCase();
     answerSlots = List.filled(answer.replaceAll(' ', '').length,
-         ''); // Chỉ đếm ký tự, bỏ khoảng trống
+        ''); // Chỉ đếm ký tự, bỏ khoảng trống
 
     answerCharIndexes = List.filled(
         answer.replaceAll(' ', '').length, null);
@@ -253,7 +253,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _controller.forward();
     _hintBanner = null;
     _hintUsedOnce = false;
-    _hintWordIndex = 0;
+    // _hintWordIndex = 0;
 
     // _askFriendInitialActive = true;
     // _askFriendInitialSeconds = 30;
@@ -762,6 +762,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.005),
+
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
@@ -836,9 +837,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           )
                               : Image.asset(
                             'assets/images/logo3-15dhbc.png',
-                            height: bannerHeight * 3.0,
+                            height: bannerHeight * 4.0,
                             fit: BoxFit.contain,
                           ),
+
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.005),
@@ -856,7 +858,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 4,
+                                height: adjustedSize * 3.2,
+
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
@@ -1128,7 +1131,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 key: ValueKey('char_$charIdx'),
                 onTap: () => _onCharTap(charIdx),
                 child: Container(
-                  margin: EdgeInsets.all(2.0),
+                  margin: EdgeInsets.all(6.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1150,22 +1153,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
+
                 ),
               ),
             ),
-          ),
-        );
-      }
-
-      rows.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: row,
-      ));
-      if (idx + count < total) {
-        rows.add(SizedBox(height: size * 0.1));
-      }
-      idx += count;
+    ),
+    );
     }
+
+    rows.add(Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: row,
+    ));
+    if (idx + count < total) {
+    rows.add(SizedBox(height: size * 0.1));
+    }
+    idx += count;
+  }
 
     return rows;
   }
@@ -1311,29 +1315,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           return Transform.translate(
             offset: Offset(offset, 0),
             child: Container(
-              width: size,
-              height: size,
-              margin: EdgeInsets.all(2.0),
-              // decoration property holds the BoxDecoration
-              decoration: boxDecoration, // Use the dynamically created boxDecoration
-              alignment: Alignment.center, // Alignment property of Container
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) =>
-                    ScaleTransition(scale: animation, child: child),
-                child: slots[slotIdx].isNotEmpty
-                    ? Text(
-                  slots[slotIdx],
-                  key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
-                  style: TextStyle(
-                    fontSize: size * 0.55,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                  textAlign: TextAlign.center,
-                )
-                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
-              ),
+              width: size * 0.8,
+              height: size * 0.8,
+              margin: EdgeInsets.all(1.2),
+              decoration: boxDecoration,
+              alignment: Alignment.center,
+              child: slots[slotIdx].isNotEmpty
+                  ? Text(
+                slots[slotIdx],
+                key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                style: TextStyle(
+                  fontSize: size * 0.55,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+              )
+                  : const SizedBox.shrink(key: ValueKey('empty_answer')),
+
             ),
           );
         },
