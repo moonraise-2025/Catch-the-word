@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
-import 'PopupWatchVideo.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -56,9 +55,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   String? _hintBanner;
   // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
-  Timer? _askFriendInitialTimer;
-  int _askFriendInitialSeconds = 30;
-  bool _askFriendInitialActive = true;
+  // Timer? _askFriendInitialTimer;
+  // int _askFriendInitialSeconds = 30;
+  // bool _askFriendInitialActive = true;
   bool _askFriendUsedOnce = false;
 
   late AnimationController _controller;
@@ -74,7 +73,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   // int dummyState = 0; // Biến này không được sử dụng
 
   Future<void> captureAndShareWidget() async {
-    if (_askFriendInitialActive || _askFriendUsedOnce) {
+    if (_askFriendUsedOnce) {
       return;
     }
 
@@ -227,7 +226,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _controller.dispose();
     _shakeController.dispose();
     _hintTimer?.cancel();
-    _askFriendInitialTimer?.cancel();
+    // _askFriendInitialTimer?.cancel();
     super.dispose();
   }
 
@@ -239,7 +238,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
 
     final answer = questions[currentQuestion].answer.toUpperCase();
-    answerSlots = List.filled(answer.replaceAll(' ', '').length, '');
+    answerSlots = List.filled(answer.replaceAll(' ', '').length,
+         ''); // Chỉ đếm ký tự, bỏ khoảng trống
+
     answerCharIndexes = List.filled(
         answer.replaceAll(' ', '').length, null);
     charOptions = _generateCharOptions(
@@ -252,12 +253,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _controller.forward();
     _hintBanner = null;
     _hintUsedOnce = false;
-    // _hintWordIndex = 0; // Đã bỏ
-    _askFriendInitialActive = true;
-    _askFriendInitialSeconds = 30;
-    _askFriendUsedOnce = false;
-    _askFriendInitialTimer?.cancel();
-    _startAskFriendInitialCountdown();
+    _hintWordIndex = 0;
+
+    // _askFriendInitialActive = true;
+    // _askFriendInitialSeconds = 30;
+    _askFriendUsedOnce = false; // Đặt lại trạng thái đã dùng
+    // _askFriendInitialTimer?.cancel();
+    // _startAskFriendInitialCountdown();
+
     _startHintCountdown();
   }
 
@@ -384,27 +387,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _startAskFriendInitialCountdown() {
-    setState(() {
-      _askFriendInitialSeconds = 30;
-      _askFriendInitialActive = true;
-    });
-
-    _askFriendInitialTimer?.cancel();
-    _askFriendInitialTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_askFriendInitialSeconds == 0) {
-            timer.cancel();
-            setState(() {
-              _askFriendInitialActive = false;
-            });
-          } else {
-            setState(() {
-              _askFriendInitialSeconds--;
-            });
-          }
-        });
-  }
+  // Phương thức _startAskFriendInitialCountdown đã được loại bỏ
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -973,37 +956,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   SizedBox(width: screenWidth * 0.001),
                                   SizedBox(
                                     width: screenWidth * 0.31,
-                                    child: ElevatedButton.icon(
-                                      onPressed: (_askFriendInitialActive ||
-                                          _askFriendUsedOnce)
-
+                                    child: ElevatedButton(
+                                      onPressed: _askFriendUsedOnce
                                           ? null
                                           : captureAndShareWidget,
-                                      label: Column(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.center,
-
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text('Hỏi Bạn ',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color:
-                                                  (_askFriendInitialActive ||
-                                                      _askFriendUsedOnce)
-                                                      ? Colors.white70
-                                                      : Colors.white,
-                                                  fontSize:
-                                                  screenWidth * 0.045)),
-
-                                          if (_askFriendInitialActive)
-                                            Text('${_askFriendInitialSeconds}s',
-                                                style: TextStyle(
-                                                    fontSize:
-                                                    screenWidth * 0.03,
-                                                    color: Colors.white70)),
-                                        ],
-                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFFF8B52E),
                                         disabledBackgroundColor:
@@ -1013,13 +969,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                           borderRadius:
                                           BorderRadius.circular(10),
                                           side: BorderSide(
-                                              color: (_askFriendInitialActive ||
-                                                  _askFriendUsedOnce)
-                                                  ? Colors.black
-                                                  .withOpacity(0.5)
-
+                                              color: _askFriendUsedOnce
+                                                  ? Colors.black.withOpacity(0.5)
                                                   : Colors.black,
                                               width: screenWidth * 0.002),
+                                        ),
+                                      ),
+                                      child: Text( // Chỉ hiển thị Text, không còn countdown
+                                        'Hỏi Bạn',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: _askFriendUsedOnce
+                                              ? Colors.white70
+                                              : Colors.white,
+                                          fontSize: screenWidth * 0.045,
                                         ),
                                       ),
                                     ),
