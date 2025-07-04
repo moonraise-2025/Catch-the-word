@@ -732,7 +732,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 )
                               : Image.asset(
                                   'assets/images/logo3-15dhbc.png',
-                                  height: bannerHeight * 2.0,
+                                  height: bannerHeight * 3.0,
                                   fit: BoxFit.contain,
                                 ),
                         ),
@@ -787,7 +787,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     width: screenWidth * 0.31,
                                     child: ElevatedButton(
                                       onPressed: _showRevealLetterDialog,
-                                      style: ElevatedButton.styleFrom(
+                                      style: 
+                                      ElevatedButton.styleFrom(
                                         backgroundColor:
                                             const Color(0xFF90C240),
                                         disabledBackgroundColor:
@@ -1087,7 +1088,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(SizedBox(height: size * 0.1)); 
       }
       if (rows.isNotEmpty) rows.removeLast();
-    } else if (words.length > 2) {
+    } else if (words.length > 1) {
       List<Widget> currentRow = [];
       int currentLength = 0;
       for (int i = 0; i < words.length; i++) {
@@ -1114,10 +1115,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             rows.add(Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: currentRow.map((widget) => Padding(
-                      padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                      padding: EdgeInsets.symmetric(horizontal: size * 0.1), 
                       child: widget,
                     )).toList()));
-            rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
+            rows.add(SizedBox(height: size * 0.1)); 
             currentRow = [];
             currentLength = 0;
           }
@@ -1127,7 +1128,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: currentRow.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), 
                   child: widget,
                 )).toList()));
       }
@@ -1139,7 +1140,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: currentRow.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), 
                   child: widget,
                 )).toList()));
       } else {
@@ -1173,13 +1174,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          double offset =
-              (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
-          Color boxColor = Colors.white;
+          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          BoxDecoration boxDecoration;
+          Color textColor = const Color(0xFF556B2F);
           if (isCorrect) {
-            boxColor = Colors.green;
+            boxDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Correct.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
           } else if (isWrong) {
-            boxColor = Colors.red;
+            boxDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Incorrect.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+          } else {
+            boxDecoration = BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.white, width: 2),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = const Color(0xFF556B2F);
           }
           return Transform.translate(
             offset: Offset(offset, 0),
@@ -1187,11 +1209,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               width: size,
               height: size,
               margin: EdgeInsets.all(2.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 2),
-                color: boxColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: boxDecoration,
               alignment: Alignment.center,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
@@ -1202,9 +1220,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         slots[slotIdx],
                         key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
                         style: TextStyle(
-                          fontSize: size * 0.65,
+                          fontSize: size * 0.55,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: textColor,
                         ),
                         textAlign: TextAlign.center,
                       )
