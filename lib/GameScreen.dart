@@ -68,6 +68,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late List<bool> charUsed;
   int currentSlot = 0;
   bool isCorrect = false;
+//   late List<String>
+//   answerSlots; //giải thích: Danh sách ký tự đã điền vào đáp án
+//   late List<String> charOptions; //giải thích: Danh sách ký tự lựa chọn bên dưới
+//   late List<int?> answerCharIndexes; // Lưu chỉ mục của charOptions
+//   late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
+//   int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
+//   bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
 
   Timer? _hintTimer;
   int _hintSeconds = 20;
@@ -107,13 +114,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       }
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List? pngBytes = byteData?.buffer.asUint8List();
 
       if (pngBytes != null) {
         final tempDir = await getTemporaryDirectory();
         final file =
-            await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
+        await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
         await Share.shareFiles([file.path],
             text: 'Chơi game Đuổi hình bắt chữ nè!');
         setState(() {
@@ -145,9 +152,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
     _shakeAnimation =
         Tween<double>(begin: 0, end: 6 * 2 * 3.1415926535).animate(
-      CurvedAnimation(parent: _shakeController, curve: Curves.linear),
-    );
-
+          CurvedAnimation(parent: _shakeController, curve: Curves.linear),
+        );
     _initAnimations();
     _initGame();
 
@@ -188,6 +194,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         answer.replaceAll(' ', '').length, null);
     charOptions = _generateCharOptions(
         answer.replaceAll(' ', ''));
+
     charUsed = List.filled(charOptions.length, false);
     currentSlot = 0;
     isCorrect = false;
@@ -250,11 +257,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
 
     if (currentSlot == answerSlots.length) {
+
       final userAnswer = answerSlots.join('');
       final correctAnswer = questions[currentQuestion]
           .answer
           .toUpperCase()
           .replaceAll(' ', '');
+
       final correct = userAnswer == correctAnswer;
 
       setState(() {
@@ -326,18 +335,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _askFriendInitialTimer?.cancel();
     _askFriendInitialTimer =
         Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_askFriendInitialSeconds == 0) {
-        timer.cancel();
-        setState(() {
-          _askFriendInitialActive = false;
+          if (_askFriendInitialSeconds == 0) {
+            timer.cancel();
+            setState(() {
+              _askFriendInitialActive = false;
+            });
+          } else {
+            setState(() {
+              _askFriendInitialSeconds--;
+            });
+          }
         });
-      } else {
-        setState(() {
-          _askFriendInitialSeconds--;
-        });
-      }
-    });
   }
+
+  // void _onAnswerSlotTap(int slotIndex) {
+  //   if (answerCharIndexes[slotIndex] != null) { // Kiểm tra xem ô có chứa ký tự không
+  //     setState(() {
+  //       int? charIdxToReturn = answerCharIndexes[slotIndex]; // Lấy chỉ mục đã lưu
+  //
+  //       if (charIdxToReturn != null && charIdxToReturn != -1) {
+  //         charUsed[charIdxToReturn] = false; // Đặt lại trạng thái 'đã sử dụng'
+  //       }
+  //       answerSlots[slotIndex] = ''; // Xóa chữ cái hiển thị
+  //       answerCharIndexes[slotIndex] = null; // Xóa chỉ mục
+  //       currentSlot = slotIndex;
+  //       isCorrect = false;
+  //     });
+  //   }
+  // }
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -520,7 +545,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         for (int i = 0; i < answerSlots.length; i++) {
           if (answerSlots[i].isEmpty) {
             String correctChar =
-                answer.replaceAll(' ', '')[i];
+            answer.replaceAll(' ', '')[i];
             for (int j = 0; j < charOptions.length; j++) {
               if (charOptions[j] == correctChar && !charUsed[j]) {
                 answerSlots[i] = correctChar;
@@ -569,6 +594,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
             maxPerRow *
             0.9;
+
 
     return Container(
       decoration: const BoxDecoration(
@@ -650,7 +676,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     diamonds += amount;
                                   });
                                   final prefs =
-                                      await SharedPreferences.getInstance();
+                                  await SharedPreferences.getInstance();
                                   await prefs.setInt('diamonds', diamonds);
                                 },
                               ),
@@ -700,6 +726,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     child: Image.asset(
                                       'assets/questions/${questions[currentQuestion].imageName}',
                                       fit: BoxFit.contain,
+
                                     ),
                                   ),
                                 );
@@ -723,21 +750,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         child: Center(
                           child: _hintBanner != null
                               ? Text(
-                                  _hintBanner!,
-                                  style: TextStyle(
-                                    fontSize: bannerHeight * 0.4,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                )
+                            _hintBanner!,
+                            style: TextStyle(
+                              fontSize: bannerHeight * 0.4,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          )
                               : Image.asset(
-                                  'assets/images/logo3-15dhbc.png',
-                                  height: bannerHeight * 2.0,
-                                  fit: BoxFit.contain,
-                                ),
+                            'assets/images/logo3-15dhbc.png',
+                            height: bannerHeight * 2.0,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.005),
+
                       Expanded(
                         child: Center(
                           child: Column(
@@ -749,10 +777,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 padding: EdgeInsets.all(4.0),
                                 decoration: BoxDecoration(
                                   border:
-                                      Border.all(color: Colors.white, width: 2),
+                                  Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 height: adjustedSize * 3.5,
+
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
@@ -780,7 +809,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               height: screenHeight * 0.07,
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
+
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   SizedBox(
@@ -789,14 +819,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       onPressed: _showRevealLetterDialog,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor:
-                                            const Color(0xFF90C240),
+                                        const Color(0xFF90C240),
                                         disabledBackgroundColor:
-                                            const Color(0xFF90C240)
-                                                .withOpacity(0.6),
+                                        const Color(0xFF90C240)
+                                            .withOpacity(0.6),
                                         padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(10),
+                                          BorderRadius.circular(10),
+
                                           side: BorderSide(
                                             color: Colors.black,
                                             width: screenWidth * 0.002,
@@ -805,7 +836,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       ),
                                       child: Column(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
+
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
@@ -823,15 +855,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                   text: '10 ',
                                                   style: TextStyle(
                                                     fontSize:
-                                                        screenWidth * 0.03,
+                                                    screenWidth * 0.03,
+
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
                                                   ),
                                                 ),
                                                 WidgetSpan(
                                                   alignment:
-                                                      PlaceholderAlignment
-                                                          .middle,
+                                                  PlaceholderAlignment
+                                                      .middle,
+
                                                   child: Image.asset(
                                                     'assets/images/Diamond_Borderless.png',
                                                     width: screenWidth * 0.04,
@@ -850,45 +884,49 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     width: screenWidth * 0.31,
                                     child: ElevatedButton.icon(
                                       onPressed: (_askFriendInitialActive ||
-                                              _askFriendUsedOnce)
+                                          _askFriendUsedOnce)
+
                                           ? null
                                           : captureAndShareWidget,
                                       label: Column(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
+
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text('Hỏi Bạn ',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color:
-                                                      (_askFriendInitialActive ||
-                                                              _askFriendUsedOnce)
-                                                          ? Colors.white70
-                                                          : Colors.white,
+                                                  (_askFriendInitialActive ||
+                                                      _askFriendUsedOnce)
+                                                      ? Colors.white70
+                                                      : Colors.white,
                                                   fontSize:
-                                                      screenWidth * 0.045)),
+                                                  screenWidth * 0.045)),
+
                                           if (_askFriendInitialActive)
                                             Text('${_askFriendInitialSeconds}s',
                                                 style: TextStyle(
                                                     fontSize:
-                                                        screenWidth * 0.03,
+                                                    screenWidth * 0.03,
                                                     color: Colors.white70)),
                                         ],
                                       ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFFF8B52E),
                                         disabledBackgroundColor:
-                                            Color(0xFFF8B52E).withOpacity(0.6),
+                                        Color(0xFFF8B52E).withOpacity(0.6),
                                         padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(10),
+                                          BorderRadius.circular(10),
                                           side: BorderSide(
                                               color: (_askFriendInitialActive ||
-                                                      _askFriendUsedOnce)
+                                                  _askFriendUsedOnce)
                                                   ? Colors.black
-                                                      .withOpacity(0.5)
+                                                  .withOpacity(0.5)
+
                                                   : Colors.black,
                                               width: screenWidth * 0.002),
                                         ),
@@ -905,28 +943,31 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Color(0xFFF3A3C5),
                                         disabledBackgroundColor:
-                                            Color(0xFFF3A3C5).withOpacity(0.6),
+                                        Color(0xFFF3A3C5).withOpacity(0.6),
                                         padding: EdgeInsets.zero,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(10),
+                                          BorderRadius.circular(10),
                                           side: BorderSide(
                                               color:
-                                                  (_hintActive || _hintUsedOnce)
-                                                      ? Colors.black
-                                                          .withOpacity(0.5)
-                                                      : Colors.black,
+                                              (_hintActive || _hintUsedOnce)
+                                                  ? Colors.black
+                                                  .withOpacity(0.5)
+                                                  : Colors.black,
+
                                               width: screenWidth * 0.002),
                                         ),
                                       ),
                                       child: Column(
+                                        //mainAxisAlignment: MainAxisAlignment.center,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text('Gợi Ý',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 color: (_hintActive ||
-                                                        _hintUsedOnce)
+                                                    _hintUsedOnce)
+
                                                     ? Colors.white70
                                                     : Colors.white,
                                                 fontSize: screenWidth * 0.045,
@@ -936,7 +977,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                 style: TextStyle(
                                                     color: Colors.white70,
                                                     fontSize:
-                                                        screenWidth * 0.03)),
+                                                    screenWidth * 0.03)),
+
                                         ],
                                       ),
                                     ),
@@ -1009,9 +1051,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     List<Widget> rows = [];
     int total = charOptions.length;
     int idx = 0;
+
     while (idx < total) {
       int count = (total - idx) >= maxPerRow ? maxPerRow : (total - idx);
       List<Widget> row = [];
+
       for (int i = 0; i < count; i++) {
         int charIdx = idx + i;
         row.add(
@@ -1025,48 +1069,51 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               child: charUsed[charIdx]
                   ? const SizedBox.shrink(key: ValueKey('empty'))
                   : GestureDetector(
-                      key: ValueKey('char_$charIdx'),
-                      onTap: () => _onCharTap(charIdx),
-                      child: Container(
-                        margin: EdgeInsets.all(7.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
-                              blurRadius: 4,
-                              offset: Offset(1, 1),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            charOptions[charIdx],
-                            style: TextStyle(
-                              fontSize: size * 0.45,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF556B2F),
-                            ),
-                          ),
-                        ),
+                key: ValueKey('char_$charIdx'),
+                onTap: () => _onCharTap(charIdx),
+                child: Container(
+                  margin: EdgeInsets.all(7.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 4,
+                        offset: Offset(1, 1),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      charOptions[charIdx],
+                      style: TextStyle(
+                        fontSize: size * 0.45,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF556B2F),
                       ),
                     ),
+                  ),
+                ),
+              ),
             ),
           ),
-        );
-      }
-      rows.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: row,
-      ));
-      if (idx + count < total) {
-        rows.add(SizedBox(height: size * 0.1));
-      }
-      idx += count;
+    );
     }
+
+    rows.add(Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: row,
+    ));
+    if (idx + count < total) {
+    rows.add(SizedBox(height: size * 0.1));
+    }
+    idx += count;
+  }
+
     return rows;
   }
+
 
   List<Widget> _buildAnswerRows(
       List<String> slots, String answer, double size) {
@@ -1081,10 +1128,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), 
-                  child: widget,
-                )).toList()));
-        rows.add(SizedBox(height: size * 0.1)); 
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+              child: widget,
+            )).toList()));
+        rows.add(SizedBox(height: size * 0.1));
+
       }
       if (rows.isNotEmpty) rows.removeLast();
     } else if (words.length > 2) {
@@ -1096,10 +1144,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rows.add(Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: currentRow.map((widget) => Padding(
-                    padding: EdgeInsets.symmetric(horizontal: size * 0.1), 
-                    child: widget,
-                  )).toList()));
-          rows.add(SizedBox(height: size * 0.1)); 
+                padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+                child: widget,
+              )).toList()));
+          rows.add(SizedBox(height: size * 0.1));
+
           currentRow = [];
           currentLength = 0;
         }
@@ -1114,10 +1163,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             rows.add(Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: currentRow.map((widget) => Padding(
-                      padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
-                      child: widget,
-                    )).toList()));
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                  child: widget,
+                )).toList()));
             rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
+
             currentRow = [];
             currentLength = 0;
           }
@@ -1127,9 +1177,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: currentRow.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
-                  child: widget,
-                )).toList()));
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+              child: widget,
+            )).toList()));
+
       }
     } else {
       String currentWord = words[0];
@@ -1139,9 +1190,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: currentRow.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
-                  child: widget,
-                )).toList()));
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+              child: widget,
+            )).toList()));
+
       } else {
         for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
           int endIdx = (i + maxCharsPerRow < currentWord.length)
@@ -1152,11 +1204,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rows.add(Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: wordRow.map((widget) => Padding(
-                    padding: EdgeInsets.symmetric(horizontal: size * 0.1), 
-                    child: widget,
-                  )).toList()));
+                padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+                child: widget,
+              )).toList()));
+
           if (endIdx < currentWord.length) {
-            rows.add(SizedBox(height: size * 0.1)); 
+            rows.add(SizedBox(height: size * 0.1));
           }
         }
       }
@@ -1174,7 +1227,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         animation: _shakeController,
         builder: (context, child) {
           double offset =
-              (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
           Color boxColor = Colors.white;
           if (isCorrect) {
             boxColor = Colors.green;
@@ -1199,15 +1252,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     ScaleTransition(scale: animation, child: child),
                 child: slots[slotIdx].isNotEmpty
                     ? Text(
-                        slots[slotIdx],
-                        key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
-                        style: TextStyle(
-                          fontSize: size * 0.65,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.center,
-                      )
+                  slots[slotIdx],
+                  key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                  style: TextStyle(
+                    fontSize: size * 0.65,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+
                     : const SizedBox.shrink(key: ValueKey('empty_answer')),
               ),
             ),

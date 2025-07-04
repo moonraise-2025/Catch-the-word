@@ -1,4 +1,4 @@
-package com.example.duoihinhbatchu
+package com.duoihinhbatchu.app
 
 import io.flutter.embedding.android.FlutterActivity
 
