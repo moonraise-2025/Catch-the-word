@@ -95,7 +95,7 @@ class _StartScreenState extends State<StartScreen> {
                           fit: BoxFit.contain,
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.04),
+                      SizedBox(height: screenHeight * 0.15),
                       if (lastLevel == null || lastLevel == 1) ...[
                         SizedBox(
                           width: buttonWidth,
@@ -109,7 +109,7 @@ class _StartScreenState extends State<StartScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             onPressed: _startNewGame,
@@ -123,20 +123,21 @@ class _StartScreenState extends State<StartScreen> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: Colors.lightBlue,
+
+                              foregroundColor: Color(0xFF616FD3),
                               textStyle: TextStyle(
                                 fontSize: screenWidth * 0.05,
                                 fontWeight: FontWeight.bold,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             onPressed: _continueGame,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text('Tiếp tục', textAlign: TextAlign.center),
+                    const Text('TIẾP TỤC', textAlign: TextAlign.center),
                                 Text('(Level $lastLevel)',
                                     style: TextStyle(
                                         fontSize: screenWidth * 0.03,

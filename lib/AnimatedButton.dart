@@ -4,11 +4,19 @@ class AnimatedButton extends StatefulWidget {
   final VoidCallback onPressed;
   final String text;
 
+  final double? width;
+  final double? height;
+  final double? fontSize;
+
   const AnimatedButton({
     Key? key,
     required this.onPressed,
     required this.text,
+    this.width,
+    this.height,
+    this.fontSize,
   }) : super(key: key);
+
 
   @override
   State<AnimatedButton> createState() => _AnimatedButtonState();
@@ -53,6 +61,10 @@ class _AnimatedButtonState extends State<AnimatedButton>
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
+    final double buttonWidth = widget.width ?? screenWidth * 0.5;
+    final double buttonHeight = widget.height ?? screenHeight * 0.07;
+    final double textFontSize = widget.fontSize ?? screenWidth * 0.06;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -61,8 +73,8 @@ class _AnimatedButtonState extends State<AnimatedButton>
         animation: _animation,
         builder: (context, child) {
           return Container(
-            width: screenWidth * 0.5, // Chiều rộng tương đối (65% chiều rộng màn hình)
-            height: screenHeight * 0.07, // Chiều cao tương đối (9% chiều cao màn hình)
+            width: buttonWidth,
+            height:buttonHeight,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(screenWidth * 0.02), // Bo góc động
               gradient: RadialGradient(
@@ -76,10 +88,13 @@ class _AnimatedButtonState extends State<AnimatedButton>
             child: Center(
               child: Text(
                 widget.text,
+
                 style: TextStyle(
-                  fontSize: screenWidth * 0.06, // Cỡ chữ động
+                  fontSize:textFontSize,
                   fontWeight: FontWeight.bold,
                   color: _isPressed ? Colors.white : const Color(0xFF8E61DC),
+                  decoration: TextDecoration.none,
+                    fontFamily: 'Roboto'
                 ),
               ),
             ),
