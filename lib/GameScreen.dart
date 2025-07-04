@@ -853,7 +853,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           )
                               : Image.asset(
                             'assets/images/logo3-15dhbc.png',
-                            height: bannerHeight * 2.0,
+                            height: bannerHeight * 3.0,
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -907,7 +907,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     width: screenWidth * 0.31,
                                     child: ElevatedButton(
                                       onPressed: _showRevealLetterDialog,
-                                      style: ElevatedButton.styleFrom(
+                                      style:
+                                      ElevatedButton.styleFrom(
                                         backgroundColor:
                                         const Color(0xFF90C240),
                                         disabledBackgroundColor:
@@ -1224,7 +1225,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
       }
       if (rows.isNotEmpty) rows.removeLast();
-    } else if (words.length > 2) {
+    } else if (words.length > 1) {
       List<Widget> currentRow = [];
       int currentLength = 0;
       for (int i = 0; i < words.length; i++) {
@@ -1248,7 +1249,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           } else {
             rows.add(Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: currentRow)); // Đã xóa Padding ở đây
+                children: currentRow.map((widget) => Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+                  child: widget,
+                )).toList()));
             rows.add(SizedBox(height: size * 0.1));
 
             currentRow = [];
@@ -1259,8 +1263,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       if (currentRow.isNotEmpty) {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: currentRow)); // Đã xóa Padding ở đây
-
+            children: currentRow.map((widget) => Padding(
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+              child: widget,
+            )).toList()));
       }
     } else {
       String currentWord = words[0];
@@ -1269,7 +1275,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: currentRow)); // Đã xóa Padding ở đây
+            children: currentRow.map((widget) => Padding(
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+              child: widget,
+            )).toList()));
 
       } else {
         for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
@@ -1300,26 +1309,51 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          double offset =
-          (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
-          Color boxColor = Colors.white;
+          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          BoxDecoration boxDecoration;
+          Color textColor = const Color(0xFF556B2F);
+          Color boxColor; // Declare boxColor here
+
           if (isCorrect) {
-            boxColor = Colors.green;
+            boxDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Correct.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+            boxColor = Colors.transparent; // Assuming transparent for image background
           } else if (isWrong) {
-            boxColor = Colors.red;
+            boxDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Incorrect.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+            boxColor = Colors.transparent; // Assuming transparent for image background
+          } else {
+            // This is the default state for the answer box
+            boxDecoration = BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.white, width: 2), // Border here is correct
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = const Color(0xFF556B2F);
+            boxColor = Colors.white; // Default color
           }
+
           return Transform.translate(
             offset: Offset(offset, 0),
             child: Container(
               width: size,
               height: size,
-              margin: EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 2),
-                color: boxColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
+              margin: EdgeInsets.all(2.0),
+              // decoration property holds the BoxDecoration
+              decoration: boxDecoration, // Use the dynamically created boxDecoration
+              alignment: Alignment.center, // Alignment property of Container
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 transitionBuilder: (child, animation) =>
@@ -1329,13 +1363,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   slots[slotIdx],
                   key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
                   style: TextStyle(
-                    fontSize: size * 0.65,
+                    fontSize: size * 0.55,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: textColor,
                   ),
                   textAlign: TextAlign.center,
                 )
-
                     : const SizedBox.shrink(key: ValueKey('empty_answer')),
               ),
             ),
