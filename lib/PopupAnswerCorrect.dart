@@ -87,7 +87,7 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                           Text(
                             '5',
                             style: TextStyle(
-                              fontSize: screenWidth * 0.1,
+                              fontSize: screenWidth * 0.15,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF2C86F2),
                               decoration: TextDecoration.none,
@@ -97,8 +97,8 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                           SizedBox(width: screenWidth * 0.01),
                           Image.asset(
                             'assets/images/diamond.png',
-                            width: screenWidth * 0.1,
-                            height: screenHeight * 0.1,
+                            width: screenWidth * 0.15,
+                            height: screenHeight * 0.15,
                           ),
                         ],
                       ),
@@ -106,8 +106,8 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                       AnimatedButton(
                         text: 'TIẾP TỤC',
                         onPressed: widget.onNext,
-                        width: screenWidth * 0.5,
-                        height: screenHeight * 0.07,
+                        width: screenWidth * 0.65,
+                        height: screenHeight * 0.06,
                         fontSize: screenWidth * 0.06,
                       )
                     ],
@@ -129,6 +129,7 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
               ),
             ),
           ),
+          SizedBox(height: screenHeight * 0.65),
         ],
       ),
     );

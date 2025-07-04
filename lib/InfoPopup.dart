@@ -116,6 +116,7 @@ class InfoPopup extends StatelessWidget {
               ),
             ),
           ),
+          SizedBox(height: screenHeight * 0.65),
         ],
       ),
     );

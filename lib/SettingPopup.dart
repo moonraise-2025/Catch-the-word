@@ -270,6 +270,7 @@ class _SettingPopupState extends State<SettingPopup> {
                   ),
                 ),
               ),
+          SizedBox(height: screenHeight * 0.65),
 
         ],
       ),

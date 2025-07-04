@@ -177,133 +177,126 @@ class _GiftpopupState extends State<Giftpopup> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.zero,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: screenWidth * 0.9,
-          maxHeight: screenHeight * 0.6,
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              height: screenHeight * 0.7,
-              width: screenWidth * 0.85,
-              margin: EdgeInsets.only(top: screenHeight * 0.1),
-              padding: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.05,
-                vertical: screenHeight * 0.03,
+    return Center(
+      child: Stack(
+        children: [
+          Container(
+            width: screenWidth * 0.90,
+            height: screenHeight * 0.50,
+            margin: EdgeInsets.only(top: screenHeight * 0.1), // Margin động để chừa chỗ cho tiêu đề/logo
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.03,
+              vertical: screenHeight * 0.025,
+            ),
+            decoration: BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage('assets/images/bg_popup.png'),
+                fit: BoxFit.fill,
               ),
-              decoration: BoxDecoration(
-                image: const DecorationImage(
-                  image: AssetImage('assets/images/bg_popup.png'),
-                  fit: BoxFit.fill,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(height: screenHeight * 0.08),
-                  Text(
-                    'PHẦN THƯỞNG',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.08,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8E61DC),
-                    ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: screenHeight * 0.08),
+                Text(
+                  'PHẦN THƯỞNG',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.09,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF8E61DC),
+                      decoration: TextDecoration.none,
+                      fontFamily: 'Roboto'
                   ),
-                  SizedBox(height: screenHeight * 0.01),
+                ),
+                SizedBox(height: screenHeight * 0.01),
 
-                  // Expanded bọc SingleChildScrollView để nó chiếm hết không gian còn lại và có thể cuộn
-                  Expanded(
-                    child:
-                    SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          FutureBuilder<List<MissionData>>(
-                            future: _missionsFuture,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
-                              } else if (snapshot.hasError) {
-                                return Text('Lỗi: ${snapshot.error}');
-                              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                return const Text('Không có nhiệm vụ nào.');
-                              } else {
-                                return Column(
-                                  children: snapshot.data!.map((mission) {
-                                    return Column(
-                                      children: [
-                                        if (mission.hasProgress)
-                                          _buildMissionRow(
-                                            context: context,
-                                            keyId: mission.keyId,
-                                            title: mission.title,
-                                            reward: mission.reward,
-                                            current: mission.current!,
-                                            total: mission.total!,
-                                            amount: mission.amount,
-                                          )
-                                        else
-                                          _buildMissionNoProgress(
-                                            context: context,
-                                            keyId: mission.keyId,
-                                            title: mission.title,
-                                            reward: mission.reward,
-                                            amount: mission.amount,
-                                          ),
-                                        SizedBox(height: screenHeight * 0.01),
-                                      ],
-                                    );
-                                  }).toList(),
-                                );
-                              }
-                            },
-                          ),
-                        ],
-                      ),
+                // Expanded bọc SingleChildScrollView để nó chiếm hết không gian còn lại và có thể cuộn
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        FutureBuilder<List<MissionData>>(
+                          future: _missionsFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Lỗi: ${snapshot.error}');
+                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Text('Không có nhiệm vụ nào.');
+                            } else {
+                              return Column(
+                                children: snapshot.data!.map((mission) {
+                                  return Column(
+                                    children: [
+                                      if (mission.hasProgress)
+                                        _buildMissionRow(
+                                          context: context,
+                                          keyId: mission.keyId,
+                                          title: mission.title,
+                                          reward: mission.reward,
+                                          current: mission.current!,
+                                          total: mission.total!,
+                                          amount: mission.amount,
+                                        )
+                                      else
+                                        _buildMissionNoProgress(
+                                          context: context,
+                                          keyId: mission.keyId,
+                                          title: mission.title,
+                                          reward: mission.reward,
+                                          amount: mission.amount,
+                                        ),
+                                      SizedBox(height: screenHeight * 0.01),
+                                    ],
+                                  );
+                                }).toList(),
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: screenHeight * 0.02,
-              left: 0,
-              right: 0,
-              child: Align(
-                alignment: Alignment.center,
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: screenWidth * 0.7,
                 ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: screenHeight * 0.02,
+            left: 0,
+            right: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: screenWidth * 0.7,
               ),
             ),
-            Positioned(
-              top: screenHeight * 0.05,
-              right: screenWidth * 0.02,
-              child: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Image.asset(
-                  'assets/images/icon_close.png',
-                  width: screenWidth * 0.06,
-                  height: screenWidth * 0.06,
-                ),
+          ),
+          Positioned(
+            top: screenHeight * 0.05,
+            right: screenWidth * 0.02,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Image.asset(
+                'assets/images/icon_close.png',
+                width: screenWidth * 0.06,
+                height: screenWidth * 0.06,
               ),
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: screenHeight * 0.65),
+
+        ],
       ),
-    );
+    ); // Only one closing parenthesis for the Center widget
   }
-
   Widget _buildMissionRow({
     required BuildContext context,
     required String keyId,
@@ -376,6 +369,8 @@ class _GiftpopupState extends State<Giftpopup> {
                           fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.bold,
                           color: titleColor,
+                            decoration: TextDecoration.none,
+                            fontFamily: 'Roboto'
                         ),
                       ),
                     ),
@@ -425,6 +420,9 @@ class _GiftpopupState extends State<Giftpopup> {
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black45,
+                                  decoration: TextDecoration.none,
+                                  fontFamily: 'Roboto'
+
                               ),
                             ),
                             SizedBox(width: screenWidth * 0.01),
@@ -516,6 +514,8 @@ class _GiftpopupState extends State<Giftpopup> {
                           fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.bold,
                           color: titleColor,
+                            decoration: TextDecoration.none,
+                            fontFamily: 'Roboto'
                         ),
                       ),
                     ),
