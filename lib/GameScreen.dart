@@ -873,7 +873,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                // height: adjustedSize * 3.5,
+                                height: adjustedSize * 4,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
@@ -1233,7 +1233,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rows.add(Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: currentRow)); // Đã xóa Padding ở đây
-          rows.add(SizedBox(height: size * 0.1));
+          rows.add(SizedBox(height: size * 0.05));
 
           currentRow = [];
           currentLength = 0;
@@ -1313,7 +1313,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             child: Container(
               width: size,
               height: size,
-              margin: EdgeInsets.all(2.0),
+              margin: EdgeInsets.all(4),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white, width: 2),
                 color: boxColor,
