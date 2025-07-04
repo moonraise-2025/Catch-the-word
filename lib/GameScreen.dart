@@ -14,12 +14,9 @@ import 'package:intl/intl.dart';
 
 import 'audio_manager.dart';
 
-class Question {
-  final String imageName;
-  final String answer;
+import 'package:duoihinhbatchu/model/question.dart'; // Đảm bảo đúng đường dẫn tới model/question.dart
+import 'package:duoihinhbatchu/service/question_service.dart';
 
-  Question({required this.imageName, required this.answer});
-}
 
 class GameScreen extends StatefulWidget {
   final int initialLevel;
@@ -31,51 +28,32 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
-  final List<Question> questions = [
-    Question(imageName: 'cau1.png', answer: 'CƯỚP BIỂN'),
-    Question(imageName: 'cau2.png', answer: 'THUỶ TINH'),
-    Question(imageName: 'cau3.png', answer: 'GIẤU ĐẦU LÒI ĐUÔI'),
-    Question(imageName: 'cau4.png', answer: 'ĂN NĂN'),
-    Question(imageName: 'cau5.png', answer: 'QUẠT THAN'),
-    Question(imageName: 'cau6.png', answer: 'CẦU HÔN'),
-    Question(imageName: 'cau7.png', answer: 'CHÂN DUNG'),
-    //Question(imageName: 'cau8.png', answer: 'GIẢI THƯỞNG'),
-    Question(imageName: 'cau9.png', answer: 'ĐẦU TƯ'),
-    Question(imageName: 'cau10.png', answer: 'BÀN BẠC'),
-    Question(imageName: 'cau11.png', answer: 'RAU MÁ'),
-    Question(imageName: 'cau12.png', answer: 'MẮT NAI'),
-    Question(imageName: 'cau13.png', answer: 'LƯỠI DAO'),
-    Question(imageName: 'cau14.png', answer: 'NÓI DỐI'),
-    Question(imageName: 'cau15.png', answer: 'MỞ LÒNG'),
-    Question(imageName: 'cau16.png', answer: 'HOA MẮT'),
-    Question(imageName: 'cau17.png', answer: 'CHẠY NƯỚC RÚT'),
-    Question(imageName: 'cau18.png', answer: 'TAY CHÂN'),
-    Question(imageName: 'cau19.png', answer: 'CÁ CHÉP'),
-    Question(imageName: 'cau20.png', answer: 'CÂY CẦU'),
-  ];
+  // Thay thế danh sách questions cứng bằng một danh sách rỗng ban đầu
+  // Dữ liệu sẽ được tải từ JSON
+  List<Question> questions = [];
+  bool _isLoadingQuestions = true; // Biến trạng thái để kiểm tra xem dữ liệu đã tải xong chưa
 
-  int dailyCount = 0; // Biến đếm nhiệm vụ ngày
-  int daily30Count = 0; // Biến đếm nhiệm vụ tuần: 30 câu
-  int daily50Count = 0; // Biến đếm nhiệm vụ tuần: 50 câu
+  int dailyCount = 0;
+  int daily30Count = 0;
+  int daily50Count = 0;
 
-  int currentQuestion = 0; //giải thích: Chỉ số câu hỏi hiện tại
-  int level = 1; //giải thích: Level hiện tại
-  int diamonds = 0; //giải thích: Số kim cương hiện có
+  int currentQuestion = 0;
+  int level = 1;
+  int diamonds = 0;
 
-  late List<String>
-  answerSlots; //giải thích: Danh sách ký tự đã điền vào đáp án
-  late List<String> charOptions; //giải thích: Danh sách ký tự lựa chọn bên dưới
-  late List<int?> answerCharIndexes; // Lưu chỉ mục của charOptions
-  late List<bool> charUsed; //giải thích: Trạng thái đã chọn của từng ký tự
-  int currentSlot = 0; //giải thích: Vị trí ô đáp án hiện tại
-  bool isCorrect = false; //giải thích: Trạng thái đúng/sai của đáp án
+  late List<String> answerSlots;
+  late List<String> charOptions;
+  late List<int?> answerCharIndexes;
+  late List<bool> charUsed;
+  int currentSlot = 0;
+  bool isCorrect = false;
 
   Timer? _hintTimer;
   int _hintSeconds = 20;
   bool _hintActive = false;
   bool _hintUsedOnce = false;
   String? _hintBanner;
-  int _hintWordIndex = 0;
+  // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
   // Timer? _askFriendInitialTimer;
   // int _askFriendInitialSeconds = 30;
@@ -88,11 +66,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
   bool isWrong = false;
-  late final int maxAnswerLength;
+  late int maxAnswerLength; // Sẽ tính toán sau khi tải questions
   late double bannerHeight;
 
   final GlobalKey previewContainerKey = GlobalKey();
-  int dummyState = 0; // Biến phụ để force rebuild UI nếu cần
+  // int dummyState = 0; // Biến này không được sử dụng
 
   Future<void> captureAndShareWidget() async {
     if (_askFriendUsedOnce) {
@@ -129,12 +107,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    if (widget.initialLevel > 1) {
-      level = widget.initialLevel;
-      currentQuestion = widget.initialLevel - 1;
-    }
-    maxAnswerLength =
-        questions.map((q) => q.answer.length).reduce((a, b) => a > b ? a : b);
+    _loadAllDataAndInitGame(); // Gọi hàm tải dữ liệu và khởi tạo game
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -148,13 +121,88 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         Tween<double>(begin: 0, end: 6 * 2 * 3.1415926535).animate(
           CurvedAnimation(parent: _shakeController, curve: Curves.linear),
         );
-
     _initAnimations();
-    _initGame();
-
     checkAndResetDailyProgress();
     _loadDiamonds();
   }
+
+  Future<void> _loadAllDataAndInitGame() async {
+    // Tải danh sách câu hỏi từ QuestionService
+    try {
+      final loadedQuestions = await QuestionService.loadQuestions();
+      setState(() {
+        questions = loadedQuestions;
+        _isLoadingQuestions = false; // Đã tải xong
+      });
+
+      if (questions.isNotEmpty) { // Chỉ khởi tạo game nếu có câu hỏi
+        if (widget.initialLevel > 1) { // Đảm bảo initialLevel không vượt quá số lượng câu hỏi
+          level = min(widget.initialLevel, questions.length);
+          currentQuestion = level - 1;
+        } else {
+          currentQuestion = 0;
+          level = 1;
+        }
+        // Đảm bảo rằng maxAnswerLength được tính sau khi questions được tải
+        maxAnswerLength = questions.map((q) => q.answer.replaceAll(' ', '').length).reduce((a, b) => a > b ? a : b);
+        _initGame(); // Khởi tạo game với câu hỏi đầu tiên (hoặc level được truyền vào)
+      } else { // Xử lý trường hợp không có câu hỏi nào được tải (ví dụ: hiển thị lỗi hoặc quay về màn hình chính)
+        debugPrint("Không có câu hỏi nào được tải từ JSON.");
+        // Bạn có thể showDialog hoặc Navigator.pop ở đây
+        // Để hiển thị lỗi trên màn hình như ảnh chụp, bạn có thể thiết lập một biến trạng thái lỗi
+        // và hiển thị một widget Text dựa trên biến đó.
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("Lỗi"),
+                content: const Text("Không thể tải câu hỏi. Vui lòng kiểm tra file JSON hoặc đường dẫn."),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text("Quay lại"),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Đóng dialog
+                      Navigator.of(context).pop(); // Quay lại màn hình trước đó
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Lỗi khi tải hoặc khởi tạo game: $e');
+      setState(() {
+        _isLoadingQuestions = false; // Vẫn đặt false để dừng indicator
+        // Tùy chọn, đặt trạng thái lỗi để hiển thị cho người dùng
+      });
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Lỗi"),
+              content: Text("Không thể tải câu hỏi. Vui lòng kiểm tra file JSON hoặc đường dẫn. Chi tiết: $e"),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("Quay lại"),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Đóng dialog
+                    Navigator.of(context).pop(); // Quay lại màn hình trước đó
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
+  }
+
 
   Future<void> _loadDiamonds() async {
     final prefs = await SharedPreferences.getInstance();
@@ -183,13 +231,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _initGame() {
+    // Đảm bảo `questions` không rỗng trước khi truy cập
+    if (questions.isEmpty) {
+      debugPrint("Lỗi: Không có câu hỏi để khởi tạo game.");
+      return;
+    }
+
     final answer = questions[currentQuestion].answer.toUpperCase();
     answerSlots = List.filled(answer.replaceAll(' ', '').length,
          ''); // Chỉ đếm ký tự, bỏ khoảng trống
+
     answerCharIndexes = List.filled(
-        answer.replaceAll(' ', '').length, null); // Khởi tạo chỉ mục là null
+        answer.replaceAll(' ', '').length, null);
     charOptions = _generateCharOptions(
-        answer.replaceAll(' ', '')); // Tạo charOptions từ chuỗi liền
+        answer.replaceAll(' ', ''));
+
     charUsed = List.filled(charOptions.length, false);
     currentSlot = 0;
     isCorrect = false;
@@ -204,6 +260,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _askFriendUsedOnce = false; // Đặt lại trạng thái đã dùng
     // _askFriendInitialTimer?.cancel();
     // _startAskFriendInitialCountdown();
+
     _startHintCountdown();
   }
 
@@ -223,10 +280,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         numDistractors = 1 + rnd.nextInt(2);
       }
     }
+    // Thêm các ký tự gây nhiễu, đảm bảo không trùng với ký tự trong đáp án chính
+    // và đủ số lượng theo logic đã có
     while (chars.length < answer.length + numDistractors) {
       String c = alphabet[rnd.nextInt(alphabet.length)];
-      if (!answer.contains(c)) {
+      if (!answer.contains(c)) { // Chỉ thêm nếu ký tự không có trong đáp án
         chars.add(c);
+      }
+      // Nếu có quá nhiều ký tự và không thể tìm thấy ký tự gây nhiễu mới, vòng lặp có thể bị treo.
+      // Cần có một cơ chế thoát hoặc giới hạn số lần thử.
+      // Hiện tại, với alphabet 26 chữ cái, và answer chỉ vài chữ, khả năng treo rất thấp.
+      if (chars.length >= alphabet.length) { // Bảo vệ khỏi vòng lặp vô hạn nếu answer quá dài
+        break;
       }
     }
     chars.shuffle();
@@ -234,38 +299,32 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _onCharTap(int idx) async {
-    // Tìm ô trống đầu tiên để điền vào
     int targetSlot = answerSlots.indexOf('');
-    // Nếu không còn ô trống nào, không làm gì cả
     if (targetSlot == -1) {
       return;
     }
-    // Nếu ký tự đã được sử dụng, cũng không làm gì cả
     if (charUsed[idx]) {
       return;
     }
 
     setState(() {
-      answerSlots[targetSlot] = charOptions[idx]; // Điền vào ô trống tìm được
-      answerCharIndexes[targetSlot] = idx; // Lưu chỉ mục
-      charUsed[idx] = true; // Đánh dấu đã sử dụng
-
-      // Sau khi điền, cập nhật currentSlot để trỏ đến ô trống tiếp theo (nếu có)
+      answerSlots[targetSlot] = charOptions[idx];
+      answerCharIndexes[targetSlot] = idx;
+      charUsed[idx] = true;
       currentSlot = answerSlots.indexOf('');
       if (currentSlot == -1) {
-        // Nếu tất cả các ô đã điền
-        currentSlot = answerSlots.length; // Đặt về cuối
+        currentSlot = answerSlots.length;
       }
     });
 
-    // Kiểm tra đáp án nếu tất cả các ô đã được điền
     if (currentSlot == answerSlots.length) {
-      // Dùng currentSlot sau khi cập nhật
+
       final userAnswer = answerSlots.join('');
       final correctAnswer = questions[currentQuestion]
           .answer
           .toUpperCase()
-          .replaceAll(' ', ''); // So sánh chuỗi liền
+          .replaceAll(' ', '');
+
       final correct = userAnswer == correctAnswer;
 
       setState(() {
@@ -273,7 +332,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
 
       if (correct) {
-        // Bắt đầu hiệu ứng rung lắc khi đúng
         _shakeController.forward(from: 0);
         await Future.delayed(const Duration(seconds: 2));
         showCorrectDialog();
@@ -308,8 +366,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         });
       }
     }
-    // In ra để kiểm tra
-    print(
+    debugPrint(
         'Sau khi chọn: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
   }
 
@@ -332,22 +389,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   // Phương thức _startAskFriendInitialCountdown đã được loại bỏ
 
-  // void _onAnswerSlotTap(int slotIndex) {
-  //   if (answerCharIndexes[slotIndex] != null) { // Kiểm tra xem ô có chứa ký tự không
-  //     setState(() {
-  //       int? charIdxToReturn = answerCharIndexes[slotIndex]; // Lấy chỉ mục đã lưu
-  //
-  //       if (charIdxToReturn != null && charIdxToReturn != -1) {
-  //         charUsed[charIdxToReturn] = false; // Đặt lại trạng thái 'đã sử dụng'
-  //       }
-  //       answerSlots[slotIndex] = ''; // Xóa chữ cái hiển thị
-  //       answerCharIndexes[slotIndex] = null; // Xóa chỉ mục
-  //       currentSlot = slotIndex;
-  //       isCorrect = false;
-  //     });
-  //   }
-  // }
-
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
       setState(() {
@@ -359,15 +400,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         answerCharIndexes[slotIndex] = null;
         isCorrect = false;
 
-        // Tìm ô trống đầu tiên từ bên trái
         currentSlot = answerSlots.indexOf('');
         if (currentSlot == -1) {
-          // Nếu không có ô trống nào (tức là tất cả đã điền)
-          currentSlot = answerSlots.length; // Đặt về cuối để tránh lỗi
+          currentSlot = answerSlots.length;
         }
 
-        // In ra để kiểm tra
-        print(
+        debugPrint(
             'Sau khi xóa: answerSlots = $answerSlots, charUsed = $charUsed, currentSlot = $currentSlot');
       });
     }
@@ -382,24 +420,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         return PopupAnswerCorrect(
           onNext: () async {
             Navigator.of(context).pop();
-            setState(() async {
+            setState(() { // setState không cần async
               if (currentQuestion < questions.length - 1) {
                 currentQuestion++;
                 level++;
                 diamonds += 5;
-                _initGame();
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setInt('lastLevel', level);
-                await prefs.setInt('diamonds', diamonds);
               } else {
                 currentQuestion = 0;
                 level = 1;
                 diamonds = 0;
-                _initGame();
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setInt('lastLevel', 1);
-                await prefs.setInt('diamonds', diamonds);
               }
+              _initGame(); // Gọi _initGame sau khi cập nhật level/question
+              _saveGameProgress(); // Lưu trạng thái game
+              _saveDiamonds(); // Lưu kim cương
             });
           },
         );
@@ -525,14 +558,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       setState(() {
         diamonds -= 10;
       });
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('diamonds', diamonds);
+      await _saveDiamonds();
       setState(() {
         final answer = questions[currentQuestion].answer.toUpperCase();
         for (int i = 0; i < answerSlots.length; i++) {
           if (answerSlots[i].isEmpty) {
             String correctChar =
-            answer.replaceAll(' ', '')[i]; // Lấy ký tự từ chuỗi liền
+            answer.replaceAll(' ', '')[i];
             for (int j = 0; j < charOptions.length; j++) {
               if (charOptions[j] == correctChar && !charUsed[j]) {
                 answerSlots[i] = correctChar;
@@ -552,7 +584,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (_hintActive) return;
     final answer = questions[currentQuestion].answer.toUpperCase();
     final words = answer.split(' ');
-    String hint = words[0]; // Luôn lấy từ đầu tiên làm gợi ý
+    String hint = words[0];
 
     setState(() {
       _hintBanner = hint;
@@ -562,11 +594,52 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _saveGameProgress() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('lastLevel', currentQuestion + 1);
+    await prefs.setInt('lastLevel', level); // Lưu level hiện tại
+  }
+
+  Future<void> _saveDiamonds() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('diamonds', diamonds);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingQuestions) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    if (questions.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Không thể tải câu hỏi. Vui lòng kiểm tra file JSON hoặc đường dẫn.",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Quay lại màn hình trước
+                },
+                child: const Text("Quay lại"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -580,7 +653,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final double adjustedSize =
         (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
             maxPerRow *
-            0.85;
+            0.9;
+
 
     return Container(
       decoration: const BoxDecoration(
@@ -681,18 +755,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
               ),
 
-              // Spacer đẩy riêng cụm ảnh + banner xuống giữa
-
-//                 Expanded(
-//                 child: RepaintBoundary(
-//                   key: previewContainerKey, bọc vào để ảnh
-              SizedBox(height: screenHeight * 0.01),
+              SizedBox(height: screenHeight * 0.001),
               Expanded(
                 child: RepaintBoundary(
                   key: previewContainerKey,
                   child: Column(
                     children: [
-                      SizedBox(height: screenHeight * 0.01),
+                      SizedBox(height: screenHeight * 0.005),
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
@@ -714,9 +783,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: Image.asset(
-                                      'assets/questions/${questions[currentQuestion].imageName}',
-                                      fit: BoxFit.cover,
+                                    // SỬ DỤNG Image.network ĐỂ TẢI HÌNH ẢNH TỪ URL
+                                    child: Image.network(
+                                      questions[currentQuestion].imgQuestion,
+                                      fit: BoxFit.contain,
+                                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                        return const Center(
+                                          child: Icon(Icons.error, color: Colors.red, size: 50),
+                                        );
+                                      },
                                     ),
                                   ),
                                 );
@@ -725,11 +812,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      SizedBox(height: screenWidth * 0.01),
+                      SizedBox(height: screenWidth * 0.005),
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
-                        height: screenWidth * 0.15,
+                        height: screenWidth * 0.10,
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/banner.png'),
@@ -742,20 +829,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               ? Text(
                             _hintBanner!,
                             style: TextStyle(
-                              fontSize: bannerHeight * 0.6,
+                              fontSize: bannerHeight * 0.4,
                               fontWeight: FontWeight.bold,
                               color: Colors.deepPurple,
                             ),
                           )
                               : Image.asset(
                             'assets/images/logo3-15dhbc.png',
-                            height: bannerHeight * 2.5,
+                            height: bannerHeight * 3.0,
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.005),
-
                       Expanded(
                         child: Center(
                           child: Column(
@@ -764,25 +850,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               Container(
                                 margin: EdgeInsets.symmetric(
                                     horizontal: mediumPadding),
-                                padding: EdgeInsets.all(5.0),
+                                padding: EdgeInsets.all(4.0),
                                 decoration: BoxDecoration(
                                   border:
-                                  Border.all(color: Colors.white, width: 3),
+                                  Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 4.0,
+                                height: adjustedSize * 4,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
                                       answerSlots, answer, adjustedSize),
                                 ),
                               ),
-
-                              SizedBox(height: screenHeight * 0.005),
-
+                              SizedBox(height: screenHeight * 0.01),
                               Expanded(
                                 child: Column(
-                                  children: buildCharRows(adjustedSize * 1.05),
+                                  children: buildCharRows(adjustedSize * 1.2),
                                 ),
                               ),
                             ],
@@ -799,13 +883,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               child: Row(
                                 mainAxisAlignment:
                                 MainAxisAlignment.spaceBetween,
+
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   SizedBox(
                                     width: screenWidth * 0.31,
                                     child: ElevatedButton(
                                       onPressed: _showRevealLetterDialog,
-                                      style: ElevatedButton.styleFrom(
+                                      style:
+                                      ElevatedButton.styleFrom(
                                         backgroundColor:
                                         const Color(0xFF90C240),
                                         disabledBackgroundColor:
@@ -815,6 +901,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                           BorderRadius.circular(10),
+
                                           side: BorderSide(
                                             color: Colors.black,
                                             width: screenWidth * 0.002,
@@ -824,6 +911,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                       child: Column(
                                         mainAxisAlignment:
                                         MainAxisAlignment.center,
+
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
@@ -842,6 +930,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                   style: TextStyle(
                                                     fontSize:
                                                     screenWidth * 0.03,
+
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
                                                   ),
@@ -850,6 +939,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                   alignment:
                                                   PlaceholderAlignment
                                                       .middle,
+
                                                   child: Image.asset(
                                                     'assets/images/Diamond_Borderless.png',
                                                     width: screenWidth * 0.04,
@@ -918,6 +1008,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                   ? Colors.black
                                                   .withOpacity(0.5)
                                                   : Colors.black,
+
                                               width: screenWidth * 0.002),
                                         ),
                                       ),
@@ -930,6 +1021,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                 fontWeight: FontWeight.bold,
                                                 color: (_hintActive ||
                                                     _hintUsedOnce)
+
                                                     ? Colors.white70
                                                     : Colors.white,
                                                 fontSize: screenWidth * 0.045,
@@ -940,6 +1032,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                                     color: Colors.white70,
                                                     fontSize:
                                                     screenWidth * 0.03)),
+
                                         ],
                                       ),
                                     ),
@@ -959,7 +1052,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 width: double.infinity,
                                 height: screenHeight * 0.07,
                                 child: ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     padding: EdgeInsets.zero,
@@ -1012,9 +1107,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     List<Widget> rows = [];
     int total = charOptions.length;
     int idx = 0;
+
     while (idx < total) {
       int count = (total - idx) >= maxPerRow ? maxPerRow : (total - idx);
       List<Widget> row = [];
+
       for (int i = 0; i < count; i++) {
         int charIdx = idx + i;
         row.add(
@@ -1031,7 +1128,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 key: ValueKey('char_$charIdx'),
                 onTap: () => _onCharTap(charIdx),
                 child: Container(
-                  margin: EdgeInsets.all(1.0),
+                  margin: EdgeInsets.all(2.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1047,9 +1144,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     child: Text(
                       charOptions[charIdx],
                       style: TextStyle(
-                        fontSize: size * 0.5,
+                        fontSize: size * 0.45,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Color(0xFF556B2F),
                       ),
                     ),
                   ),
@@ -1059,15 +1156,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
         );
       }
+
       rows.add(Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: row,
       ));
-      rows.add(SizedBox(height: size * 0.15));
+      if (idx + count < total) {
+        rows.add(SizedBox(height: size * 0.1));
+      }
       idx += count;
     }
+
     return rows;
   }
+
 
   List<Widget> _buildAnswerRows(
       List<String> slots, String answer, double size) {
@@ -1076,18 +1178,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
     if (words.length == 2) {
-      // Nếu có đúng 1 khoảng trắng, luôn chia thành 2 dòng, mỗi dòng 1 từ
       for (var word in words) {
         List<Widget> row = List.generate(
             word.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: row));
-        rows.add(SizedBox(height: size * 0.2));
+        rows.add(Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: row)); // Đã xóa Padding ở đây
+        rows.add(SizedBox(height: size * 0.1));
+
       }
-      // Xoá SizedBox cuối cùng nếu có
       if (rows.isNotEmpty) rows.removeLast();
-    } else if (words.length > 2) {
-      // Nếu có nhiều hơn 1 khoảng trắng, áp dụng logic thông minh
+    } else if (words.length > 1) {
       List<Widget> currentRow = [];
       int currentLength = 0;
       for (int i = 0; i < words.length; i++) {
@@ -1095,8 +1196,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         if (currentLength + wordLen > maxCharsPerRow && currentRow.isNotEmpty) {
           rows.add(Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: currentRow));
-          rows.add(SizedBox(height: size * 0.2));
+              children: currentRow)); // Đã xóa Padding ở đây
+          rows.add(SizedBox(height: size * 0.05));
+
           currentRow = [];
           currentLength = 0;
         }
@@ -1105,15 +1207,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         currentLength += wordLen;
         if (i < words.length - 1) {
           if (currentLength <= maxCharsPerRow) {
-            // Thêm khoảng cách giữa các từ trong cùng dòng
-            currentRow.add(SizedBox(width: size * 0.2));
+            currentRow.add(SizedBox(width: size * 0.1));
             currentLength += 1;
           } else {
-            // Nếu vượt quá, xuống dòng tại khoảng trắng này
             rows.add(Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: currentRow));
-            rows.add(SizedBox(height: size * 0.2));
+                children: currentRow.map((widget) => Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+                  child: widget,
+                )).toList()));
+            rows.add(SizedBox(height: size * 0.1));
+
             currentRow = [];
             currentLength = 0;
           }
@@ -1121,16 +1225,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       }
       if (currentRow.isNotEmpty) {
         rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: currentRow.map((widget) => Padding(
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+              child: widget,
+            )).toList()));
       }
     } else {
-      // Trường hợp 1 từ
       String currentWord = words[0];
       if (currentWord.length <= maxCharsPerRow) {
         List<Widget> currentRow = List.generate(
             currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
         rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center, children: currentRow));
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: currentRow.map((widget) => Padding(
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+              child: widget,
+            )).toList()));
+
       } else {
         for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
           int endIdx = (i + maxCharsPerRow < currentWord.length)
@@ -1139,9 +1251,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           List<Widget> wordRow = List.generate(
               endIdx - i, (j) => _buildAnswerBox(slotIdx++, slots, size));
           rows.add(Row(
-              mainAxisAlignment: MainAxisAlignment.center, children: wordRow));
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: wordRow)); // Đã xóa Padding ở đây
+
           if (endIdx < currentWord.length) {
-            rows.add(SizedBox(height: size * 0.2));
+            rows.add(SizedBox(height: size * 0.1));
           }
         }
       }
@@ -1158,26 +1272,51 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          double offset =
-          (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
-          Color boxColor = Colors.white;
+          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          BoxDecoration boxDecoration;
+          Color textColor = const Color(0xFF556B2F);
+          Color boxColor; // Declare boxColor here
+
           if (isCorrect) {
-            boxColor = Colors.green;
+            boxDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Correct.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+            boxColor = Colors.transparent; // Assuming transparent for image background
           } else if (isWrong) {
-            boxColor = Colors.red;
+            boxDecoration = BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/Incorrect.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+            boxColor = Colors.transparent; // Assuming transparent for image background
+          } else {
+            // This is the default state for the answer box
+            boxDecoration = BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.white, width: 2), // Border here is correct
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = const Color(0xFF556B2F);
+            boxColor = Colors.white; // Default color
           }
+
           return Transform.translate(
             offset: Offset(offset, 0),
             child: Container(
               width: size,
               height: size,
-              margin: EdgeInsets.all(1.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 2),
-                color: boxColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
+              margin: EdgeInsets.all(2.0),
+              // decoration property holds the BoxDecoration
+              decoration: boxDecoration, // Use the dynamically created boxDecoration
+              alignment: Alignment.center, // Alignment property of Container
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 transitionBuilder: (child, animation) =>
@@ -1187,9 +1326,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   slots[slotIdx],
                   key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
                   style: TextStyle(
-                    fontSize: size * 0.6,
+                    fontSize: size * 0.55,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black, // Luôn giữ màu chữ là đen
+                    color: textColor,
                   ),
                   textAlign: TextAlign.center,
                 )

@@ -68,10 +68,12 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
     - assets/audio/
+    - assets/questions.json
     - assets/images/BackgroundDHBC.png
     - assets/images/logodhbc.png
     - assets/images/banner.png
@@ -85,7 +87,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/icondhbc.png"
+  image_path: "assets/images/icondhbc2.png"
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
