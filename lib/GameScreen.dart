@@ -1072,7 +1072,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 key: ValueKey('char_$charIdx'),
                 onTap: () => _onCharTap(charIdx),
                 child: Container(
-                  margin: const EdgeInsets.all(1.5),
+                  margin: EdgeInsets.all(7.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1080,7 +1080,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       BoxShadow(
                         color: Colors.black.withOpacity(0.15),
                         blurRadius: 4,
-                        offset: const Offset(1, 1),
+                        offset: Offset(1, 1),
                       ),
                     ],
                   ),
@@ -1088,9 +1088,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     child: Text(
                       charOptions[charIdx],
                       style: TextStyle(
-                        fontSize: size * 0.55,
+                        fontSize: size * 0.45,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Color(0xFF556B2F),
                       ),
                     ),
                   ),
@@ -1098,16 +1098,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
-        );
-      }
-
-      rows.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: row,
-      ));
-      rows.add(SizedBox(height: size * 0.3));
-      idx += count;
+    );
     }
+
+    rows.add(Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: row,
+    ));
+    if (idx + count < total) {
+    rows.add(SizedBox(height: size * 0.1));
+    }
+    idx += count;
+  }
 
     return rows;
   }
@@ -1126,10 +1128,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         rows.add(Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((widget) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
               child: widget,
             )).toList()));
-        rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
+        rows.add(SizedBox(height: size * 0.1));
 
       }
       if (rows.isNotEmpty) rows.removeLast();
@@ -1142,10 +1144,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rows.add(Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: currentRow.map((widget) => Padding(
-                padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                padding: EdgeInsets.symmetric(horizontal: size * 0.1),
                 child: widget,
               )).toList()));
-          rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
+          rows.add(SizedBox(height: size * 0.1));
 
           currentRow = [];
           currentLength = 0;
@@ -1202,12 +1204,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           rows.add(Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: wordRow.map((widget) => Padding(
-                padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Reduced from 0.15 to 0.1
+                padding: EdgeInsets.symmetric(horizontal: size * 0.1),
                 child: widget,
               )).toList()));
 
           if (endIdx < currentWord.length) {
-            rows.add(SizedBox(height: size * 0.1)); // Reduced from 0.3 to 0.1
+            rows.add(SizedBox(height: size * 0.1));
           }
         }
       }
