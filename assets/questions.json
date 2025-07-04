@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau1.png?raw=true",
+    "answer": "CƯỚP BIỂN",
+    "answer_type": "CƯỚP"
+  },
+  {
+    "id": "2",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau2.png?raw=true",
+    "answer": "THUỶ TINH",
+    "answer_type": "THUỶ"
+  },
+  {
+    "id": "3",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau3.png?raw=true",
+    "answer": "GIẤU ĐẦU LÒI ĐUÔI",
+    "answer_type": "GIẤU"
+  },
+  {
+    "id": "4",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau4.png?raw=true",
+    "answer": "ĂN NĂN",
+    "answer_type": "ĂN"
+  },
+  {
+    "id": "5",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau5.png?raw=true",
+    "answer": "QUẠT THAN",
+    "answer_type": "QUẠT"
+  },
+  {
+    "id": "6",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau6.png?raw=true",
+    "answer": "CẦU HÔN",
+    "answer_type": "CẦU"
+  },
+  {
+    "id": "7",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau7.png?raw=true",
+    "answer": "CHÂN DUNG",
+    "answer_type": "CHÂN"
+  },
+  {
+    "id": "8",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau8.png?raw=true",
+    "answer": "GIẢI THƯỞNG",
+    "answer_type": "GIẢI"
+  },
+  {
+    "id": "9",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau9.png?raw=true",
+    "answer": "ĐẦU TƯ",
+    "answer_type": "ĐẦU"
+  },
+  {
+    "id": "10",
+    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau10.png?raw=true",
+    "answer": "BÀN BẠC",
+    "answer_type": "BÀN"
+  }
+]
