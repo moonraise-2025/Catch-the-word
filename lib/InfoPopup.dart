@@ -30,23 +30,27 @@ class InfoPopup extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // SizedBox(height: screenHeight * 0.01), // Để tránh logo đè lên
+                    SizedBox(height: screenHeight * 0.01),
                     Text(
                       'Thông Tin',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: screenWidth * 0.1,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF626DD2)),
+                          color: const Color(0xFF626DD2),
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Roboto'),
                     ),
                     SizedBox(height: screenHeight * 0.015),
                     Text(
                       'Đuổi hình bắt chữ là trò chơi trí tuệ, nơi bạn đoán câu, từ qua các hình ảnh gợi ý.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: screenWidth * 0.036,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white),
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Roboto'),
                     ),
                     SizedBox(height: screenHeight * 0.015),
                     Text(
@@ -55,34 +59,46 @@ class InfoPopup extends StatelessWidget {
                       style: TextStyle(
                           fontSize: screenWidth * 0.07,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF626DD2)),
+                          color: const Color(0xFF626DD2),
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Roboto'
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     Text(
-                      '1. Nghĩ nhiều nghĩa/âm, từ Hán-Việt cho hình ảnh.\n(VD: ngựa = mã, tim = tâm...)',
+                      '1. Nghĩ nhiều nghĩa/âm, từ Hán-Việt cho\n hình ảnh.\n(VD: ngựa = mã, tim = tâm...)',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: screenWidth * 0.036,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white),
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Roboto'
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     Text(
                       '2. Chơi cùng bạn bè để có nhiều ý tưởng hơn',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: screenWidth * 0.036,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white),
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Roboto'
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     Text(
                       '3. Dùng gợi ý trong app',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          fontSize: screenWidth * 0.036,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white),
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Roboto'
+                      ),
                     )
                   ],
                 ),

@@ -181,10 +181,32 @@ class _StartScreenState extends State<StartScreen> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          showDialog(
+                          showGeneralDialog(
                             context: context,
-                            builder: (BuildContext context) {
-                              return const InfoPopup();
+                            barrierDismissible: true,
+                            barrierLabel: 'InfoPopup',
+                            barrierColor: Colors.black.withOpacity(0.5),
+                            transitionDuration: const Duration(milliseconds: 500),
+                            pageBuilder: (context, animation, secondaryAnimation) {
+                              return const InfoPopup( );
+                            },
+                            transitionBuilder: (context, animation, secondaryAnimation, child) {
+                              // Hiệu ứng phóng to/thu nhỏ
+                              return ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
+                                  reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+                                ),
+                                child: FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut, // Mờ dần khi hiện ra
+                                    reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+                                  ),
+                                  child: child,
+                                ),
+                              );
                             },
                           );
                         },
@@ -198,10 +220,33 @@ class _StartScreenState extends State<StartScreen> {
                       SizedBox(width: screenWidth * 0.04),
                       GestureDetector(
                         onTap: () {
-                          showDialog(
+                          // Thay thế showDialog bằng showGeneralDialog để tùy chỉnh transition
+                          showGeneralDialog(
                             context: context,
-                            builder: (BuildContext context) {
+                            barrierDismissible: true,
+                            barrierLabel: 'SettingPopup',
+                            barrierColor: Colors.black.withOpacity(0.5),
+                            transitionDuration: const Duration(milliseconds: 500),
+                            pageBuilder: (context, animation, secondaryAnimation) {
                               return const SettingPopup();
+                            },
+                            transitionBuilder: (context, animation, secondaryAnimation, child) {
+                              // Hiệu ứng phóng to/thu nhỏ
+                              return ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
+                                  reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+                                ),
+                                child: FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut, // Mờ dần khi hiện ra
+                                    reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+                                  ),
+                                  child: child,
+                                ),
+                              );
                             },
                           );
                         },

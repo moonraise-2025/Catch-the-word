@@ -79,7 +79,9 @@ class _SettingPopupState extends State<SettingPopup> {
                         style: TextStyle(
                             fontSize: screenWidth * 0.1,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFF626DD2)),
+                            color: const Color(0xFF626DD2),
+                            decoration: TextDecoration.none,
+                            fontFamily: 'Roboto'),
                       ),
                       SizedBox(height: screenHeight *0.01 ),
                       Padding(
@@ -93,7 +95,9 @@ class _SettingPopupState extends State<SettingPopup> {
                                 style: TextStyle(
                                     fontSize: screenWidth * 0.06,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
+                                    color: Colors.white,
+                                    decoration: TextDecoration.none,
+                                    fontFamily: 'Roboto')),
                             SizedBox(width: screenWidth * 0.04),
                             GestureDetector(
                               onTap: () async {
@@ -149,7 +153,9 @@ class _SettingPopupState extends State<SettingPopup> {
                                 style: TextStyle(
                                     fontSize: screenWidth * 0.06,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
+                                    color: Colors.white,
+                                    decoration: TextDecoration.none,
+                                    fontFamily: 'Roboto')),
                             SizedBox(width: screenWidth * 0.04),
                             GestureDetector(
                               onTap: () async {
