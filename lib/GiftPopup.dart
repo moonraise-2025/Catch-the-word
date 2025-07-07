@@ -565,6 +565,8 @@ class _GiftpopupState extends State<Giftpopup> {
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black45,
+                                  decoration: TextDecoration.none,
+                                  fontFamily: 'Roboto'
                               ),
                             ),
                             SizedBox(width: screenWidth * 0.01),

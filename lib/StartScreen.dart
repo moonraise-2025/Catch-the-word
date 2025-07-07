@@ -15,6 +15,7 @@ class StartScreen extends StatefulWidget {
 class _StartScreenState extends State<StartScreen> {
   int? lastLevel;
   bool loading = true;
+  Map<String, bool> _isPressedMap = {};
 
   @override
   void initState() {
@@ -40,7 +41,6 @@ class _StartScreenState extends State<StartScreen> {
       ),
     );
     _loadLastLevel();
-
   }
 
   void _continueGame() async {
@@ -97,52 +97,75 @@ class _StartScreenState extends State<StartScreen> {
                       ),
                       SizedBox(height: screenHeight * 0.15),
                       if (lastLevel == null || lastLevel == 1) ...[
-                        SizedBox(
-                          width: buttonWidth,
-                          height: buttonHeight,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.blue,
-                              textStyle: TextStyle(
-                                fontSize: screenWidth * 0.05,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                        AnimatedScale(
+                          scale: _isPressedMap['start_game'] == true ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: GestureDetector(
+                            onTapDown: (_) => setState(() => _isPressedMap['start_game'] = true),
+                            onTapUp: (_) {
+                              setState(() => _isPressedMap['start_game'] = false);
+                              _startNewGame();
+                            },
+                            onTapCancel: () => setState(() => _isPressedMap['start_game'] = false),
+                            child: SizedBox(
+                              width: buttonWidth,
+                              height: buttonHeight,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.blue,
+                                  textStyle: TextStyle(
+                                    fontSize: screenWidth * 0.05,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onPressed: _startNewGame,
+                                child: const Text('Chơi ngay', textAlign: TextAlign.center),
                               ),
                             ),
-                            onPressed: _startNewGame,
-                            child: const Text('Chơi ngay', textAlign: TextAlign.center),
                           ),
                         ),
                       ] else ...[
-                        SizedBox(
-                          width: buttonWidth,
-                          height: buttonHeight,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-
-                              foregroundColor: Color(0xFF616FD3),
-                              textStyle: TextStyle(
-                                fontSize: screenWidth * 0.05,
-                                fontWeight: FontWeight.bold,
+                        AnimatedScale(
+                          scale: _isPressedMap['continue_game'] == true ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: GestureDetector(
+                            onTapDown: (_) => setState(() => _isPressedMap['continue_game'] = true),
+                            onTapUp: (_) {
+                              setState(() => _isPressedMap['continue_game'] = false);
+                              _continueGame();
+                            },
+                            onTapCancel: () => setState(() => _isPressedMap['continue_game'] = false),
+                            child: SizedBox(
+                              width: buttonWidth,
+                              height: buttonHeight,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF616FD3),
+                                  textStyle: TextStyle(
+                                    fontSize: screenWidth * 0.05,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                onPressed: _continueGame,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text('TIẾP TỤC', textAlign: TextAlign.center),
+                                    Text('(Level $lastLevel)',
+                                        style: TextStyle(
+                                            fontSize: screenWidth * 0.03,
+                                            color: const Color(0xFF4E4E51))),
+                                  ],
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: _continueGame,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                    const Text('TIẾP TỤC', textAlign: TextAlign.center),
-                                Text('(Level $lastLevel)',
-                                    style: TextStyle(
-                                        fontSize: screenWidth * 0.03,
-                                        color: Color(0xFF4E4E51))),
-                              ],
                             ),
                           ),
                         ),
@@ -158,10 +181,32 @@ class _StartScreenState extends State<StartScreen> {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          showDialog(
+                          showGeneralDialog(
                             context: context,
-                            builder: (BuildContext context) {
-                              return const InfoPopup();
+                            barrierDismissible: true,
+                            barrierLabel: 'InfoPopup',
+                            barrierColor: Colors.black.withOpacity(0.5),
+                            transitionDuration: const Duration(milliseconds: 500),
+                            pageBuilder: (context, animation, secondaryAnimation) {
+                              return const InfoPopup( );
+                            },
+                            transitionBuilder: (context, animation, secondaryAnimation, child) {
+                              // Hiệu ứng phóng to/thu nhỏ
+                              return ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
+                                  reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+                                ),
+                                child: FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut, // Mờ dần khi hiện ra
+                                    reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+                                  ),
+                                  child: child,
+                                ),
+                              );
                             },
                           );
                         },
@@ -175,10 +220,33 @@ class _StartScreenState extends State<StartScreen> {
                       SizedBox(width: screenWidth * 0.04),
                       GestureDetector(
                         onTap: () {
-                          showDialog(
+                          // Thay thế showDialog bằng showGeneralDialog để tùy chỉnh transition
+                          showGeneralDialog(
                             context: context,
-                            builder: (BuildContext context) {
+                            barrierDismissible: true,
+                            barrierLabel: 'SettingPopup',
+                            barrierColor: Colors.black.withOpacity(0.5),
+                            transitionDuration: const Duration(milliseconds: 500),
+                            pageBuilder: (context, animation, secondaryAnimation) {
                               return const SettingPopup();
+                            },
+                            transitionBuilder: (context, animation, secondaryAnimation, child) {
+                              // Hiệu ứng phóng to/thu nhỏ
+                              return ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
+                                  reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+                                ),
+                                child: FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut, // Mờ dần khi hiện ra
+                                    reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+                                  ),
+                                  child: child,
+                                ),
+                              );
                             },
                           );
                         },
@@ -199,4 +267,4 @@ class _StartScreenState extends State<StartScreen> {
       ),
     );
   }
-} 
+}

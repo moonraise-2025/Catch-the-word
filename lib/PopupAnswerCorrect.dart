@@ -12,6 +12,8 @@ class PopupAnswerCorrect extends StatefulWidget {
 }
 
 class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
+  bool _isNextButtonPressed = false;
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -73,10 +75,10 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                         'CHÍNH XÁC',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: screenWidth * 0.1,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF626DD2),
-                          decoration: TextDecoration.none,
+                            fontSize: screenWidth * 0.1,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF626DD2),
+                            decoration: TextDecoration.none,
                             fontFamily: 'Roboto'
                         ),
                       ),
@@ -87,10 +89,10 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                           Text(
                             '5',
                             style: TextStyle(
-                              fontSize: screenWidth * 0.15,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2C86F2),
-                              decoration: TextDecoration.none,
+                                fontSize: screenWidth * 0.15,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF2C86F2),
+                                decoration: TextDecoration.none,
                                 fontFamily: 'Roboto'
                             ),
                           ),
@@ -103,12 +105,27 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                         ],
                       ),
                       SizedBox(height: screenHeight * 0.04),
-                      AnimatedButton(
-                        text: 'TIẾP TỤC',
-                        onPressed: widget.onNext,
-                        width: screenWidth * 0.65,
-                        height: screenHeight * 0.06,
-                        fontSize: screenWidth * 0.06,
+                      AnimatedScale(
+                        scale: _isNextButtonPressed ? 0.95 : 1.0, // Co lại 5% khi nhấn, về 100% khi nhả
+                        duration: const Duration(milliseconds: 100),
+                        child: GestureDetector(
+                          onTapDown: (_) => setState(() => _isNextButtonPressed = true),
+                          onTapUp: (_) {
+                            setState(() {
+                              _isNextButtonPressed = false; // Đặt lại trạng thái không nhấn
+                            });
+
+                          },
+                          onTapCancel: () => setState(() => _isNextButtonPressed = false),
+
+                          child: AnimatedButton(
+                            text: 'TIẾP TỤC',
+                            onPressed: () {widget.onNext();},
+                            width: screenWidth * 0.65,
+                            height: screenHeight * 0.06,
+                            fontSize: screenWidth * 0.06,
+                          ),
+                        ),
                       )
                     ],
                   ),
