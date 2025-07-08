@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
+import 'PopupWatchVideo.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -57,9 +58,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   String? _hintBanner;
   // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
-  // Timer? _askFriendInitialTimer;
-  // int _askFriendInitialSeconds = 30;
-  // bool _askFriendInitialActive = true;
+  Timer? _askFriendInitialTimer;
+  int _askFriendInitialSeconds = 30;
+  bool _askFriendInitialActive = true;
   bool _askFriendUsedOnce = false;
 
   late AnimationController _controller;
@@ -75,7 +76,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   // int dummyState = 0; // Biến này không được sử dụng
 
   Future<void> captureAndShareWidget() async {
-    if (_askFriendUsedOnce) {
+    if (_askFriendInitialActive || _askFriendUsedOnce) {
       return;
     }
 
@@ -228,7 +229,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _controller.dispose();
     _shakeController.dispose();
     _hintTimer?.cancel();
-    // _askFriendInitialTimer?.cancel();
+    _askFriendInitialTimer?.cancel();
     super.dispose();
   }
 
@@ -240,9 +241,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
 
     final answer = questions[currentQuestion].answer.toUpperCase();
-    answerSlots = List.filled(answer.replaceAll(' ', '').length,
-        ''); // Chỉ đếm ký tự, bỏ khoảng trống
-
+    answerSlots = List.filled(answer.replaceAll(' ', '').length, '');
     answerCharIndexes = List.filled(
         answer.replaceAll(' ', '').length, null);
     charOptions = _generateCharOptions(
@@ -255,14 +254,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _controller.forward();
     _hintBanner = null;
     _hintUsedOnce = false;
-    // _hintWordIndex = 0;
-
-    // _askFriendInitialActive = true;
-    // _askFriendInitialSeconds = 30;
-    _askFriendUsedOnce = false; // Đặt lại trạng thái đã dùng
-    // _askFriendInitialTimer?.cancel();
-    // _startAskFriendInitialCountdown();
-
+    // _hintWordIndex = 0; // Đã bỏ
+    _askFriendInitialActive = true;
+    _askFriendInitialSeconds = 30;
+    _askFriendUsedOnce = false;
+    _askFriendInitialTimer?.cancel();
+    _startAskFriendInitialCountdown();
     _startHintCountdown();
   }
 
@@ -389,7 +386,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
-  // Phương thức _startAskFriendInitialCountdown đã được loại bỏ
+  void _startAskFriendInitialCountdown() {
+    setState(() {
+      _askFriendInitialSeconds = 30;
+      _askFriendInitialActive = true;
+    });
+
+    _askFriendInitialTimer?.cancel();
+    _askFriendInitialTimer =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (_askFriendInitialSeconds == 0) {
+            timer.cancel();
+            setState(() {
+              _askFriendInitialActive = false;
+            });
+          } else {
+            setState(() {
+              _askFriendInitialSeconds--;
+            });
+          }
+        });
+  }
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -415,13 +432,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void showCorrectDialog() {
     AudioManager().playNextLevelSound();
-    showGeneralDialog(
+    showDialog(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: 'InfoPopup',
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 500),
-      pageBuilder: (context, animation, secondaryAnimation) {
+      barrierDismissible: false,
+      builder: (context) {
         return PopupAnswerCorrect(
           onNext: () async {
             Navigator.of(context).pop();
@@ -442,26 +456,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           },
         );
       },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Hiệu ứng phóng to/thu nhỏ
-        return ScaleTransition(
-          scale: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-            reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
-          ),
-          child: FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut, // Mờ dần khi hiện ra
-              reverseCurve: Curves.easeIn, // Rõ dần khi đóng
-            ),
-            child: child,
-          ),
-        );
-      },
     );
-
   }
 
   Future<void> checkAndResetDailyProgress() async {
@@ -667,7 +662,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final double imageContainerSize = screenWidth * 0.7;
+    // final double imageContainerSize = screenWidth * 0.7; // This variable is not used
     bannerHeight = screenHeight * 0.045;
     final double smallPadding = screenWidth * 0.025;
     final double mediumPadding = screenWidth * 0.05;
@@ -677,8 +672,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final double adjustedSize =
         (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
             maxPerRow *
-            0.9;
-
+            0.8;
 
     return Container(
       decoration: const BoxDecoration(
@@ -749,47 +743,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         SizedBox(width: smallPadding),
                         GestureDetector(
                           onTap: () {
-                            showGeneralDialog(
+                            showDialog(
                               context: context,
-                              barrierDismissible: true,
-                              barrierLabel: 'InfoPopup',
-                              barrierColor: Colors.black.withOpacity(0.5),
-                              transitionDuration: const Duration(milliseconds: 500),
-                              pageBuilder: (context, animation, secondaryAnimation) {
-                                return  Giftpopup(
-                                  dailyCount: dailyCount,
-                                  daily30Count: daily30Count,
-                                  daily50Count: daily50Count,
-                                  onReward: (amount) async {
-                                    setState(() {
-                                      diamonds += amount;
-                                    });
-                                    final prefs =
-                                    await SharedPreferences.getInstance();
-                                    await prefs.setInt('diamonds', diamonds);
-                                  },
-                                );
-                              },
-                              transitionBuilder: (context, animation, secondaryAnimation, child) {
-                                // Hiệu ứng phóng to/thu nhỏ
-                                return ScaleTransition(
-                                  scale: CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-                                    reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
-                                  ),
-                                  child: FadeTransition(
-                                    opacity: CurvedAnimation(
-                                      parent: animation,
-                                      curve: Curves.easeOut, // Mờ dần khi hiện ra
-                                      reverseCurve: Curves.easeIn, // Rõ dần khi đóng
-                                    ),
-                                    child: child,
-                                  ),
-                                );
-                              },
+                              builder: (context) => Giftpopup(
+                                dailyCount: dailyCount,
+                                daily30Count: daily30Count,
+                                daily50Count: daily50Count,
+                                onReward: (amount) async {
+                                  setState(() {
+                                    diamonds += amount;
+                                  });
+                                  final prefs =
+                                  await SharedPreferences.getInstance();
+                                  await prefs.setInt('diamonds', diamonds);
+                                },
+                              ),
                             );
-
                           },
                           child: Image.asset(
                             'assets/images/gift.png',
@@ -805,13 +774,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               ),
 
               SizedBox(height: screenHeight * 0.001),
-              Expanded(
+              Expanded( // Corrected Expanded usage
                 child: RepaintBoundary(
                   key: previewContainerKey,
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.005),
-
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
@@ -833,25 +801,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    // SỬ DỤNG Image.network ĐỂ TẢI HÌNH ẢNH TỪ URL
                                     child: Image.network(
                                       questions[currentQuestion].imgQuestion,
                                       fit: BoxFit.contain,
-                                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                                      loadingBuilder: (BuildContext context,
+                                          Widget child,
+                                          ImageChunkEvent? loadingProgress) {
                                         if (loadingProgress == null) {
                                           return child;
                                         }
                                         return Center(
                                           child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                            value: loadingProgress
+                                                .expectedTotalBytes !=
+                                                null
+                                                ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
                                                 : null,
                                           ),
                                         );
                                       },
-                                      errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                      errorBuilder: (BuildContext context,
+                                          Object exception,
+                                          StackTrace? stackTrace) {
                                         return const Center(
-                                          child: Icon(Icons.error, color: Colors.red, size: 50),
+                                          child: Icon(Icons.error,
+                                              color: Colors.red, size: 50),
                                         );
                                       },
                                     ),
@@ -886,10 +863,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           )
                               : Image.asset(
                             'assets/images/logo3-15dhbc.png',
-                            height: bannerHeight * 4.0,
+                            height: bannerHeight * 3.0,
                             fit: BoxFit.contain,
                           ),
-
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.005),
@@ -907,12 +883,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 3.2,
-
+                                height: adjustedSize * 3.5,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
-                                      answerSlots, answer, adjustedSize),
+                                      answerSlots,
+                                      questions[currentQuestion].answer,
+                                      adjustedSize),
                                 ),
                               ),
                               SizedBox(height: screenHeight * 0.01),
@@ -925,6 +902,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
+
 
                       Padding(
                         padding: EdgeInsets.all(screenWidth * 0.027),
@@ -1148,6 +1126,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
                                     child: ElevatedButton(
                                       onPressed: () {
+                                        // TODO: Implement "QUA MÀN" functionality (e.g., show video ad)
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.white,
@@ -1186,7 +1165,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -1224,7 +1203,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 key: ValueKey('char_$charIdx'),
                 onTap: () => _onCharTap(charIdx),
                 child: Container(
-                  margin: EdgeInsets.all(6.0),
+                  margin: EdgeInsets.all(2.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1242,31 +1221,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       style: TextStyle(
                         fontSize: size * 0.45,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF556B2F),
+                        color: const Color(0xFF556B2F),
                       ),
                     ),
                   ),
-
                 ),
               ),
             ),
-    ),
-    );
-    }
+          ),
+        );
+      }
 
-    rows.add(Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: row,
-    ));
-    if (idx + count < total) {
-    rows.add(SizedBox(height: size * 0.1));
+      rows.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: row,
+      ));
+      if (idx + count < total) {
+        rows.add(SizedBox(height: size * 0.1));
+      }
+      idx += count;
     }
-    idx += count;
-  }
 
     return rows;
   }
-
 
   List<Widget> _buildAnswerRows(
       List<String> slots, String answer, double size) {
@@ -1274,89 +1251,43 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     int slotIdx = 0;
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
-    if (words.length == 2) {
-      for (var word in words) {
-        List<Widget> row = List.generate(
-            word.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: row)); // Đã xóa Padding ở đây
-        rows.add(SizedBox(height: size * 0.1));
 
-      }
-      if (rows.isNotEmpty) rows.removeLast();
-    } else if (words.length > 1) {
+    // Duyệt qua từng từ
+    for (int i = 0; i < words.length; i++) {
+      String currentWord = words[i];
       List<Widget> currentRow = [];
-      int currentLength = 0;
-      for (int i = 0; i < words.length; i++) {
-        int wordLen = words[i].length;
-        if (currentLength + wordLen > maxCharsPerRow && currentRow.isNotEmpty) {
-          rows.add(Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: currentRow)); // Đã xóa Padding ở đây
-          rows.add(SizedBox(height: size * 0.05));
 
-          currentRow = [];
-          currentLength = 0;
-        }
-        currentRow.addAll(List.generate(
-            wordLen, (j) => _buildAnswerBox(slotIdx++, slots, size)));
-        currentLength += wordLen;
-        if (i < words.length - 1) {
-          if (currentLength <= maxCharsPerRow) {
-            currentRow.add(SizedBox(width: size * 0.1));
-            currentLength += 1;
-          } else {
-            rows.add(Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: currentRow.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1),
-                  child: widget,
-                )).toList()));
-            rows.add(SizedBox(height: size * 0.1));
+      // Chia từ thành các hàng nếu quá maxCharsPerRow
+      for (int j = 0; j < currentWord.length; j += maxCharsPerRow) {
+        int endIdx = (j + maxCharsPerRow < currentWord.length)
+            ? j + maxCharsPerRow
+            : currentWord.length;
+        List<Widget> wordRow = List.generate(
+          endIdx - j,
+              (k) => Padding(
+            padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Thêm padding đồng đều
+            child: _buildAnswerBox(slotIdx++, slots, size),
+          ),
+        );
 
-            currentRow = [];
-            currentLength = 0;
-          }
+        // Thêm hàng vào danh sách rows
+        rows.add(Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: wordRow,
+        ));
+
+        // Thêm khoảng cách giữa các hàng nếu không phải hàng cuối
+        if (endIdx < currentWord.length) {
+          rows.add(SizedBox(height: size * 0.1));
         }
       }
-      if (currentRow.isNotEmpty) {
-        rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: currentRow.map((widget) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
-              child: widget,
-            )).toList()));
-      }
-    } else {
-      String currentWord = words[0];
-      if (currentWord.length <= maxCharsPerRow) {
-        List<Widget> currentRow = List.generate(
-            currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: currentRow.map((widget) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
-              child: widget,
-            )).toList()));
 
-      } else {
-        for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
-          int endIdx = (i + maxCharsPerRow < currentWord.length)
-              ? i + maxCharsPerRow
-              : currentWord.length;
-          List<Widget> wordRow = List.generate(
-              endIdx - i, (j) => _buildAnswerBox(slotIdx++, slots, size));
-          rows.add(Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: wordRow)); // Đã xóa Padding ở đây
-
-          if (endIdx < currentWord.length) {
-            rows.add(SizedBox(height: size * 0.1));
-          }
-        }
+      // Thêm khoảng cách giữa các từ (nếu không phải từ cuối)
+      if (i < words.length - 1) {
+        rows.add(SizedBox(height: size * 0.1)); // Khoảng cách giữa các từ
       }
     }
+
     return rows;
   }
 
@@ -1372,60 +1303,63 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
           BoxDecoration boxDecoration;
           Color textColor = const Color(0xFF556B2F);
-          Color boxColor; // Declare boxColor here
+          // Color boxColor; // This variable is not used
 
           if (isCorrect) {
             boxDecoration = BoxDecoration(
-              image: DecorationImage(
+              image: const DecorationImage(
                 image: AssetImage('assets/images/Correct.png'),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(8),
             );
             textColor = Colors.white;
-            boxColor = Colors.transparent; // Assuming transparent for image background
+            // boxColor = Colors.transparent; // This assignment is not used
           } else if (isWrong) {
             boxDecoration = BoxDecoration(
-              image: DecorationImage(
+              image: const DecorationImage(
                 image: AssetImage('assets/images/Incorrect.png'),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(8),
             );
             textColor = Colors.white;
-            boxColor = Colors.transparent; // Assuming transparent for image background
+            // boxColor = Colors.transparent; // This assignment is not used
           } else {
-            // This is the default state for the answer box
             boxDecoration = BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: Colors.white, width: 2), // Border here is correct
+              border: Border.all(color: Colors.white, width: 2),
               borderRadius: BorderRadius.circular(8),
             );
             textColor = const Color(0xFF556B2F);
-            boxColor = Colors.white; // Default color
+            // boxColor = Colors.white; // Default color // This assignment is not used
           }
 
           return Transform.translate(
             offset: Offset(offset, 0),
             child: Container(
-              width: size * 0.8,
-              height: size * 0.8,
-              margin: EdgeInsets.all(1.2),
+              width: size,
+              height: size,
+              margin: const EdgeInsets.all(2.0),
               decoration: boxDecoration,
               alignment: Alignment.center,
-              child: slots[slotIdx].isNotEmpty
-                  ? Text(
-                slots[slotIdx],
-                key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
-                style: TextStyle(
-                  fontSize: size * 0.55,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-              )
-                  : const SizedBox.shrink(key: ValueKey('empty_answer')),
-
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
+                child: slots[slotIdx].isNotEmpty
+                    ? Text(
+                  slots[slotIdx],
+                  key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                  style: TextStyle(
+                    fontSize: size * 0.5,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
+              ),
             ),
           );
         },
