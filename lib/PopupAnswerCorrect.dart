@@ -112,7 +112,7 @@ class _PopupAnswerCorrectState extends State<PopupAnswerCorrect> {
                           onTapDown: (_) => setState(() => _isNextButtonPressed = true),
                           onTapUp: (_) {
                             setState(() {
-                              _isNextButtonPressed = false; // Đặt lại trạng thái không nhấn
+                              _isNextButtonPressed = false;
                             });
 
                           },

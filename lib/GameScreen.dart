@@ -33,6 +33,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   // Dữ liệu sẽ được tải từ JSON
   List<Question> questions = [];
   bool _isLoadingQuestions = true; // Biến trạng thái để kiểm tra xem dữ liệu đã tải xong chưa
+  Map<String, bool> _isPressedMap = {};
+
 
   int dailyCount = 0;
   int daily30Count = 0;
@@ -620,701 +622,748 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   @override
-Widget build(BuildContext context) {
-  if (_isLoadingQuestions) {
-    return const Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: CircularProgressIndicator(
-          color: Colors.white,
+  Widget build(BuildContext context) {
+    if (_isLoadingQuestions) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  if (questions.isEmpty) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              "Không thể tải câu hỏi. Vui lòng kiểm tra file JSON hoặc đường dẫn.",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Quay lại màn hình trước
-              },
-              child: const Text("Quay lại"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-
-  final double imageContainerSize = screenWidth * 0.7;
-  bannerHeight = screenHeight * 0.045;
-  final double smallPadding = screenWidth * 0.025;
-  final double mediumPadding = screenWidth * 0.05;
-
-  const int maxPerRow = 7;
-  final answer = questions[currentQuestion].answer.toUpperCase();
-  final double adjustedSize =
-      (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
-          maxPerRow *
-          0.8;
-
-  return Container(
-    decoration: const BoxDecoration(
-      image: DecorationImage(
-        image: AssetImage('assets/images/BackgroundGame.png'),
-        fit: BoxFit.cover,
-      ),
-    ),
-    child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: mediumPadding, vertical: smallPadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      await _saveGameProgress();
-                      Navigator.pop(context);
-                    },
-                    child: Image.asset(
-                      'assets/images/home.png',
-                      width: screenWidth * 0.07,
-                      height: screenWidth * 0.07,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Level ',
-                          style: TextStyle(
-                              fontSize: screenWidth * 0.06,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
-                      Text('$level',
-                          style: TextStyle(
-                              fontSize: screenWidth * 0.06,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white)),
-                    ],
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('$diamonds',
-                              style: TextStyle(
-                                  fontSize: screenWidth * 0.06,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          SizedBox(width: screenWidth * 0.0015),
-                          Image.asset(
-                            'assets/images/Diamond_Borderless.png',
-                            width: screenWidth * 0.06,
-                            height: screenWidth * 0.06,
-                            fit: BoxFit.contain,
-                          ),
-                        ],
-                      ),
-                      SizedBox(width: smallPadding),
-                      GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => Giftpopup(
-                              dailyCount: dailyCount,
-                              daily30Count: daily30Count,
-                              daily50Count: daily50Count,
-                              onReward: (amount) async {
-                                setState(() {
-                                  diamonds += amount;
-                                });
-                                final prefs =
-                                    await SharedPreferences.getInstance();
-                                await prefs.setInt('diamonds', diamonds);
-                              },
-                            ),
-                          );
-                        },
-                        child: Image.asset(
-                          'assets/images/gift.png',
-                          width: screenWidth * 0.07,
-                          height: screenWidth * 0.07,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+    if (questions.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Không thể tải câu hỏi. Vui lòng kiểm tra file JSON hoặc đường dẫn.",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+                textAlign: TextAlign.center,
               ),
-            ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Quay lại màn hình trước
+                },
+                child: const Text("Quay lại"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-            SizedBox(height: screenHeight * 0.001),
-            Expanded(
-              child: RepaintBoundary(
-                key: previewContainerKey,
-                child: Column(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // final double imageContainerSize = screenWidth * 0.7; // This variable is not used
+    bannerHeight = screenHeight * 0.045;
+    final double smallPadding = screenWidth * 0.025;
+    final double mediumPadding = screenWidth * 0.05;
+
+    const int maxPerRow = 7;
+    final answer = questions[currentQuestion].answer.toUpperCase();
+    final double adjustedSize =
+        (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
+            maxPerRow *
+            0.8;
+
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/BackgroundGame.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: mediumPadding, vertical: smallPadding),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SizedBox(height: screenHeight * 0.005),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                      width: double.infinity,
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final double imageBoxSize =
-                                  constraints.maxWidth;
-                              return Container(
-                                width: imageBoxSize,
-                                height: imageBoxSize * 0.6,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.black26),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Image.network(
-                                    questions[currentQuestion].imgQuestion,
-                                    fit: BoxFit.contain,
-                                    loadingBuilder: (BuildContext context,
-                                        Widget child,
-                                        ImageChunkEvent? loadingProgress) {
-                                      if (loadingProgress == null) {
-                                        return child;
-                                      }
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress
-                                                      .expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder: (BuildContext context,
-                                        Object exception,
-                                        StackTrace? stackTrace) {
-                                      return const Center(
-                                        child: Icon(Icons.error,
-                                            color: Colors.red, size: 50),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                    GestureDetector(
+                      onTap: () async {
+                        await _saveGameProgress();
+                        Navigator.pop(context);
+                      },
+                      child: Image.asset(
+                        'assets/images/home.png',
+                        width: screenWidth * 0.07,
+                        height: screenWidth * 0.07,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    SizedBox(height: screenWidth * 0.005),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                      width: double.infinity,
-                      height: screenWidth * 0.10,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/images/banner.png'),
-                          fit: BoxFit.cover,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: _hintBanner != null
-                            ? Text(
-                                _hintBanner!,
-                                style: TextStyle(
-                                  fontSize: bannerHeight * 0.4,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                ),
-                              )
-                            : Image.asset(
-                                'assets/images/logo3-15dhbc.png',
-                                height: bannerHeight * 3.0,
-                                fit: BoxFit.contain,
-                              ),
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Level ',
+                            style: TextStyle(
+                                fontSize: screenWidth * 0.06,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
+                        Text('$level',
+                            style: TextStyle(
+                                fontSize: screenWidth * 0.06,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
+                      ],
                     ),
-                    SizedBox(height: screenHeight * 0.005),
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              margin: EdgeInsets.symmetric(
-                                  horizontal: mediumPadding),
-                              padding: EdgeInsets.all(4.0),
-                              decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              height: adjustedSize * 3.5,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: _buildAnswerRows(
-                                    answerSlots,
-                                    questions[currentQuestion].answer,
-                                    adjustedSize),
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.01),
-                            Expanded(
-                              child: Column(
-                                children: buildCharRows(adjustedSize * 1.2),
-                              ),
+                            Text('$diamonds',
+                                style: TextStyle(
+                                    fontSize: screenWidth * 0.06,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            SizedBox(width: screenWidth * 0.0015),
+                            Image.asset(
+                              'assets/images/Diamond_Borderless.png',
+                              width: screenWidth * 0.06,
+                              height: screenWidth * 0.06,
+                              fit: BoxFit.contain,
                             ),
                           ],
                         ),
-                      ),
+                        SizedBox(width: smallPadding),
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => Giftpopup(
+                                dailyCount: dailyCount,
+                                daily30Count: daily30Count,
+                                daily50Count: daily50Count,
+                                onReward: (amount) async {
+                                  setState(() {
+                                    diamonds += amount;
+                                  });
+                                  final prefs =
+                                  await SharedPreferences.getInstance();
+                                  await prefs.setInt('diamonds', diamonds);
+                                },
+                              ),
+                            );
+                          },
+                          child: Image.asset(
+                            'assets/images/gift.png',
+                            width: screenWidth * 0.07,
+                            height: screenWidth * 0.07,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
                     ),
+                  ],
+                ),
+              ),
 
-                    Padding(
-                      padding: EdgeInsets.all(screenWidth * 0.027),
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: screenHeight * 0.07,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                SizedBox(
-                                  width: screenWidth * 0.31,
-                                  child: ElevatedButton(
-                                    onPressed: _showRevealLetterDialog,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF90C240),
-                                      disabledBackgroundColor:
-                                          const Color(0xFF90C240)
-                                              .withOpacity(0.6),
-                                      padding: EdgeInsets.zero,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        side: BorderSide(
-                                          color: Colors.black,
-                                          width: screenWidth * 0.002,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Hiện Đáp Án',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                            fontSize: screenWidth * 0.045,
+              SizedBox(height: screenHeight * 0.001),
+              Expanded( // Corrected Expanded usage
+                child: RepaintBoundary(
+                  key: previewContainerKey,
+                  child: Column(
+                    children: [
+                      SizedBox(height: screenHeight * 0.005),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                        width: double.infinity,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final double imageBoxSize =
+                                    constraints.maxWidth;
+                                return Container(
+                                  width: imageBoxSize,
+                                  height: imageBoxSize * 0.6,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: Colors.black26),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.network(
+                                      questions[currentQuestion].imgQuestion,
+                                      fit: BoxFit.contain,
+                                      loadingBuilder: (BuildContext context,
+                                          Widget child,
+                                          ImageChunkEvent? loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress
+                                                .expectedTotalBytes !=
+                                                null
+                                                ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
+                                                : null,
                                           ),
-                                        ),
-                                        RichText(
-                                          text: TextSpan(
+                                        );
+                                      },
+                                      errorBuilder: (BuildContext context,
+                                          Object exception,
+                                          StackTrace? stackTrace) {
+                                        return const Center(
+                                          child: Icon(Icons.error,
+                                              color: Colors.red, size: 50),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: screenWidth * 0.005),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                        width: double.infinity,
+                        height: screenWidth * 0.10,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/images/banner.png'),
+                            fit: BoxFit.cover,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Center(
+                          child: _hintBanner != null
+                              ? Text(
+                            _hintBanner!,
+                            style: TextStyle(
+                              fontSize: bannerHeight * 0.4,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          )
+                              : Image.asset(
+                            'assets/images/logo3-15dhbc.png',
+                            height: bannerHeight * 3.0,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.005),
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: mediumPadding),
+                                padding: EdgeInsets.all(4.0),
+                                decoration: BoxDecoration(
+                                  border:
+                                  Border.all(color: Colors.white, width: 2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                height: adjustedSize * 3.5,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: _buildAnswerRows(
+                                      answerSlots,
+                                      questions[currentQuestion].answer,
+                                      adjustedSize),
+                                ),
+                              ),
+                              SizedBox(height: screenHeight * 0.01),
+                              Expanded(
+                                child: Column(
+                                  children: buildCharRows(adjustedSize * 1.2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+
+                      Padding(
+                        padding: EdgeInsets.all(screenWidth * 0.027),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: screenHeight * 0.07,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Nút "Hiện Đáp Án"
+                                  AnimatedScale(
+                                    scale: _isPressedMap['reveal_answer_button'] ?? false ? 0.90 : 1.0,
+                                    duration: const Duration(milliseconds: 500),
+                                    child: GestureDetector(
+                                      onTapDown: (_) {
+                                        setState(() => _isPressedMap['reveal_answer_button'] = true);
+                                        Future.delayed(const Duration(milliseconds: 150), () {
+                                          if (mounted) {
+                                            setState(() => _isPressedMap['reveal_answer_button'] = false);
+                                          }
+                                        });
+                                      },
+                                      onTapUp: (_) {},
+                                      onTapCancel: () => setState(() => _isPressedMap['reveal_answer_button'] = false),
+                                      child: SizedBox(
+                                        width: screenWidth * 0.31,
+                                        child: ElevatedButton(
+                                          onPressed: _showRevealLetterDialog,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF90C240),
+                                            disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
+                                            padding: EdgeInsets.zero,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              side: BorderSide(
+                                                color: Colors.black,
+                                                width: screenWidth * 0.002,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              TextSpan(
-                                                text: '10 ',
+                                              Text(
+                                                'Hiện Đáp Án',
                                                 style: TextStyle(
-                                                  fontSize:
-                                                      screenWidth * 0.03,
                                                   fontWeight: FontWeight.bold,
                                                   color: Colors.white,
+                                                  fontSize: screenWidth * 0.045,
                                                 ),
                                               ),
-                                              WidgetSpan(
-                                                alignment:
-                                                    PlaceholderAlignment.middle,
-                                                child: Image.asset(
-                                                  'assets/images/Diamond_Borderless.png',
-                                                  width: screenWidth * 0.04,
-                                                  height: screenWidth * 0.04,
+                                              RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    TextSpan(
+                                                      text: '10 ',
+                                                      style: TextStyle(
+                                                        fontSize: screenWidth * 0.03,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    WidgetSpan(
+                                                      alignment: PlaceholderAlignment.middle,
+                                                      child: Image.asset(
+                                                        'assets/images/Diamond_Borderless.png',
+                                                        width: screenWidth * 0.04,
+                                                        height: screenWidth * 0.04,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.001),
-                                SizedBox(
-                                  width: screenWidth * 0.31,
-                                  child: ElevatedButton.icon(
-                                    onPressed: (_askFriendInitialActive ||
-                                            _askFriendUsedOnce)
-                                        ? null
-                                        : captureAndShareWidget,
-                                    label: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('Hỏi Bạn ',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: (_askFriendInitialActive ||
-                                                        _askFriendUsedOnce)
-                                                    ? Colors.white70
-                                                    : Colors.white,
-                                                fontSize:
-                                                    screenWidth * 0.045)),
-                                        if (_askFriendInitialActive)
-                                          Text(
-                                              '${_askFriendInitialSeconds}s',
-                                              style: TextStyle(
-                                                  fontSize:
-                                                      screenWidth * 0.03,
-                                                  color: Colors.white70)),
-                                      ],
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFFF8B52E),
-                                      disabledBackgroundColor:
-                                          Color(0xFFF8B52E).withOpacity(0.6),
-                                      padding: EdgeInsets.zero,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        side: BorderSide(
-                                            color: (_askFriendInitialActive ||
-                                                    _askFriendUsedOnce)
-                                                ? Colors.black.withOpacity(0.5)
-                                                : Colors.black,
-                                            width: screenWidth * 0.002),
                                       ),
                                     ),
                                   ),
-                                ),
-                                SizedBox(width: screenWidth * 0.001),
-                                SizedBox(
-                                  width: screenWidth * 0.31,
-                                  child: ElevatedButton(
-                                    onPressed: (_hintActive || _hintUsedOnce)
-                                        ? null
-                                        : () => _onHint(),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFFF3A3C5),
-                                      disabledBackgroundColor:
-                                          Color(0xFFF3A3C5).withOpacity(0.6),
-                                      padding: EdgeInsets.zero,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        side: BorderSide(
-                                            color: (_hintActive ||
-                                                    _hintUsedOnce)
-                                                ? Colors.black.withOpacity(0.5)
-                                                : Colors.black,
-                                            width: screenWidth * 0.002),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('Gợi Ý',
+                                  SizedBox(width: screenWidth * 0.001),
+
+                                  // Nút "Hỏi Bạn"
+                                  AnimatedScale(
+                                    scale: _isPressedMap['ask_friend_button'] ?? false ? 0.90 : 1.0,
+                                    duration: const Duration(milliseconds: 500),
+                                    child: GestureDetector(
+                                      onTapDown: (_) {
+                                        setState(() => _isPressedMap['ask_friend_button'] = true);
+                                        Future.delayed(const Duration(milliseconds: 150), () {
+                                          if (mounted) {
+                                            setState(() => _isPressedMap['ask_friend_button'] = false);
+                                          }
+                                        });
+                                      },
+                                      onTapUp: (_) {},
+                                      onTapCancel: () => setState(() => _isPressedMap['ask_friend_button'] = false),
+                                      child: SizedBox(
+                                        width: screenWidth * 0.31,
+                                        child: ElevatedButton(
+                                          onPressed: _askFriendUsedOnce ? null : captureAndShareWidget,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFF8B52E),
+                                            disabledBackgroundColor: const Color(0xFFF8B52E).withOpacity(0.6),
+                                            padding: EdgeInsets.zero,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              side: BorderSide(
+                                                color: _askFriendUsedOnce
+                                                    ? Colors.black.withOpacity(0.5)
+                                                    : Colors.black,
+                                                width: screenWidth * 0.002,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Hỏi Bạn',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color: (_hintActive ||
-                                                      _hintUsedOnce)
-                                                  ? Colors.white70
-                                                  : Colors.white,
+                                              color: _askFriendUsedOnce ? Colors.white70 : Colors.white,
                                               fontSize: screenWidth * 0.045,
-                                            )),
-                                        if (_hintActive)
-                                          Text('${_hintSeconds}s',
-                                              style: TextStyle(
-                                                  color: Colors.white70,
-                                                  fontSize:
-                                                      screenWidth * 0.03)),
-                                      ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: smallPadding,
-                          ),
-                          Visibility(
-                            visible: true,
-                            maintainSize: true,
-                            maintainAnimation: true,
-                            maintainState: true,
-                            child: SizedBox(
-                              width: double.infinity,
-                              height: screenHeight * 0.07,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                  SizedBox(width: screenWidth * 0.001),
+
+                                  // Nút "Gợi Ý"
+                                  AnimatedScale(
+                                    scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
+                                    duration: const Duration(milliseconds: 500),
+                                    child: GestureDetector(
+                                      onTapDown: (_) {
+                                        setState(() => _isPressedMap['hint_button'] = true);
+                                        Future.delayed(const Duration(milliseconds: 150), () {
+                                          if (mounted) {
+                                            setState(() => _isPressedMap['hint_button'] = false);
+                                          }
+                                        });
+                                      },
+                                      onTapUp: (_) {},
+                                      onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
+                                      child: SizedBox(
+                                        width: screenWidth * 0.31,
+                                        child: ElevatedButton(
+                                          onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFF3A3C5),
+                                            disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
+                                            padding: EdgeInsets.zero,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                              side: BorderSide(
+                                                color: (_hintActive || _hintUsedOnce)
+                                                    ? Colors.black.withOpacity(0.5)
+                                                    : Colors.black,
+                                                width: screenWidth * 0.002,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'Gợi Ý',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: (_hintActive || _hintUsedOnce)
+                                                      ? Colors.white70
+                                                      : Colors.white,
+                                                  fontSize: screenWidth * 0.045,
+                                                ),
+                                              ),
+                                              if (_hintActive)
+                                                Text(
+                                                  '${_hintSeconds}s',
+                                                  style: TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: screenWidth * 0.03,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                child: RichText(
-                                  textAlign: TextAlign.center,
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: "QUA MÀN\n",
-                                        style: TextStyle(
-                                          color: Color(0xFF616FD3),
-                                          fontSize: screenWidth * 0.07,
-                                          fontWeight: FontWeight.bold,
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: smallPadding,
+                            ),
+                            Visibility(
+                              visible: true,
+                              maintainSize: true,
+                              maintainAnimation: true,
+                              maintainState: true,
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: screenHeight * 0.07,
+                                child:
+                                // Nút "QUA MÀN"
+                                AnimatedScale(
+                                  scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
+                                  duration: const Duration(milliseconds: 500),
+                                  child: GestureDetector(
+                                    onTapDown: (_) {
+                                      setState(() => _isPressedMap['pass_level_button'] = true);
+                                      Future.delayed(const Duration(milliseconds: 150), () {
+                                        if (mounted) {
+                                          setState(() => _isPressedMap['pass_level_button'] = false);
+                                        }
+                                      });
+                                    },
+                                    onTapUp: (_) {},
+                                    onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        // TODO: Implement "QUA MÀN" functionality (e.g., show video ad)
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        padding: EdgeInsets.zero,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
                                         ),
                                       ),
-                                      TextSpan(
-                                        text: "(Quảng cáo 15s~30s)",
-                                        style: TextStyle(
-                                          color: Color(0xFF43ADED),
-                                          fontSize: screenWidth * 0.03,
-                                          fontWeight: FontWeight.bold,
+                                      child: RichText(
+                                        textAlign: TextAlign.center,
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: "QUA MÀN\n",
+                                              style: TextStyle(
+                                                color: const Color(0xFF616FD3),
+                                                fontSize: screenWidth * 0.07,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: "(Quảng cáo 15s~30s)",
+                                              style: TextStyle(
+                                                color: const Color(0xFF43ADED),
+                                                fontSize: screenWidth * 0.03,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-List<Widget> buildCharRows(double size) {
-  const int maxPerRow = 7;
-  List<Widget> rows = [];
-  int total = charOptions.length;
-  int idx = 0;
-
-  while (idx < total) {
-    int count = (total - idx) >= maxPerRow ? maxPerRow : (total - idx);
-    List<Widget> row = [];
-
-    for (int i = 0; i < count; i++) {
-      int charIdx = idx + i;
-      row.add(
-        SizedBox(
-          width: size,
-          height: size,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            transitionBuilder: (child, animation) =>
-                ScaleTransition(scale: animation, child: child),
-            child: charUsed[charIdx]
-                ? const SizedBox.shrink(key: ValueKey('empty'))
-                : GestureDetector(
-                    key: ValueKey('char_$charIdx'),
-                    onTap: () => _onCharTap(charIdx),
-                    child: Container(
-                      margin: EdgeInsets.all(2.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 4,
-                            offset: Offset(1, 1),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          charOptions[charIdx],
-                          style: TextStyle(
-                            fontSize: size * 0.45,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF556B2F),
-                          ),
+                          ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
+                ),
+              ),
+            ],
           ),
         ),
-      );
-    }
-
-    rows.add(Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: row,
-    ));
-    if (idx + count < total) {
-      rows.add(SizedBox(height: size * 0.1));
-    }
-    idx += count;
+      ),
+    );
   }
 
-  return rows;
-}
+  List<Widget> buildCharRows(double size) {
+    const int maxPerRow = 7;
+    List<Widget> rows = [];
+    int total = charOptions.length;
+    int idx = 0;
 
-List<Widget> _buildAnswerRows(
-    List<String> slots, String answer, double size) {
-  List<Widget> rows = [];
-  int slotIdx = 0;
-  final words = answer.split(' ');
-  const int maxCharsPerRow = 7;
+    while (idx < total) {
+      int count = (total - idx) >= maxPerRow ? maxPerRow : (total - idx);
+      List<Widget> row = [];
 
-  // Duyệt qua từng từ
-  for (int i = 0; i < words.length; i++) {
-    String currentWord = words[i];
-    List<Widget> currentRow = [];
-
-    // Chia từ thành các hàng nếu quá maxCharsPerRow
-    for (int j = 0; j < currentWord.length; j += maxCharsPerRow) {
-      int endIdx = (j + maxCharsPerRow < currentWord.length)
-          ? j + maxCharsPerRow
-          : currentWord.length;
-      List<Widget> wordRow = List.generate(
-        endIdx - j,
-        (k) => Padding(
-          padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Thêm padding đồng đều
-          child: _buildAnswerBox(slotIdx++, slots, size),
-        ),
-      );
-
-      // Thêm hàng vào danh sách rows
-      rows.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: wordRow,
-      ));
-
-      // Thêm khoảng cách giữa các hàng nếu không phải hàng cuối
-      if (endIdx < currentWord.length) {
-        rows.add(SizedBox(height: size * 0.1));
-      }
-    }
-
-    // Thêm khoảng cách giữa các từ (nếu không phải từ cuối)
-    if (i < words.length - 1) {
-      rows.add(SizedBox(height: size * 0.1)); // Khoảng cách giữa các từ
-    }
-  }
-
-  return rows;
-}
-
-Widget _buildAnswerBox(int slotIdx, List<String> slots, double size) {
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: () {
-      _onAnswerSlotTap(slotIdx);
-    },
-    child: AnimatedBuilder(
-      animation: _shakeController,
-      builder: (context, child) {
-        double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
-        BoxDecoration boxDecoration;
-        Color textColor = const Color(0xFF556B2F);
-        Color boxColor;
-
-        if (isCorrect) {
-          boxDecoration = BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/Correct.png'),
-              fit: BoxFit.cover,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          );
-          textColor = Colors.white;
-          boxColor = Colors.transparent;
-        } else if (isWrong) {
-          boxDecoration = BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/Incorrect.png'),
-              fit: BoxFit.cover,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          );
-          textColor = Colors.white;
-          boxColor = Colors.transparent;
-        } else {
-          boxDecoration = BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.white, width: 2),
-            borderRadius: BorderRadius.circular(8),
-          );
-          textColor = const Color(0xFF556B2F);
-          boxColor = Colors.white; // Default color
-        }
-
-        return Transform.translate(
-          offset: Offset(offset, 0),
-          child: Container(
+      for (int i = 0; i < count; i++) {
+        int charIdx = idx + i;
+        row.add(
+          SizedBox(
             width: size,
             height: size,
-            margin: EdgeInsets.all(2.0),
-            decoration: boxDecoration,
-            alignment: Alignment.center,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, animation) =>
                   ScaleTransition(scale: animation, child: child),
-              child: slots[slotIdx].isNotEmpty
-                  ? Text(
-                      slots[slotIdx],
-                      key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
-                      style: TextStyle(
-                        fontSize: size * 0.5,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
+              child: charUsed[charIdx]
+                  ? const SizedBox.shrink(key: ValueKey('empty'))
+                  : GestureDetector(
+                key: ValueKey('char_$charIdx'),
+                onTap: () => _onCharTap(charIdx),
+                child: Container(
+                  margin: EdgeInsets.all(2.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 4,
+                        offset: Offset(1, 1),
                       ),
-                      textAlign: TextAlign.center,
-                    )
-                  : const SizedBox.shrink(key: ValueKey('empty_answer')),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      charOptions[charIdx],
+                      style: TextStyle(
+                        fontSize: size * 0.45,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF556B2F),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         );
+      }
+
+      rows.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: row,
+      ));
+      if (idx + count < total) {
+        rows.add(SizedBox(height: size * 0.1));
+      }
+      idx += count;
+    }
+
+    return rows;
+  }
+
+  List<Widget> _buildAnswerRows(
+      List<String> slots, String answer, double size) {
+    List<Widget> rows = [];
+    int slotIdx = 0;
+    final words = answer.split(' ');
+    const int maxCharsPerRow = 7;
+
+    // Duyệt qua từng từ
+    for (int i = 0; i < words.length; i++) {
+      String currentWord = words[i];
+      List<Widget> currentRow = [];
+
+      // Chia từ thành các hàng nếu quá maxCharsPerRow
+      for (int j = 0; j < currentWord.length; j += maxCharsPerRow) {
+        int endIdx = (j + maxCharsPerRow < currentWord.length)
+            ? j + maxCharsPerRow
+            : currentWord.length;
+        List<Widget> wordRow = List.generate(
+          endIdx - j,
+              (k) => Padding(
+            padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Thêm padding đồng đều
+            child: _buildAnswerBox(slotIdx++, slots, size),
+          ),
+        );
+
+        // Thêm hàng vào danh sách rows
+        rows.add(Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: wordRow,
+        ));
+
+        // Thêm khoảng cách giữa các hàng nếu không phải hàng cuối
+        if (endIdx < currentWord.length) {
+          rows.add(SizedBox(height: size * 0.1));
+        }
+      }
+
+      // Thêm khoảng cách giữa các từ (nếu không phải từ cuối)
+      if (i < words.length - 1) {
+        rows.add(SizedBox(height: size * 0.1)); // Khoảng cách giữa các từ
+      }
+    }
+
+    return rows;
+  }
+
+  Widget _buildAnswerBox(int slotIdx, List<String> slots, double size) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        _onAnswerSlotTap(slotIdx);
       },
-    ),
-  );
-}
+      child: AnimatedBuilder(
+        animation: _shakeController,
+        builder: (context, child) {
+          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          BoxDecoration boxDecoration;
+          Color textColor = const Color(0xFF556B2F);
+          // Color boxColor; // This variable is not used
+
+          if (isCorrect) {
+            boxDecoration = BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage('assets/images/Correct.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+            // boxColor = Colors.transparent; // This assignment is not used
+          } else if (isWrong) {
+            boxDecoration = BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage('assets/images/Incorrect.png'),
+                fit: BoxFit.cover,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = Colors.white;
+            // boxColor = Colors.transparent; // This assignment is not used
+          } else {
+            boxDecoration = BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.white, width: 2),
+              borderRadius: BorderRadius.circular(8),
+            );
+            textColor = const Color(0xFF556B2F);
+            // boxColor = Colors.white; // Default color // This assignment is not used
+          }
+
+          return Transform.translate(
+            offset: Offset(offset, 0),
+            child: Container(
+              width: size,
+              height: size,
+              margin: const EdgeInsets.all(2.0),
+              decoration: boxDecoration,
+              alignment: Alignment.center,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
+                child: slots[slotIdx].isNotEmpty
+                    ? Text(
+                  slots[slotIdx],
+                  key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                  style: TextStyle(
+                    fontSize: size * 0.5,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  textAlign: TextAlign.center,
+                )
+                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
