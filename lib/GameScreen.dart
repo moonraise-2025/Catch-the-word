@@ -432,10 +432,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   void showCorrectDialog() {
     AudioManager().playNextLevelSound();
-    showDialog(
+    showGeneralDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
+      barrierDismissible: true,
+      barrierLabel: 'InfoPopup',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 500),
+      pageBuilder: (context, animation, secondaryAnimation) {
         return PopupAnswerCorrect(
           onNext: () async {
             Navigator.of(context).pop();
@@ -454,6 +457,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               _saveDiamonds(); // Lưu kim cương
             });
           },
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        // Hiệu ứng phóng to/thu nhỏ
+        return ScaleTransition(
+          scale: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
+            reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+          ),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut, // Mờ dần khi hiện ra
+              reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+            ),
+            child: child,
+          ),
         );
       },
     );
@@ -743,21 +764,45 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         SizedBox(width: smallPadding),
                         GestureDetector(
                           onTap: () {
-                            showDialog(
+                            showGeneralDialog(
                               context: context,
-                              builder: (context) => Giftpopup(
-                                dailyCount: dailyCount,
-                                daily30Count: daily30Count,
-                                daily50Count: daily50Count,
-                                onReward: (amount) async {
-                                  setState(() {
-                                    diamonds += amount;
-                                  });
-                                  final prefs =
-                                  await SharedPreferences.getInstance();
-                                  await prefs.setInt('diamonds', diamonds);
-                                },
-                              ),
+                              barrierDismissible: true,
+                              barrierLabel: 'Giftpopup',
+                              barrierColor: Colors.black.withOpacity(0.5),
+                              transitionDuration: const Duration(milliseconds: 500),
+                              pageBuilder: (context, animation, secondaryAnimation) {
+                                return  Giftpopup(
+                                  dailyCount: dailyCount,
+                                  daily30Count: daily30Count,
+                                  daily50Count: daily50Count,
+                                  onReward: (amount) async {
+                                    setState(() {
+                                      diamonds += amount;
+                                    });
+                                    final prefs =
+                                    await SharedPreferences.getInstance();
+                                    await prefs.setInt('diamonds', diamonds);
+                                  },
+                                );
+                              },
+                              transitionBuilder: (context, animation, secondaryAnimation, child) {
+                                // Hiệu ứng phóng to/thu nhỏ
+                                return ScaleTransition(
+                                  scale: CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
+                                    reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+                                  ),
+                                  child: FadeTransition(
+                                    opacity: CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeOut, // Mờ dần khi hiện ra
+                                      reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+                                    ),
+                                    child: child,
+                                  ),
+                                );
+                              },
                             );
                           },
                           child: Image.asset(
