@@ -826,7 +826,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     children: [
                       SizedBox(height: screenHeight * 0.005),
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
                         width: double.infinity,
                         child: ScaleTransition(
                           scale: _scaleAnimation,
@@ -837,8 +837,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 final double imageBoxSize =
                                     constraints.maxWidth;
                                 return Container(
-                                  width: imageBoxSize,
-                                  height: imageBoxSize * 0.6,
+                                  width: imageBoxSize ,
+                                  height: imageBoxSize * 0.9,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     border: Border.all(color: Colors.black26),
@@ -848,7 +848,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     borderRadius: BorderRadius.circular(16),
                                     child: Image.network(
                                       questions[currentQuestion].imgQuestion,
-                                      fit: BoxFit.contain,
+                                      fit: BoxFit.cover,
                                       loadingBuilder: (BuildContext context,
                                           Widget child,
                                           ImageChunkEvent? loadingProgress) {
