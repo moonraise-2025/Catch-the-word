@@ -135,10 +135,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       final loadedQuestions = await QuestionService.loadQuestions();
       setState(() {
         questions = loadedQuestions;
-        _isLoadingQuestions = false; // Đã tải xong
       });
 
       if (questions.isNotEmpty) { // Chỉ khởi tạo game nếu có câu hỏi
+        // Pre-cache tất cả ảnh
+        for (var question in questions) {
+          await precacheImage(NetworkImage(question.imgQuestion), context);
+        }
+
         if (widget.initialLevel > 1) { // Đảm bảo initialLevel không vượt quá số lượng câu hỏi
           level = min(widget.initialLevel, questions.length);
           currentQuestion = level - 1;
@@ -151,9 +155,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _initGame(); // Khởi tạo game với câu hỏi đầu tiên (hoặc level được truyền vào)
       } else { // Xử lý trường hợp không có câu hỏi nào được tải (ví dụ: hiển thị lỗi hoặc quay về màn hình chính)
         debugPrint("Không có câu hỏi nào được tải từ JSON.");
-        // Bạn có thể showDialog hoặc Navigator.pop ở đây
-        // Để hiển thị lỗi trên màn hình như ảnh chụp, bạn có thể thiết lập một biến trạng thái lỗi
-        // và hiển thị một widget Text dựa trên biến đó.
         if (mounted) {
           showDialog(
             context: context,
@@ -178,10 +179,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('Lỗi khi tải hoặc khởi tạo game: $e');
-      setState(() {
-        _isLoadingQuestions = false; // Vẫn đặt false để dừng indicator
-        // Tùy chọn, đặt trạng thái lỗi để hiển thị cho người dùng
-      });
       if (mounted) {
         showDialog(
           context: context,
@@ -203,6 +200,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           },
         );
       }
+    } finally {
+      setState(() {
+        _isLoadingQuestions = false; // Dừng trạng thái loading dù có lỗi hay không
+      });
     }
   }
 
@@ -849,6 +850,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     child: Image.network(
                                       questions[currentQuestion].imgQuestion,
                                       fit: BoxFit.cover,
+                                      // Image is already pre-cached, so loadingBuilder is less critical here but can remain for fallback.
                                       loadingBuilder: (BuildContext context,
                                           Widget child,
                                           ImageChunkEvent? loadingProgress) {
