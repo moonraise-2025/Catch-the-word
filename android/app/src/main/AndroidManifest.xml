@@ -13,6 +13,9 @@
         android:label="duoihinhbatchu"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+                android:value="ca-app-pub-4955170106426992~7861992731"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

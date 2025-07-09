@@ -30,8 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-#  google_mobile_ads: ^3.0.0 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
-#  flutter_riverpod: ^2.4.0 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
+  google_mobile_ads: ^5.0.0 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
+  flutter_riverpod: ^2.6.1 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
   path_provider: ^2.1.2
   share_plus: ^7.2.1
   shared_preferences: ^2.2.2
