@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import 'ads/interstitial_ad_provider.dart';
 import 'audio_manager.dart';
 
 import 'package:duoihinhbatchu/model/question.dart';
@@ -415,56 +416,98 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       });
     }
   }
+// Hàm này chỉ cập nhật trạng thái game và trả về cấp độ mới
 
+  int _advanceGameToNextLevelState() {
+    setState(() {
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        level++;
+        diamonds += 5;
+      } else {
+        currentQuestion = 0;
+        level = 1;
+        diamonds = 0;
+      }
+    });
+    return level; // Trả về cấp độ mới sau khi cập nhật
+  }
+
+// Trong class _GameScreenState
   void showCorrectDialog() {
     AudioManager().playNextLevelSound();
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'InfoPopup',
+      barrierLabel: 'PopupAnswerCorrect',
       barrierColor: Colors.black.withOpacity(0.5),
       transitionDuration: const Duration(milliseconds: 500),
       pageBuilder: (context, animation, secondaryAnimation) {
         return PopupAnswerCorrect(
           onNext: () async {
-            Navigator.of(context).pop();
-            setState(() { // setState không cần async
-              if (currentQuestion < questions.length - 1) {
-                currentQuestion++;
-                level++;
-                diamonds += 5;
-              } else {
-                currentQuestion = 0;
-                level = 1;
-                diamonds = 0;
+            Navigator.of(context).pop(); // Đóng PopupAnswerCorrect dialog
+
+            // 1. Cập nhật trạng thái game và lấy cấp độ mới
+            final int newLevel = _advanceGameToNextLevelState();
+
+            // 2. LUÔN khởi tạo game và lưu tiến độ ngay lập tức sau khi chuyển màn
+            //    Điều này đảm bảo game đã được 'load xong' trước khi xử lý quảng cáo.
+            if (mounted) { // Đảm bảo widget vẫn còn trên cây widget
+              _initGame();
+              _saveGameProgress();
+              _saveDiamonds();
+            }
+
+            // 3. Quyết định có hiển thị quảng cáo xen kẽ hay không
+            //    Chỉ hiển thị nếu cấp độ mới là bội số của 2 (như trong code bạn cung cấp)
+            if (newLevel % 2 == 0) {
+              final interstitialAdNotifier = ref.read(interstitialAdProvider.notifier);
+              final interstitialAd = ref.read(interstitialAdProvider);
+
+              if (interstitialAd == null) {
+                print('DEBUG: Quảng cáo xen kẽ chưa tải hoặc không sẵn sàng. Game đã load xong.');
+                // Không cần gọi lại _initGame() ở đây vì game đã được load.
+                // Chỉ cố gắng tải lại quảng cáo cho lần sau.
+                interstitialAdNotifier.createInterstitialAd();
+                return; // Kết thúc hàm
               }
-              _initGame(); // Gọi _initGame sau khi cập nhật level/question
-              _saveGameProgress(); // Lưu trạng thái game
-              _saveDiamonds(); // Lưu kim cương
-            });
+
+              // Hiển thị quảng cáo xen kẽ
+              interstitialAdNotifier.showInterstitialAd(
+                    () {
+                  // Callback này được gọi khi quảng cáo đóng hoặc lỗi hiển thị.
+                  // Không cần gọi _initGame(), _saveGameProgress(), _saveDiamonds() ở đây nữa
+                  // vì chúng đã được gọi ở trên (sau _advanceGameToNextLevelState).
+                  print('DEBUG: Quảng cáo xen kẽ đã đóng hoặc lỗi. Game đã load xong. Tiếp tục.');
+                  // interstitialAdNotifier.createInterstitialAd() đã được gọi trong provider của bạn sau khi ad đóng.
+                },
+              );
+            } else {
+              // Không phải cấp độ cần hiển thị quảng cáo.
+              // Game đã được load xong ở bước 2, không cần làm gì thêm.
+              print('DEBUG: Không phải cấp độ ${newLevel} cần hiển thị quảng cáo. Game đã load xong.');
+            }
           },
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Hiệu ứng phóng to/thu nhỏ
         return ScaleTransition(
           scale: CurvedAnimation(
             parent: animation,
-            curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-            reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
+            curve: Curves.easeOutBack,
+            reverseCurve: Curves.easeInBack,
           ),
           child: FadeTransition(
             opacity: CurvedAnimation(
               parent: animation,
-              curve: Curves.easeOut, // Mờ dần khi hiện ra
-              reverseCurve: Curves.easeIn, // Rõ dần khi đóng
+              curve: Curves.easeOut,
+              reverseCurve: Curves.easeIn,
             ),
             child: child,
           ),
         );
       },
     );
-
   }
 
   Future<void> checkAndResetDailyProgress() async {
