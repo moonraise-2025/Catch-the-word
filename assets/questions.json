@@ -1,62 +1,42 @@
 [
   {
     "id": "1",
-    "img_question": "https://moonraise-2025.github.io/assets/cau1.png",
-    "answer": "CƯỚP BIỂN",
-    "answer_type": "CƯỚP"
+    "answer": "BÁO THỨC",
+    "answer_type": "BÁO"
   },
   {
     "id": "2",
-    "img_question": "https://moonraise-2025.github.io/assets/cau3.png",
-    "answer": "THUỶ TINH",
-    "answer_type": "THUỶ"
+    "answer": "XE HOA",
+    "answer_type": "XE"
   },
   {
     "id": "3",
-    "img_question": "https://moonraise-2025.github.io/assets/cau3.png",
-    "answer": "GIẤU ĐẦULÒI ĐUÔI",
-    "answer_type": "GIẤU"
+    "answer": "XƯƠNG RỒNG",
+    "answer_type": "XƯƠNG"
   },
   {
     "id": "4",
-    "img_question": "https://moonraise-2025.github.io/assets/cau4.png",
-    "answer": "ĂN NĂN",
-    "answer_type": "ĂN"
+    "answer": "CƠ BẮP",
+    "answer_type": "CƠ"
   },
   {
     "id": "5",
-    "img_question": "https://moonraise-2025.github.io/assets/cau5.png",
-    "answer": "QUẠT THAN",
-    "answer_type": "QUẠT"
+    "answer": "BÓNG ĐÁ",
+    "answer_type": "BÓNG"
   },
   {
     "id": "6",
-    "img_question": "https://moonraise-2025.github.io/assets/cau6.png",
-    "answer": "CẦU HÔN",
-    "answer_type": "CẦU"
+    "answer": "BÚT KÝ",
+    "answer_type": "BÚT"
   },
   {
     "id": "7",
-    "img_question": "https://moonraise-2025.github.io/assets/cau7.png",
-    "answer": "CHÂN DUNG",
-    "answer_type": "CHÂN"
+    "answer": "BẠC TÌNH",
+    "answer_type": "BẠC"
   },
   {
     "id": "8",
-    "img_question": "https://moonraise-2025.github.io/assets/cau8.png",
-    "answer": "GIẢI THƯỞNG",
-    "answer_type": "GIẢI"
-  },
-  {
-    "id": "9",
-    "img_question": "https://moonraise-2025.github.io/assets/cau9.png",
-    "answer": "ĐẦU TƯ",
-    "answer_type": "ĐẦU"
-  },
-  {
-    "id": "10",
-    "img_question": "https://moonraise-2025.github.io/assets/cau10.png",
-    "answer": "BÀN BẠC",
-    "answer_type": "BÀN"
+    "answer": "HỒNG TÂM",
+    "answer_type": "HỒNG"
   }
 ]
