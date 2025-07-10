@@ -645,13 +645,45 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+
+    // man load co bg
+    // if (_isLoadingQuestions) {
+    //   return Scaffold(
+    //     body: Container(
+    //       decoration: const BoxDecoration(
+    //         image: DecorationImage(
+    //           image: AssetImage('assets/images/BackgroundGame.png'), // Đường dẫn tới ảnh tải
+    //           fit: BoxFit.cover,
+    //         ),
+    //       ),
+    //       child: const Center(
+    //         child: CircularProgressIndicator(
+    //           valueColor: AlwaysStoppedAnimation<Color>(Colors.white), // Đổi màu loading cho dễ nhìn trên nền ảnh
+    //         ),
+    //       ),
+    //     ),
+    //   );
+    // }
+
+    // if (_isLoadingQuestions) {
+    //   return const Scaffold(
+    //     backgroundColor: Colors.transparent,
+    //     body: Center(
+    //
+    //       child: SizedBox.shrink(),
+    //     ),
+    //   );
+    // }
+
     if (_isLoadingQuestions) {
+      // Khi dữ liệu đang được tải, trả về một Scaffold trống hoặc có màu nền đơn giản.
+      // Điều này sẽ làm cho màn hình không hiển thị "loading" rõ ràng.
       return const Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent, // Hoặc Colors.transparent nếu bạn muốn nền hoàn toàn trong suốt
         body: Center(
-          child: CircularProgressIndicator(
-            color: Colors.white,
-          ),
+          // Bạn có thể để trống hoặc thêm một widget nhỏ không gây chú ý ở đây.
+          // Ví dụ: SizedBox.shrink() sẽ không hiển thị gì cả.
+          child: SizedBox.shrink(),
         ),
       );
     }
