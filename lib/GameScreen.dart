@@ -332,8 +332,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
 
       if (correct) {
-        _shakeController.forward(from: 0);
-        await Future.delayed(const Duration(seconds: 2));
+        // Bắt đầu animation rung lặp lại
+        _shakeController.repeat(); // Hoặc _shakeController.repeat(reverse: true); nếu muốn hiệu ứng mượt hơn
+
+        await Future.delayed(const Duration(seconds: 2)); // Thời gian bạn muốn chữ rung
+
+        // Dừng animation rung sau khi hết thời gian
+        _shakeController.stop();
+        // Đảm bảo animation trở về trạng thái ban đầu sau khi dừng
+        _shakeController.value = 0.0; // Đặt lại về 0 để không có độ xoay dư thừa
+
         showCorrectDialog();
 
         if (dailyCount < 1) dailyCount++;
@@ -349,9 +357,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           isWrong = true;
         });
 
-        _shakeController.forward(from: 0);
+        // Bắt đầu animation rung lặp lại cho trường hợp sai
+        _shakeController.repeat(); // Hoặc _shakeController.repeat(reverse: true);
 
-        Future.delayed(const Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 2), () { // Thời gian bạn muốn chữ rung khi sai
+          _shakeController.stop();
+          _shakeController.value = 0.0; // Đặt lại về 0
           setState(() {
             isWrong = false;
             final answer = questions[currentQuestion].answer.toUpperCase();
@@ -438,7 +449,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       barrierDismissible: true,
       barrierLabel: 'InfoPopup',
       barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
         return PopupAnswerCorrect(
           onNext: () async {
@@ -461,19 +472,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Hiệu ứng phóng to/thu nhỏ
+
+        final opacityTween = TweenSequence<double>([
+          TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+          TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+        ]);
+
+        final scaleTween = TweenSequence<double>([
+          TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+          TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+        ]);
+
         return ScaleTransition(
-          scale: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-            reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
-          ),
+          scale: scaleTween.animate(animation),
           child: FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut, // Mờ dần khi hiện ra
-              reverseCurve: Curves.easeIn, // Rõ dần khi đóng
-            ),
+            opacity: opacityTween.animate(animation),
             child: child,
           ),
         );
@@ -802,7 +815,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               barrierDismissible: true,
                               barrierLabel: 'Giftpopup',
                               barrierColor: Colors.black.withOpacity(0.5),
-                              transitionDuration: const Duration(milliseconds: 500),
+                              transitionDuration: const Duration(milliseconds: 300),
                               pageBuilder: (context, animation, secondaryAnimation) {
                                 return  Giftpopup(
                                   dailyCount: dailyCount,
@@ -819,19 +832,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 );
                               },
                               transitionBuilder: (context, animation, secondaryAnimation, child) {
-                                // Hiệu ứng phóng to/thu nhỏ
+
+                                final opacityTween = TweenSequence<double>([
+                                  TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                                  TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                                ]);
+
+                                final scaleTween = TweenSequence<double>([
+                                  TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                                  TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                                ]);
+
                                 return ScaleTransition(
-                                  scale: CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-                                    reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
-                                  ),
+                                  scale: scaleTween.animate(animation),
                                   child: FadeTransition(
-                                    opacity: CurvedAnimation(
-                                      parent: animation,
-                                      curve: Curves.easeOut, // Mờ dần khi hiện ra
-                                      reverseCurve: Curves.easeIn, // Rõ dần khi đóng
-                                    ),
+                                    opacity: opacityTween.animate(animation),
                                     child: child,
                                   ),
                                 );
@@ -1018,10 +1033,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              side: BorderSide(
-                                                color: Colors.black,
-                                                width: screenWidth * 0.002,
-                                              ),
+                                              // side: BorderSide(
+                                              //   color: Colors.black,
+                                              //   width: screenWidth * 0.002,
+                                              // ),
                                             ),
                                           ),
                                           child: Column(
@@ -1091,12 +1106,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              side: BorderSide(
-                                                color: _askFriendUsedOnce
-                                                    ? Colors.black.withOpacity(0.5)
-                                                    : Colors.black,
-                                                width: screenWidth * 0.002,
-                                              ),
+                                              // side: BorderSide(
+                                              //   color: _askFriendUsedOnce
+                                              //       ? Colors.black.withOpacity(0.5)
+                                              //       : Colors.black,
+                                              //   width: screenWidth * 0.002,
+                                              // ),
                                             ),
                                           ),
                                           child: Text(
@@ -1138,12 +1153,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              side: BorderSide(
-                                                color: (_hintActive || _hintUsedOnce)
-                                                    ? Colors.black.withOpacity(0.5)
-                                                    : Colors.black,
-                                                width: screenWidth * 0.002,
-                                              ),
+                                              // side: BorderSide(
+                                              //   color: (_hintActive || _hintUsedOnce)
+                                              //       ? Colors.black.withOpacity(0.5)
+                                              //       : Colors.black,
+                                              //   width: screenWidth * 0.002,
+                                              // ),
                                             ),
                                           ),
                                           child: Column(
@@ -1331,12 +1346,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
 
-    // Duyệt qua từng từ
     for (int i = 0; i < words.length; i++) {
       String currentWord = words[i];
       List<Widget> currentRow = [];
 
-      // Chia từ thành các hàng nếu quá maxCharsPerRow
       for (int j = 0; j < currentWord.length; j += maxCharsPerRow) {
         int endIdx = (j + maxCharsPerRow < currentWord.length)
             ? j + maxCharsPerRow
@@ -1349,19 +1362,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
         );
 
-        // Thêm hàng vào danh sách rows
         rows.add(Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: wordRow,
         ));
 
-        // Thêm khoảng cách giữa các hàng nếu không phải hàng cuối
         if (endIdx < currentWord.length) {
           rows.add(SizedBox(height: size * 0.1));
         }
       }
 
-      // Thêm khoảng cách giữa các từ (nếu không phải từ cuối)
       if (i < words.length - 1) {
         rows.add(SizedBox(height: size * 0.1)); // Khoảng cách giữa các từ
       }
@@ -1379,10 +1389,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       child: AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          double rotationAngle = (isCorrect || isWrong) ? 0.3 * sin(0.5 * _shakeAnimation.value) : 0;
+
           BoxDecoration boxDecoration;
           Color textColor = const Color(0xFF556B2F);
-          // Color boxColor; // This variable is not used
 
           if (isCorrect) {
             boxDecoration = BoxDecoration(
@@ -1393,7 +1403,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(8),
             );
             textColor = Colors.white;
-            // boxColor = Colors.transparent; // This assignment is not used
           } else if (isWrong) {
             boxDecoration = BoxDecoration(
               image: const DecorationImage(
@@ -1403,7 +1412,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(8),
             );
             textColor = Colors.white;
-            // boxColor = Colors.transparent; // This assignment is not used
           } else {
             boxDecoration = BoxDecoration(
               color: Colors.white,
@@ -1411,23 +1419,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(8),
             );
             textColor = const Color(0xFF556B2F);
-            // boxColor = Colors.white; // Default color // This assignment is not used
           }
 
-          return Transform.translate(
-            offset: Offset(offset, 0),
-            child: Container(
-              width: size,
-              height: size,
-              margin: const EdgeInsets.all(2.0),
-              decoration: boxDecoration,
-              alignment: Alignment.center,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) =>
-                    ScaleTransition(scale: animation, child: child),
-                child: slots[slotIdx].isNotEmpty
-                    ? Text(
+          return Container(
+            width: size,
+            height: size,
+            margin: const EdgeInsets.all(2.0),
+            decoration: boxDecoration,
+            alignment: Alignment.center,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) =>
+                  ScaleTransition(scale: animation, child: child),
+              child: slots[slotIdx].isNotEmpty
+                  ? Transform.rotate(
+                angle: rotationAngle,
+                child: Text(
                   slots[slotIdx],
                   key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
                   style: TextStyle(
@@ -1436,9 +1443,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     color: textColor,
                   ),
                   textAlign: TextAlign.center,
-                )
-                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
-              ),
+                ),
+              )
+                  : const SizedBox.shrink(key: ValueKey('empty_answer')),
             ),
           );
         },
