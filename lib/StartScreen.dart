@@ -258,23 +258,28 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
                             barrierDismissible: true,
                             barrierLabel: 'InfoPopup',
                             barrierColor: Colors.black.withOpacity(0.5),
-                            transitionDuration: const Duration(milliseconds: 500),
+                            transitionDuration: const Duration(milliseconds: 300),
                             pageBuilder: (context, animation, secondaryAnimation) {
                               return const InfoPopup( );
                             },
                             transitionBuilder: (context, animation, secondaryAnimation, child) {
+                              // Animation khi hiển thị: (0, 0.8) -> (1, 1.05) -> (1, 1.0)
+                              // Animation khi ẩn: (1, 1.0) -> (1, 1.05) -> (0, 0.8)
+
+                              final opacityTween = TweenSequence<double>([
+                                TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7), // Hiện rõ 70% thời gian đầu
+                                TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3), // Giữ nguyên 100% opacity 30% thời gian sau
+                              ]);
+
+                              final scaleTween = TweenSequence<double>([
+                                TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7), // Phóng to từ 0.8 lên 1.05 trong 70% thời gian đầu
+                                TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3), // Thu nhỏ từ 1.05 về 1.0 trong 30% thời gian sau
+                              ]);
+
                               return ScaleTransition(
-                                scale: CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutBack,
-                                  reverseCurve: Curves.easeInBack,
-                                ),
+                                scale: scaleTween.animate(animation),
                                 child: FadeTransition(
-                                  opacity: CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOut,
-                                    reverseCurve: Curves.easeIn,
-                                  ),
+                                  opacity: opacityTween.animate(animation),
                                   child: child,
                                 ),
                               );
@@ -296,23 +301,26 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
                             barrierDismissible: true,
                             barrierLabel: 'SettingPopup',
                             barrierColor: Colors.black.withOpacity(0.5),
-                            transitionDuration: const Duration(milliseconds: 500),
+                            transitionDuration: const Duration(milliseconds: 300),
                             pageBuilder: (context, animation, secondaryAnimation) {
                               return const SettingPopup();
                             },
                             transitionBuilder: (context, animation, secondaryAnimation, child) {
+
+                              final opacityTween = TweenSequence<double>([
+                                TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                                TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                              ]);
+
+                              final scaleTween = TweenSequence<double>([
+                                TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                                TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                              ]);
+
                               return ScaleTransition(
-                                scale: CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutBack,
-                                  reverseCurve: Curves.easeInBack,
-                                ),
+                                scale: scaleTween.animate(animation),
                                 child: FadeTransition(
-                                  opacity: CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOut,
-                                    reverseCurve: Curves.easeIn,
-                                  ),
+                                  opacity: opacityTween.animate(animation),
                                   child: child,
                                 ),
                               );
