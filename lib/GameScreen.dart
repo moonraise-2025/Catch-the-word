@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:math';
@@ -135,14 +136,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       final loadedQuestions = await QuestionService.loadQuestions();
       setState(() {
         questions = loadedQuestions;
+        _isLoadingQuestions = false; // Đã tải xong
       });
 
       if (questions.isNotEmpty) { // Chỉ khởi tạo game nếu có câu hỏi
-        // Pre-cache tất cả ảnh
-        for (var question in questions) {
-          await precacheImage(NetworkImage(question.imgQuestion), context);
-        }
-
         if (widget.initialLevel > 1) { // Đảm bảo initialLevel không vượt quá số lượng câu hỏi
           level = min(widget.initialLevel, questions.length);
           currentQuestion = level - 1;
@@ -155,6 +152,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _initGame(); // Khởi tạo game với câu hỏi đầu tiên (hoặc level được truyền vào)
       } else { // Xử lý trường hợp không có câu hỏi nào được tải (ví dụ: hiển thị lỗi hoặc quay về màn hình chính)
         debugPrint("Không có câu hỏi nào được tải từ JSON.");
+        // Bạn có thể showDialog hoặc Navigator.pop ở đây
+        // Để hiển thị lỗi trên màn hình như ảnh chụp, bạn có thể thiết lập một biến trạng thái lỗi
+        // và hiển thị một widget Text dựa trên biến đó.
         if (mounted) {
           showDialog(
             context: context,
@@ -179,6 +179,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       debugPrint('Lỗi khi tải hoặc khởi tạo game: $e');
+      setState(() {
+        _isLoadingQuestions = false; // Vẫn đặt false để dừng indicator
+        // Tùy chọn, đặt trạng thái lỗi để hiển thị cho người dùng
+      });
       if (mounted) {
         showDialog(
           context: context,
@@ -200,10 +204,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           },
         );
       }
-    } finally {
-      setState(() {
-        _isLoadingQuestions = false; // Dừng trạng thái loading dù có lỗi hay không
-      });
     }
   }
 
@@ -298,7 +298,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return chars;
   }
 
-  void _onCharTap(int idx) async {
+    void _onCharTap(int idx) async {
     int targetSlot = answerSlots.indexOf('');
     if (targetSlot == -1) {
       return;
@@ -658,44 +658,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-
-    // man load co bg
-    // if (_isLoadingQuestions) {
-    //   return Scaffold(
-    //     body: Container(
-    //       decoration: const BoxDecoration(
-    //         image: DecorationImage(
-    //           image: AssetImage('assets/images/BackgroundGame.png'), // Đường dẫn tới ảnh tải
-    //           fit: BoxFit.cover,
-    //         ),
-    //       ),
-    //       child: const Center(
-    //         child: CircularProgressIndicator(
-    //           valueColor: AlwaysStoppedAnimation<Color>(Colors.white), // Đổi màu loading cho dễ nhìn trên nền ảnh
-    //         ),
-    //       ),
-    //     ),
-    //   );
-    // }
-
     // if (_isLoadingQuestions) {
     //   return const Scaffold(
-    //     backgroundColor: Colors.transparent,
+    //     backgroundColor: Colors.black,
     //     body: Center(
-    //
-    //       child: SizedBox.shrink(),
+    //       child: CircularProgressIndicator(
+    //         color: Colors.white,
+    //       ),
     //     ),
     //   );
     // }
-
     if (_isLoadingQuestions) {
-      // Khi dữ liệu đang được tải, trả về một Scaffold trống hoặc có màu nền đơn giản.
-      // Điều này sẽ làm cho màn hình không hiển thị "loading" rõ ràng.
+
       return const Scaffold(
-        backgroundColor: Colors.transparent, // Hoặc Colors.transparent nếu bạn muốn nền hoàn toàn trong suốt
+        backgroundColor: Colors.transparent,
         body: Center(
-          // Bạn có thể để trống hoặc thêm một widget nhỏ không gây chú ý ở đây.
-          // Ví dụ: SizedBox.shrink() sẽ không hiển thị gì cả.
           child: SizedBox.shrink(),
         ),
       );
@@ -897,7 +874,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     child: Image.network(
                                       questions[currentQuestion].imgQuestion,
                                       fit: BoxFit.cover,
-                                      // Image is already pre-cached, so loadingBuilder is less critical here but can remain for fallback.
                                       loadingBuilder: (BuildContext context,
                                           Widget child,
                                           ImageChunkEvent? loadingProgress) {
@@ -1346,10 +1322,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
 
+    // Duyệt qua từng từ
     for (int i = 0; i < words.length; i++) {
       String currentWord = words[i];
       List<Widget> currentRow = [];
 
+      // Chia từ thành các hàng nếu quá maxCharsPerRow
       for (int j = 0; j < currentWord.length; j += maxCharsPerRow) {
         int endIdx = (j + maxCharsPerRow < currentWord.length)
             ? j + maxCharsPerRow
@@ -1362,16 +1340,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
         );
 
+        // Thêm hàng vào danh sách rows
         rows.add(Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: wordRow,
         ));
 
+        // Thêm khoảng cách giữa các hàng nếu không phải hàng cuối
         if (endIdx < currentWord.length) {
           rows.add(SizedBox(height: size * 0.1));
         }
       }
 
+      // Thêm khoảng cách giữa các từ (nếu không phải từ cuối)
       if (i < words.length - 1) {
         rows.add(SizedBox(height: size * 0.1)); // Khoảng cách giữa các từ
       }
