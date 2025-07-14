@@ -863,7 +863,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     constraints.maxWidth;
                                 return Container(
                                   width: imageBoxSize ,
-                                  height: imageBoxSize * 0.9,
+                                  height: imageBoxSize * 1.0,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     border: Border.all(color: Colors.black26),
@@ -953,7 +953,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 3.825,
+                                height: adjustedSize * 3.6,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
@@ -1322,42 +1322,69 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
 
-    // Duyệt qua từng từ
+    // Gom nhiều từ liên tiếp trên 1 dòng nếu tổng ký tự + số khoảng trống giữa các từ <= 7
+    List<List<String>> groupedWords = [];
+    List<String> currentGroup = [];
+    int currentLen = 0;
     for (int i = 0; i < words.length; i++) {
-      String currentWord = words[i];
-      List<Widget> currentRow = [];
-
-      // Chia từ thành các hàng nếu quá maxCharsPerRow
-      for (int j = 0; j < currentWord.length; j += maxCharsPerRow) {
-        int endIdx = (j + maxCharsPerRow < currentWord.length)
-            ? j + maxCharsPerRow
-            : currentWord.length;
-        List<Widget> wordRow = List.generate(
-          endIdx - j,
-              (k) => Padding(
-            padding: EdgeInsets.symmetric(horizontal: size * 0.1), // Thêm padding đồng đều
-            child: _buildAnswerBox(slotIdx++, slots, size),
-          ),
-        );
-
-        // Thêm hàng vào danh sách rows
-        rows.add(Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: wordRow,
-        ));
-
-        // Thêm khoảng cách giữa các hàng nếu không phải hàng cuối
-        if (endIdx < currentWord.length) {
-          rows.add(SizedBox(height: size * 0.1));
-        }
-      }
-
-      // Thêm khoảng cách giữa các từ (nếu không phải từ cuối)
-      if (i < words.length - 1) {
-        rows.add(SizedBox(height: size * 0.1)); // Khoảng cách giữa các từ
+      int wordLen = words[i].length;
+      int spaceNeeded = currentGroup.isEmpty ? 0 : 1; // Nếu đã có từ thì cần thêm 1 khoảng trống
+      if (currentLen + spaceNeeded + wordLen <= maxCharsPerRow) {
+        currentGroup.add(words[i]);
+        currentLen += spaceNeeded + wordLen;
+      } else {
+        if (currentGroup.isNotEmpty) groupedWords.add(List.from(currentGroup));
+        currentGroup = [words[i]];
+        currentLen = wordLen;
       }
     }
+    if (currentGroup.isNotEmpty) groupedWords.add(currentGroup);
 
+    // Tìm số lượng ô lớn nhất trên 1 dòng để căn giữa các dòng còn lại
+    int maxRowLen = 0;
+    List<int> rowLens = [];
+    for (var group in groupedWords) {
+      int len = group.fold(0, (prev, w) => prev + w.length) + (group.length - 1);
+      rowLens.add(len);
+      if (len > maxRowLen) maxRowLen = len;
+    }
+
+    // Render từng dòng
+    for (int groupIdx = 0; groupIdx < groupedWords.length; groupIdx++) {
+      var group = groupedWords[groupIdx];
+      int rowLen = group.fold(0, (prev, w) => prev + w.length) + (group.length - 1);
+      int leadingSpaces = ((maxRowLen - rowLen) / 2).floor();
+      int trailingSpaces = maxRowLen - rowLen - leadingSpaces;
+      List<Widget> row = [];
+      // Thêm khoảng trống đầu dòng để căn giữa
+      for (int i = 0; i < leadingSpaces; i++) {
+        row.add(SizedBox(width: size));
+      }
+      // Thêm các ô chữ và khoảng trống giữa các từ
+      for (int i = 0; i < group.length; i++) {
+        for (int j = 0; j < group[i].length; j++) {
+          row.add(_buildAnswerBox(slotIdx++, slots, size));
+          if (j < group[i].length - 1) {
+            row.add(SizedBox(width: size * 0.15)); // Khoảng cách giữa các ký tự trong cùng 1 từ
+          }
+        }
+        if (i < group.length - 1) {
+          row.add(SizedBox(width: size * 1.35)); // Khoảng trống giữa các từ
+        }
+      }
+      // Thêm khoảng trống cuối dòng để căn giữa
+      for (int i = 0; i < trailingSpaces; i++) {
+        row.add(SizedBox(width: size));
+      }
+      rows.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: row,
+      ));
+      // Thêm khoảng cách giữa các dòng (trừ dòng cuối)
+      if (groupIdx < groupedWords.length - 1) {
+        rows.add(SizedBox(height: size * 0.15));
+      }
+    }
     return rows;
   }
 
