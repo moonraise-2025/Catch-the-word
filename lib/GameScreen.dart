@@ -986,6 +986,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 ),
                                 height: adjustedSize * 3.6,
                                 child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
                                       answerSlots,
@@ -1353,7 +1354,38 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
 
-    // Gom nhiều từ liên tiếp trên 1 dòng nếu tổng ký tự + số khoảng trống giữa các từ <= 7
+    // Nếu chỉ có đúng 2 từ, luôn hiển thị mỗi từ trên 1 dòng, căn giữa 2 dòng với nhau
+    if (words.length == 2) {
+      int maxLen = words[0].length > words[1].length ? words[0].length : words[1].length;
+      for (int i = 0; i < 2; i++) {
+        int rowLen = words[i].length;
+        int leadingSpaces = ((maxLen - rowLen) / 2).floor();
+        int trailingSpaces = maxLen - rowLen - leadingSpaces;
+        List<Widget> row = [];
+        for (int j = 0; j < leadingSpaces; j++) {
+          row.add(SizedBox(width: size + size * 0.15));
+        }
+        for (int j = 0; j < words[i].length; j++) {
+          row.add(_buildAnswerBox(slotIdx++, slots, size));
+          if (j < words[i].length - 1) {
+            row.add(SizedBox(width: size * 0.15));
+          }
+        }
+        for (int j = 0; j < trailingSpaces; j++) {
+          row.add(SizedBox(width: size + size * 0.15));
+        }
+        rows.add(Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: row,
+        ));
+        if (i == 0) {
+          rows.add(SizedBox(height: size * 0.15));
+        }
+      }
+      return rows;
+    }
+
+    // Trường hợp còn lại: gom nhiều từ liên tiếp trên 1 dòng nếu tổng ký tự + số khoảng trống giữa các từ <= 7
     List<List<String>> groupedWords = [];
     List<String> currentGroup = [];
     int currentLen = 0;
@@ -1400,10 +1432,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           }
         }
         if (i < group.length - 1) {
-          row.add(SizedBox(width: size * 1.35)); // Khoảng trống giữa các từ
+          row.add(SizedBox(width: size * 1.25)); // Khoảng trống giữa các từ
         }
       }
-      // Thêm khoảng trống cuối dòng để căn giữa
+      // Thêm khoảng trống cuối dòng để căn g8iữa
       for (int i = 0; i < trailingSpaces; i++) {
         row.add(SizedBox(width: size));
       }
