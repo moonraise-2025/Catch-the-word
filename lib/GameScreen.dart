@@ -1264,7 +1264,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             width: size,
             height: size,
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 100),
               transitionBuilder: (child, animation) =>
                   ScaleTransition(scale: animation, child: child),
               child: charUsed[charIdx]
@@ -1409,7 +1409,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             decoration: boxDecoration,
             alignment: Alignment.center,
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 100),
               transitionBuilder: (child, animation) =>
                   ScaleTransition(scale: animation, child: child),
               child: slots[slotIdx].isNotEmpty
