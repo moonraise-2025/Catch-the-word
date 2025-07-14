@@ -76,6 +76,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final GlobalKey previewContainerKey = GlobalKey();
   // int dummyState = 0; // Biến này không được sử dụng
 
+  void _preloadNextImage(int questionIndex) {
+    if (questionIndex < questions.length) {
+      final nextQuestion = questions[questionIndex];
+      final imageProvider = NetworkImage(nextQuestion.imgQuestion);
+      // precacheImage yêu cầu context, nên đảm bảo nó có sẵn
+      precacheImage(imageProvider, context);
+      debugPrint('Đã tải trước ảnh cho câu hỏi ${nextQuestion.id}');
+    }
+  }
+
   Future<void> captureAndShareWidget() async {
     if (_askFriendInitialActive || _askFriendUsedOnce) {
       return;
@@ -150,6 +160,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         // Đảm bảo rằng maxAnswerLength được tính sau khi questions được tải
         maxAnswerLength = questions.map((q) => q.answer.replaceAll(' ', '').length).reduce((a, b) => a > b ? a : b);
         _initGame(); // Khởi tạo game với câu hỏi đầu tiên (hoặc level được truyền vào)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _preloadNextImage(currentQuestion + 1);
+        });
       } else { // Xử lý trường hợp không có câu hỏi nào được tải (ví dụ: hiển thị lỗi hoặc quay về màn hình chính)
         debugPrint("Không có câu hỏi nào được tải từ JSON.");
         // Bạn có thể showDialog hoặc Navigator.pop ở đây
@@ -232,6 +245,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _hintTimer?.cancel();
     _askFriendInitialTimer?.cancel();
     super.dispose();
+  }
+  void _goToNextQuestion() {
+    setState(() {
+      level++;
+      currentQuestion++;
+      isCorrect = false;
+      isWrong = false;
+      _hintUsedOnce = false;
+      _askFriendUsedOnce = false;
+      _askFriendInitialActive = true;
+    });
+
+    if (currentQuestion < questions.length) {
+      _initGame();
+      _preloadNextImage(currentQuestion + 1);
+    }
+    _saveGameProgress();
   }
 
   void _initGame() {
@@ -465,6 +495,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 diamonds = 0;
               }
               _initGame(); // Gọi _initGame sau khi cập nhật level/question
+              _preloadNextImage(currentQuestion + 1);
               _saveGameProgress(); // Lưu trạng thái game
               _saveDiamonds(); // Lưu kim cương
             });
