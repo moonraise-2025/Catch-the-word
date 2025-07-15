@@ -1,6 +1,7 @@
-
+import 'package:duoihinhbatchu/ads/rewarded_ad_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
 import 'PopupWatchVideo.dart';
@@ -16,26 +17,27 @@ import 'package:intl/intl.dart';
 
 import 'audio_manager.dart';
 
-import 'package:duoihinhbatchu/model/question.dart'; // Đảm bảo đúng đường dẫn tới model/question.dart
+import 'package:duoihinhbatchu/model/question.dart';
 import 'package:duoihinhbatchu/service/question_service.dart';
 
 
-class GameScreen extends StatefulWidget {
+class GameScreen extends ConsumerStatefulWidget { // Thay đổi ở đây
   final int initialLevel;
 
   const GameScreen({super.key, this.initialLevel = 1});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  ConsumerState<GameScreen> createState() => _GameScreenState(); // Thay đổi ở đây
 }
 
-class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
+class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStateMixin {
   // Thay thế danh sách questions cứng bằng một danh sách rỗng ban đầu
   // Dữ liệu sẽ được tải từ JSON
   List<Question> questions = [];
   bool _isLoadingQuestions = true; // Biến trạng thái để kiểm tra xem dữ liệu đã tải xong chưa
   Map<String, bool> _isPressedMap = {};
 
+  bool _adRewardEarned = false; //ads
 
   int dailyCount = 0;
   int daily30Count = 0;
@@ -1211,7 +1213,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 width: double.infinity,
                                 height: screenHeight * 0.07,
                                 child:
-                                // Nút "QUA MÀN"
                                 AnimatedScale(
                                   scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
                                   duration: const Duration(milliseconds: 500),
@@ -1226,9 +1227,70 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     },
                                     onTapUp: (_) {},
                                     onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
-                                    child: ElevatedButton(
+                                    child:
+                                    ElevatedButton(
                                       onPressed: () {
-                                        // TODO: Implement "QUA MÀN" functionality (e.g., show video ad)
+                                        final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
+                                        final rewardedAd = ref.read(rewardedAdProvider);
+
+                                        if (rewardedAd == null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau.'),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                          rewardedAdNotifier.createRewardedAd();
+                                          return;
+                                        }
+
+                                        _adRewardEarned = false;
+
+                                        rewardedAdNotifier.showRewardedAd(
+                                              () {
+                                            _adRewardEarned = true;
+                                            print('DEBUG: Người dùng đã nhận thưởng.');
+                                          },
+                                              () {
+                                            print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
+                                            if (_adRewardEarned) {
+                                              print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
+                                              final correctAnswer = questions[currentQuestion]
+                                                  .answer
+                                                  .toUpperCase()
+                                                  .replaceAll(' ', '');
+
+                                              setState(() {
+                                                answerSlots = correctAnswer.split('');
+                                                isCorrect = true;
+                                                charUsed = List.filled(charOptions.length, false);
+                                                for (int i = 0; i < correctAnswer.length; i++) {
+                                                  final char = correctAnswer[i];
+                                                  for (int j = 0; j < charOptions.length; j++) {
+                                                    if (charOptions[j] == char && !charUsed[j]) {
+                                                      charUsed[j] = true;
+                                                      break;
+                                                    }
+                                                  }
+                                                }
+                                              });
+
+                                              _shakeController.forward(from: 0);
+
+                                              Future.delayed(const Duration(seconds: 1), () {
+                                                if (mounted) {
+                                                  setState(() {
+                                                    isCorrect = false;
+                                                  });
+                                                  showCorrectDialog();
+                                                }
+                                              });
+                                              // --- KẾT THÚC LOGIC CỦA NÚT "QUA MÀN" ---
+                                            } else {
+                                              print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
+                                            }
+                                          },
+                                        );
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.white,
@@ -1278,7 +1340,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
   List<Widget> buildCharRows(double size) {
     const int maxPerRow = 7;
     List<Widget> rows = [];
