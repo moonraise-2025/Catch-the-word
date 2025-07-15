@@ -62,11 +62,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   String? _hintBanner;
   // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
-  Timer? _askFriendInitialTimer;
-  int _askFriendInitialSeconds = 30;
-  bool _askFriendInitialActive = true;
-  bool _askFriendUsedOnce = false;
-
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -93,9 +88,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   Future<void> captureAndShareWidget() async {
-    if (_askFriendInitialActive || _askFriendUsedOnce) {
-      return;
-    }
+
 
     try {
       RenderRepaintBoundary boundary = previewContainerKey.currentContext
@@ -115,9 +108,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
         await Share.shareFiles([file.path],
             text: 'Chơi game Đuổi hình bắt chữ nè!');
-        setState(() {
-          _askFriendUsedOnce = true;
-        });
       }
     } catch (e) {
       debugPrint('Lỗi chụp/chia sẻ widget: $e');
@@ -250,7 +240,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _controller.dispose();
     _shakeController.dispose();
     _hintTimer?.cancel();
-    _askFriendInitialTimer?.cancel();
     super.dispose();
   }
   void _goToNextQuestion() {
@@ -260,8 +249,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       isCorrect = false;
       isWrong = false;
       _hintUsedOnce = false;
-      _askFriendUsedOnce = false;
-      _askFriendInitialActive = true;
+
     });
 
     if (currentQuestion < questions.length) {
@@ -293,11 +281,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _hintBanner = null;
     _hintUsedOnce = false;
     // _hintWordIndex = 0; // Đã bỏ
-    _askFriendInitialActive = true;
-    _askFriendInitialSeconds = 30;
-    _askFriendUsedOnce = false;
-    _askFriendInitialTimer?.cancel();
-    _startAskFriendInitialCountdown();
     _startHintCountdown();
   }
 
@@ -435,27 +418,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     });
   }
 
-  void _startAskFriendInitialCountdown() {
-    setState(() {
-      _askFriendInitialSeconds = 30;
-      _askFriendInitialActive = true;
-    });
 
-    _askFriendInitialTimer?.cancel();
-    _askFriendInitialTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_askFriendInitialSeconds == 0) {
-            timer.cancel();
-            setState(() {
-              _askFriendInitialActive = false;
-            });
-          } else {
-            setState(() {
-              _askFriendInitialSeconds--;
-            });
-          }
-        });
-  }
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -1176,7 +1139,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             'Hỏi Bạn',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color: _askFriendUsedOnce ? Colors.white70 : Colors.white,
+                                              color:  Colors.white,
                                               fontSize: screenWidth * 0.045,
                                             ),
                                           ),
