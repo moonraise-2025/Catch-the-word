@@ -5,7 +5,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
-import 'PopupWatchVideo.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -518,122 +517,78 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _showRevealLetterDialog() async {
     if (diamonds < 10) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          final screenWidth = MediaQuery.of(context).size.width;
-          return AlertDialog(
-            title: Text(
-              'Không đủ kim cương',
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-                color: Colors.redAccent,
-                letterSpacing: 1.0,
-              ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Không đủ kim cương!',
+            style: TextStyle(
+              fontSize: MediaQuery.of(context).size.width * 0.04,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-            content: Text(
-              'Bạn không đủ 10 kim cương để mở 1 chữ!',
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-                letterSpacing: 0.4,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'OK',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueAccent,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+          ),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
-    final shouldReveal = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        return AlertDialog(
-          title: Text(
-            'Hiện đáp án',
-            style: TextStyle(
-              fontSize: screenWidth * 0.06,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
-              letterSpacing: 1.2,
-            ),
-          ),
-          content: Text(
-            'Bạn có muốn dùng 10 kim cương để mở 1 chữ không?',
-            style: TextStyle(
-              fontSize: screenWidth * 0.05,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-              letterSpacing: 0.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Không',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.05,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.redAccent,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(
-                'Đồng ý',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.05,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-    if (shouldReveal == true) {
-      setState(() {
-        diamonds -= 10;
-      });
-      await _saveDiamonds();
-      setState(() {
-        final answer = questions[currentQuestion].answer.toUpperCase();
-        for (int i = 0; i < answerSlots.length; i++) {
-          if (answerSlots[i].isEmpty) {
-            String correctChar =
-            answer.replaceAll(' ', '')[i];
-            for (int j = 0; j < charOptions.length; j++) {
-              if (charOptions[j] == correctChar && !charUsed[j]) {
-                answerSlots[i] = correctChar;
-                charUsed[j] = true;
-                currentSlot = i + 1;
-                break;
-              }
+
+    setState(() {
+      diamonds -= 10;
+    });
+    await _saveDiamonds();
+
+    setState(() {
+      final answer = questions[currentQuestion].answer.toUpperCase();
+      bool allSlotsFilled = true; // Thêm biến cờ để kiểm tra
+      for (int i = 0; i < answerSlots.length; i++) {
+        if (answerSlots[i].isEmpty) {
+          String correctChar =
+          answer.replaceAll(' ', '')[i];
+          for (int j = 0; j < charOptions.length; j++) {
+            if (charOptions[j] == correctChar && !charUsed[j]) {
+              answerSlots[i] = correctChar;
+              answerCharIndexes[i] = j; // Cập nhật answerCharIndexes
+              charUsed[j] = true;
+              currentSlot = i + 1;
+              break;
             }
-            break;
           }
+          allSlotsFilled = false; // Đánh dấu là chưa điền hết
+          break; // Chỉ điền 1 chữ mỗi lần
         }
-      });
-    }
+      }
+
+      // Kiểm tra nếu tất cả các ô đã được điền (có thể do đã điền hết hoặc do chỉ còn 1 ô cuối cùng được điền)
+      // và sau đó kiểm tra tính đúng đắn và kích hoạt hành động khi đúng.
+      if (allSlotsFilled || answerSlots.every((slot) => slot.isNotEmpty)) {
+        final userAnswer = answerSlots.join('');
+        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+
+        if (userAnswer == correctAnswer) {
+          isCorrect = true;
+          _shakeController.repeat();
+          Future.delayed(const Duration(seconds: 2), () {
+            _shakeController.stop();
+            _shakeController.value = 0.0;
+            showCorrectDialog();
+
+            if (dailyCount < 1) dailyCount++;
+            if (daily30Count < 30) daily30Count++;
+            if (daily50Count < 50) daily50Count++;
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.setInt('dailyCount', dailyCount);
+              prefs.setInt('daily30Count', daily30Count);
+              prefs.setInt('daily50Count', daily50Count);
+            });
+          });
+        }
+      }
+    });
   }
+
 
   void _onHint() {
     if (_hintActive) return;
@@ -696,6 +651,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         const SnackBar(content: Text('Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!')),
       );
     }
+
   }
 
   @override
