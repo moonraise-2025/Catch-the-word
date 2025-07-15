@@ -1,62 +1,56 @@
 [
-  {
-    "id": "1",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau1.png?raw=true",
-    "answer": "CƯỚP BIỂN",
-    "answer_type": "CƯỚP"
-  },
-  {
-    "id": "2",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau2.png?raw=true",
-    "answer": "THUỶ TINH",
-    "answer_type": "THUỶ"
-  },
-  {
-    "id": "3",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau3.png?raw=true",
-    "answer": "GIẤU ĐẦU LÒI ĐUÔI",
-    "answer_type": "GIẤU"
-  },
-  {
-    "id": "4",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau4.png?raw=true",
-    "answer": "ĂN NĂN",
-    "answer_type": "ĂN"
-  },
-  {
-    "id": "5",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau5.png?raw=true",
-    "answer": "QUẠT THAN",
-    "answer_type": "QUẠT"
-  },
-  {
-    "id": "6",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau6.png?raw=true",
-    "answer": "CẦU HÔN",
-    "answer_type": "CẦU"
-  },
-  {
-    "id": "7",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau7.png?raw=true",
-    "answer": "CHÂN DUNG",
-    "answer_type": "CHÂN"
-  },
-  {
-    "id": "8",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau8.png?raw=true",
-    "answer": "GIẢI THƯỞNG",
-    "answer_type": "GIẢI"
-  },
-  {
-    "id": "9",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau9.png?raw=true",
-    "answer": "ĐẦU TƯ",
-    "answer_type": "ĐẦU"
-  },
-  {
-    "id": "10",
-    "img_question": "https://github.com/moonraise-2025/3-dhbc-assets/blob/main/assets/cau10.png?raw=true",
-    "answer": "BÀN BẠC",
-    "answer_type": "BÀN"
-  }
+  { "id": "1", "answer": "BÁO THỨC", "answer_type": "BÁO" },
+  { "id": "2", "answer": "XE HOA", "answer_type": "XE" },
+  { "id": "3", "answer": "XƯƠNG RỒNG", "answer_type": "XƯƠNG" },
+  { "id": "4", "answer": "CƠ BẮP", "answer_type": "CƠ" },
+  { "id": "5", "answer": "BÓNG ĐÁ", "answer_type": "BÓNG" },
+  { "id": "6", "answer": "BÚT KÝ", "answer_type": "BÚT" },
+  { "id": "7", "answer": "BẠC TÌNH", "answer_type": "BẠC" },
+  { "id": "8", "answer": "HỒNG TÂM", "answer_type": "HỒNG" },
+  { "id": "9", "answer": "TRÁI CÂY", "answer_type": "TRÁI" },
+  { "id": "10", "answer": "NHẠC CỤ", "answer_type": "NHẠC" },
+  { "id": "11", "answer": "XÍCH LÔ", "answer_type": "XÍCH" },
+  { "id": "12", "answer": "CƠ HỘI", "answer_type": "CƠ" },
+  { "id": "13", "answer": "ĐỒNG CẢM", "answer_type": "ĐỒNG" },
+  { "id": "14", "answer": "TƯỞNG TƯỢNG", "answer_type": "TƯỞNG" },
+  { "id": "15", "answer": "ĐÔNG ĐẢO", "answer_type": "ĐÔNG" },
+  { "id": "16", "answer": "TỔ TIÊN", "answer_type": "TỔ" },
+  { "id": "17", "answer": "SỔ MŨI", "answer_type": "SỔ" },
+  { "id": "18", "answer": "CÒ CON", "answer_type": "CÒ" },
+  { "id": "19", "answer": "THƯ RÁC", "answer_type": "THƯ" },
+  { "id": "20", "answer": "CÔNG CỤ", "answer_type": "CÔNG" },
+  { "id": "21", "answer": "HỌC HỎI", "answer_type": "HỌC" },
+  { "id": "22", "answer": "KÉO LƯỚI", "answer_type": "KÉO" },
+  { "id": "23", "answer": "BÁO LÁ CẢI", "answer_type": "BÁO" },
+  { "id": "24", "answer": "NGOẠI Ô", "answer_type": "NGOẠI" },
+  { "id": "25", "answer": "NGÔI SAO CA NHẠC", "answer_type": "NGÔI" },
+  { "id": "26", "answer": "PHẤN ĐẤU", "answer_type": "PHẤN" },
+  { "id": "27", "answer": "KEM CHỐNG NẮNG", "answer_type": "KEM" },
+  { "id": "28", "answer": "ÁO BÀ BA", "answer_type": "ÁO" },
+  { "id": "29", "answer": "ĐÁM MA", "answer_type": "ĐÁM" },
+  { "id": "30", "answer": "SAO BĂNG", "answer_type": "SAO" },
+  { "id": "31", "answer": "CƯỜI TRỪ", "answer_type": "CƯỜI" },
+  { "id": "32", "answer": "CÁ MẬP", "answer_type": "CÁ" },
+  { "id": "33", "answer": "NHẬT BÁO", "answer_type": "NHẬT" },
+  { "id": "34", "answer": "LANG THANG", "answer_type": "LANG" },
+  { "id": "35", "answer": "HÀNH TINH", "answer_type": "HÀNH" },
+  { "id": "36", "answer": "CÁNH CAM", "answer_type": "CÁNH" },
+  { "id": "37", "answer": "TRÂU MỘNG", "answer_type": "TRÂU" },
+  { "id": "38", "answer": "E LỆ", "answer_type": "E" },
+  { "id": "39", "answer": "HẠN HÁN", "answer_type": "HẠN" },
+  { "id": "40", "answer": "SỔ ĐỎ", "answer_type": "SỔ" },
+  { "id": "41", "answer": "PHÂN CÔNG", "answer_type": "PHÂN" },
+  { "id": "42", "answer": "NHẠC NƯỚC", "answer_type": "NHẠC" },
+  { "id": "43", "answer": "CÁ HOÀNG ĐẾ", "answer_type": "CÁ" },
+  { "id": "44", "answer": "BẢNG HIỆU", "answer_type": "BẢNG" },
+  { "id": "45", "answer": "NƯỚC HOA HỒNG", "answer_type": "NƯỚC" },
+  { "id": "46", "answer": "LY HÔN", "answer_type": "LY" },
+  { "id": "47", "answer": "MÃ SỐ", "answer_type": "MÃ" },
+  { "id": "48", "answer": "ĐINH BA", "answer_type": "ĐINH" },
+  { "id": "49", "answer": "BÔNG BĂNG", "answer_type": "BÔNG" },
+  { "id": "50", "answer": "CẢNH CÁO", "answer_type": "CẢNH" },
+  { "id": "51", "answer": "VỊT TRỜI", "answer_type": "VỊT" },
+  { "id": "52", "answer": "Ý KIẾN", "answer_type": "Ý" },
+  { "id": "53", "answer": "VÕ SƯ", "answer_type": "VÕ" },
+  { "id": "54", "answer": "NHÀ KÍNH", "answer_type": "NHÀ" }
 ]

@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
+import 'PopupWatchVideo.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -60,9 +61,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   String? _hintBanner;
   // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
-  // Timer? _askFriendInitialTimer;
-  // int _askFriendInitialSeconds = 30;
-  // bool _askFriendInitialActive = true;
+  Timer? _askFriendInitialTimer;
+  int _askFriendInitialSeconds = 30;
+  bool _askFriendInitialActive = true;
   bool _askFriendUsedOnce = false;
 
   late AnimationController _controller;
@@ -77,8 +78,18 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   final GlobalKey previewContainerKey = GlobalKey();
   // int dummyState = 0; // Biến này không được sử dụng
 
+  void _preloadNextImage(int questionIndex) {
+    if (questionIndex < questions.length) {
+      final nextQuestion = questions[questionIndex];
+      final imageProvider = NetworkImage(nextQuestion.imgQuestion);
+      // precacheImage yêu cầu context, nên đảm bảo nó có sẵn
+      precacheImage(imageProvider, context);
+      debugPrint('Đã tải trước ảnh cho câu hỏi ${nextQuestion.id}');
+    }
+  }
+
   Future<void> captureAndShareWidget() async {
-    if (_askFriendUsedOnce) {
+    if (_askFriendInitialActive || _askFriendUsedOnce) {
       return;
     }
 
@@ -151,6 +162,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         // Đảm bảo rằng maxAnswerLength được tính sau khi questions được tải
         maxAnswerLength = questions.map((q) => q.answer.replaceAll(' ', '').length).reduce((a, b) => a > b ? a : b);
         _initGame(); // Khởi tạo game với câu hỏi đầu tiên (hoặc level được truyền vào)
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _preloadNextImage(currentQuestion + 1);
+        });
       } else { // Xử lý trường hợp không có câu hỏi nào được tải (ví dụ: hiển thị lỗi hoặc quay về màn hình chính)
         debugPrint("Không có câu hỏi nào được tải từ JSON.");
         // Bạn có thể showDialog hoặc Navigator.pop ở đây
@@ -231,8 +245,25 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _controller.dispose();
     _shakeController.dispose();
     _hintTimer?.cancel();
-    // _askFriendInitialTimer?.cancel();
+    _askFriendInitialTimer?.cancel();
     super.dispose();
+  }
+  void _goToNextQuestion() {
+    setState(() {
+      level++;
+      currentQuestion++;
+      isCorrect = false;
+      isWrong = false;
+      _hintUsedOnce = false;
+      _askFriendUsedOnce = false;
+      _askFriendInitialActive = true;
+    });
+
+    if (currentQuestion < questions.length) {
+      _initGame();
+      _preloadNextImage(currentQuestion + 1);
+    }
+    _saveGameProgress();
   }
 
   void _initGame() {
@@ -243,9 +274,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     }
 
     final answer = questions[currentQuestion].answer.toUpperCase();
-    answerSlots = List.filled(answer.replaceAll(' ', '').length,
-        ''); // Chỉ đếm ký tự, bỏ khoảng trống
-
+    answerSlots = List.filled(answer.replaceAll(' ', '').length, '');
     answerCharIndexes = List.filled(
         answer.replaceAll(' ', '').length, null);
     charOptions = _generateCharOptions(
@@ -258,14 +287,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _controller.forward();
     _hintBanner = null;
     _hintUsedOnce = false;
-    // _hintWordIndex = 0;
-
-    // _askFriendInitialActive = true;
-    // _askFriendInitialSeconds = 30;
-    _askFriendUsedOnce = false; // Đặt lại trạng thái đã dùng
-    // _askFriendInitialTimer?.cancel();
-    // _startAskFriendInitialCountdown();
-
+    // _hintWordIndex = 0; // Đã bỏ
+    _askFriendInitialActive = true;
+    _askFriendInitialSeconds = 30;
+    _askFriendUsedOnce = false;
+    _askFriendInitialTimer?.cancel();
+    _startAskFriendInitialCountdown();
     _startHintCountdown();
   }
 
@@ -303,7 +330,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     return chars;
   }
 
-  void _onCharTap(int idx) async {
+    void _onCharTap(int idx) async {
     int targetSlot = answerSlots.indexOf('');
     if (targetSlot == -1) {
       return;
@@ -337,8 +364,16 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       });
 
       if (correct) {
-        _shakeController.forward(from: 0);
-        await Future.delayed(const Duration(seconds: 2));
+        // Bắt đầu animation rung lặp lại
+        _shakeController.repeat(); // Hoặc _shakeController.repeat(reverse: true); nếu muốn hiệu ứng mượt hơn
+
+        await Future.delayed(const Duration(seconds: 2)); // Thời gian bạn muốn chữ rung
+
+        // Dừng animation rung sau khi hết thời gian
+        _shakeController.stop();
+        // Đảm bảo animation trở về trạng thái ban đầu sau khi dừng
+        _shakeController.value = 0.0; // Đặt lại về 0 để không có độ xoay dư thừa
+
         showCorrectDialog();
 
         if (dailyCount < 1) dailyCount++;
@@ -354,9 +389,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
           isWrong = true;
         });
 
-        _shakeController.forward(from: 0);
+        // Bắt đầu animation rung lặp lại cho trường hợp sai
+        _shakeController.repeat(); // Hoặc _shakeController.repeat(reverse: true);
 
-        Future.delayed(const Duration(seconds: 2), () {
+        Future.delayed(const Duration(seconds: 2), () { // Thời gian bạn muốn chữ rung khi sai
+          _shakeController.stop();
+          _shakeController.value = 0.0; // Đặt lại về 0
           setState(() {
             isWrong = false;
             final answer = questions[currentQuestion].answer.toUpperCase();
@@ -392,7 +430,27 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     });
   }
 
-  // Phương thức _startAskFriendInitialCountdown đã được loại bỏ
+  void _startAskFriendInitialCountdown() {
+    setState(() {
+      _askFriendInitialSeconds = 30;
+      _askFriendInitialActive = true;
+    });
+
+    _askFriendInitialTimer?.cancel();
+    _askFriendInitialTimer =
+        Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (_askFriendInitialSeconds == 0) {
+            timer.cancel();
+            setState(() {
+              _askFriendInitialActive = false;
+            });
+          } else {
+            setState(() {
+              _askFriendInitialSeconds--;
+            });
+          }
+        });
+  }
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -423,7 +481,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       barrierDismissible: true,
       barrierLabel: 'InfoPopup',
       barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
         return PopupAnswerCorrect(
           onNext: () async {
@@ -439,6 +497,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 diamonds = 0;
               }
               _initGame(); // Gọi _initGame sau khi cập nhật level/question
+              _preloadNextImage(currentQuestion + 1);
               _saveGameProgress(); // Lưu trạng thái game
               _saveDiamonds(); // Lưu kim cương
             });
@@ -446,25 +505,26 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Hiệu ứng phóng to/thu nhỏ
+
+        final opacityTween = TweenSequence<double>([
+          TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+          TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+        ]);
+
+        final scaleTween = TweenSequence<double>([
+          TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+          TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+        ]);
+
         return ScaleTransition(
-          scale: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-            reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
-          ),
+          scale: scaleTween.animate(animation),
           child: FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut, // Mờ dần khi hiện ra
-              reverseCurve: Curves.easeIn, // Rõ dần khi đóng
-            ),
+            opacity: opacityTween.animate(animation),
             child: child,
           ),
         );
       },
     );
-
   }
 
   Future<void> checkAndResetDailyProgress() async {
@@ -631,13 +691,22 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    // if (_isLoadingQuestions) {
+    //   return const Scaffold(
+    //     backgroundColor: Colors.black,
+    //     body: Center(
+    //       child: CircularProgressIndicator(
+    //         color: Colors.white,
+    //       ),
+    //     ),
+    //   );
+    // }
     if (_isLoadingQuestions) {
+
       return const Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         body: Center(
-          child: CircularProgressIndicator(
-            color: Colors.white,
-          ),
+          child: SizedBox.shrink(),
         ),
       );
     }
@@ -670,7 +739,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final double imageContainerSize = screenWidth * 0.7;
+    // final double imageContainerSize = screenWidth * 0.7; // This variable is not used
     bannerHeight = screenHeight * 0.045;
     final double smallPadding = screenWidth * 0.025;
     final double mediumPadding = screenWidth * 0.05;
@@ -680,8 +749,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     final double adjustedSize =
         (screenWidth - 2 * mediumPadding - (maxPerRow + 1) * 4.0) /
             maxPerRow *
-            0.9;
-
+            0.8;
 
     return Container(
       decoration: const BoxDecoration(
@@ -755,9 +823,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                             showGeneralDialog(
                               context: context,
                               barrierDismissible: true,
-                              barrierLabel: 'InfoPopup',
+                              barrierLabel: 'Giftpopup',
                               barrierColor: Colors.black.withOpacity(0.5),
-                              transitionDuration: const Duration(milliseconds: 500),
+                              transitionDuration: const Duration(milliseconds: 300),
                               pageBuilder: (context, animation, secondaryAnimation) {
                                 return  Giftpopup(
                                   dailyCount: dailyCount,
@@ -774,25 +842,26 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 );
                               },
                               transitionBuilder: (context, animation, secondaryAnimation, child) {
-                                // Hiệu ứng phóng to/thu nhỏ
+
+                                final opacityTween = TweenSequence<double>([
+                                  TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                                  TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                                ]);
+
+                                final scaleTween = TweenSequence<double>([
+                                  TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                                  TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                                ]);
+
                                 return ScaleTransition(
-                                  scale: CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutBack, // Hiệu ứng nảy nhẹ khi hiện ra
-                                    reverseCurve: Curves.easeInBack, // Hiệu ứng thu nhỏ khi đóng
-                                  ),
+                                  scale: scaleTween.animate(animation),
                                   child: FadeTransition(
-                                    opacity: CurvedAnimation(
-                                      parent: animation,
-                                      curve: Curves.easeOut, // Mờ dần khi hiện ra
-                                      reverseCurve: Curves.easeIn, // Rõ dần khi đóng
-                                    ),
+                                    opacity: opacityTween.animate(animation),
                                     child: child,
                                   ),
                                 );
                               },
                             );
-
                           },
                           child: Image.asset(
                             'assets/images/gift.png',
@@ -808,15 +877,14 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
               ),
 
               SizedBox(height: screenHeight * 0.001),
-              Expanded(
+              Expanded( // Corrected Expanded usage
                 child: RepaintBoundary(
                   key: previewContainerKey,
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.005),
-
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
                         width: double.infinity,
                         child: ScaleTransition(
                           scale: _scaleAnimation,
@@ -827,8 +895,8 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 final double imageBoxSize =
                                     constraints.maxWidth;
                                 return Container(
-                                  width: imageBoxSize,
-                                  height: imageBoxSize * 0.6,
+                                  width: imageBoxSize ,
+                                  height: imageBoxSize * 1.0,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     border: Border.all(color: Colors.black26),
@@ -838,22 +906,32 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                     borderRadius: BorderRadius.circular(16),
                                     child: Image.network(
                                       questions[currentQuestion].imgQuestion,
-                                      fit: BoxFit.contain,
-                                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                                      fit: BoxFit.cover,
+                                      loadingBuilder: (BuildContext context,
+                                          Widget child,
+                                          ImageChunkEvent? loadingProgress) {
                                         if (loadingProgress == null) {
                                           return child;
                                         }
                                         return Center(
                                           child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                            value: loadingProgress
+                                                .expectedTotalBytes !=
+                                                null
+                                                ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
                                                 : null,
                                           ),
                                         );
                                       },
-                                      errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                      errorBuilder: (BuildContext context,
+                                          Object exception,
+                                          StackTrace? stackTrace) {
                                         return const Center(
-                                          child: Icon(Icons.error, color: Colors.red, size: 50),
+                                          child: Icon(Icons.error,
+                                              color: Colors.red, size: 50),
                                         );
                                       },
                                     ),
@@ -888,10 +966,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           )
                               : Image.asset(
                             'assets/images/logo3-15dhbc.png',
-                            height: bannerHeight * 4.0,
+                            height: bannerHeight * 3.0,
                             fit: BoxFit.contain,
                           ),
-
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.005),
@@ -909,12 +986,14 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 3.2,
-
+                                height: adjustedSize * 3.6,
                                 child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: _buildAnswerRows(
-                                      answerSlots, answer, adjustedSize),
+                                      answerSlots,
+                                      questions[currentQuestion].answer,
+                                      adjustedSize),
                                 ),
                               ),
                               SizedBox(height: screenHeight * 0.01),
@@ -927,6 +1006,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           ),
                         ),
                       ),
+
 
                       Padding(
                         padding: EdgeInsets.all(screenWidth * 0.027),
@@ -963,10 +1043,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              side: BorderSide(
-                                                color: Colors.black,
-                                                width: screenWidth * 0.002,
-                                              ),
+                                              // side: BorderSide(
+                                              //   color: Colors.black,
+                                              //   width: screenWidth * 0.002,
+                                              // ),
                                             ),
                                           ),
                                           child: Column(
@@ -1036,12 +1116,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              side: BorderSide(
-                                                color: _askFriendUsedOnce
-                                                    ? Colors.black.withOpacity(0.5)
-                                                    : Colors.black,
-                                                width: screenWidth * 0.002,
-                                              ),
+                                              // side: BorderSide(
+                                              //   color: _askFriendUsedOnce
+                                              //       ? Colors.black.withOpacity(0.5)
+                                              //       : Colors.black,
+                                              //   width: screenWidth * 0.002,
+                                              // ),
                                             ),
                                           ),
                                           child: Text(
@@ -1083,12 +1163,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              side: BorderSide(
-                                                color: (_hintActive || _hintUsedOnce)
-                                                    ? Colors.black.withOpacity(0.5)
-                                                    : Colors.black,
-                                                width: screenWidth * 0.002,
-                                              ),
+                                              // side: BorderSide(
+                                              //   color: (_hintActive || _hintUsedOnce)
+                                              //       ? Colors.black.withOpacity(0.5)
+                                              //       : Colors.black,
+                                              //   width: screenWidth * 0.002,
+                                              // ),
                                             ),
                                           ),
                                           child: Column(
@@ -1249,7 +1329,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -1277,7 +1357,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             width: size,
             height: size,
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 100),
               transitionBuilder: (child, animation) =>
                   ScaleTransition(scale: animation, child: child),
               child: charUsed[charIdx]
@@ -1286,7 +1366,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 key: ValueKey('char_$charIdx'),
                 onTap: () => _onCharTap(charIdx),
                 child: Container(
-                  margin: EdgeInsets.all(6.0),
+                  margin: EdgeInsets.all(2.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -1304,31 +1384,29 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                       style: TextStyle(
                         fontSize: size * 0.45,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF556B2F),
+                        color: const Color(0xFF556B2F),
                       ),
                     ),
                   ),
-
                 ),
               ),
             ),
-    ),
-    );
-    }
+          ),
+        );
+      }
 
-    rows.add(Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: row,
-    ));
-    if (idx + count < total) {
-    rows.add(SizedBox(height: size * 0.1));
+      rows.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: row,
+      ));
+      if (idx + count < total) {
+        rows.add(SizedBox(height: size * 0.1));
+      }
+      idx += count;
     }
-    idx += count;
-  }
 
     return rows;
   }
-
 
   List<Widget> _buildAnswerRows(
       List<String> slots, String answer, double size) {
@@ -1336,87 +1414,99 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     int slotIdx = 0;
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
+
+    // Nếu chỉ có đúng 2 từ, luôn hiển thị mỗi từ trên 1 dòng, căn giữa 2 dòng với nhau
     if (words.length == 2) {
-      for (var word in words) {
-        List<Widget> row = List.generate(
-            word.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: row)); // Đã xóa Padding ở đây
-        rows.add(SizedBox(height: size * 0.1));
-
-      }
-      if (rows.isNotEmpty) rows.removeLast();
-    } else if (words.length > 1) {
-      List<Widget> currentRow = [];
-      int currentLength = 0;
-      for (int i = 0; i < words.length; i++) {
-        int wordLen = words[i].length;
-        if (currentLength + wordLen > maxCharsPerRow && currentRow.isNotEmpty) {
-          rows.add(Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: currentRow)); // Đã xóa Padding ở đây
-          rows.add(SizedBox(height: size * 0.05));
-
-          currentRow = [];
-          currentLength = 0;
+      int maxLen = words[0].length > words[1].length ? words[0].length : words[1].length;
+      for (int i = 0; i < 2; i++) {
+        int rowLen = words[i].length;
+        int leadingSpaces = ((maxLen - rowLen) / 2).floor();
+        int trailingSpaces = maxLen - rowLen - leadingSpaces;
+        List<Widget> row = [];
+        for (int j = 0; j < leadingSpaces; j++) {
+          row.add(SizedBox(width: size + size * 0.15));
         }
-        currentRow.addAll(List.generate(
-            wordLen, (j) => _buildAnswerBox(slotIdx++, slots, size)));
-        currentLength += wordLen;
-        if (i < words.length - 1) {
-          if (currentLength <= maxCharsPerRow) {
-            currentRow.add(SizedBox(width: size * 0.1));
-            currentLength += 1;
-          } else {
-            rows.add(Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: currentRow.map((widget) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: size * 0.1),
-                  child: widget,
-                )).toList()));
-            rows.add(SizedBox(height: size * 0.1));
-
-            currentRow = [];
-            currentLength = 0;
+        for (int j = 0; j < words[i].length; j++) {
+          row.add(_buildAnswerBox(slotIdx++, slots, size));
+          if (j < words[i].length - 1) {
+            row.add(SizedBox(width: size * 0.15));
           }
         }
-      }
-      if (currentRow.isNotEmpty) {
+        for (int j = 0; j < trailingSpaces; j++) {
+          row.add(SizedBox(width: size + size * 0.15));
+        }
         rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: currentRow.map((widget) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
-              child: widget,
-            )).toList()));
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: row,
+        ));
+        if (i == 0) {
+          rows.add(SizedBox(height: size * 0.15));
+        }
       }
-    } else {
-      String currentWord = words[0];
-      if (currentWord.length <= maxCharsPerRow) {
-        List<Widget> currentRow = List.generate(
-            currentWord.length, (i) => _buildAnswerBox(slotIdx++, slots, size));
-        rows.add(Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: currentRow.map((widget) => Padding(
-              padding: EdgeInsets.symmetric(horizontal: size * 0.1),
-              child: widget,
-            )).toList()));
+      return rows;
+    }
 
+    // Trường hợp còn lại: gom nhiều từ liên tiếp trên 1 dòng nếu tổng ký tự + số khoảng trống giữa các từ <= 7
+    List<List<String>> groupedWords = [];
+    List<String> currentGroup = [];
+    int currentLen = 0;
+    for (int i = 0; i < words.length; i++) {
+      int wordLen = words[i].length;
+      int spaceNeeded = currentGroup.isEmpty ? 0 : 1; // Nếu đã có từ thì cần thêm 1 khoảng trống
+      if (currentLen + spaceNeeded + wordLen <= maxCharsPerRow) {
+        currentGroup.add(words[i]);
+        currentLen += spaceNeeded + wordLen;
       } else {
-        for (int i = 0; i < currentWord.length; i += maxCharsPerRow) {
-          int endIdx = (i + maxCharsPerRow < currentWord.length)
-              ? i + maxCharsPerRow
-              : currentWord.length;
-          List<Widget> wordRow = List.generate(
-              endIdx - i, (j) => _buildAnswerBox(slotIdx++, slots, size));
-          rows.add(Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: wordRow)); // Đã xóa Padding ở đây
+        if (currentGroup.isNotEmpty) groupedWords.add(List.from(currentGroup));
+        currentGroup = [words[i]];
+        currentLen = wordLen;
+      }
+    }
+    if (currentGroup.isNotEmpty) groupedWords.add(currentGroup);
 
-          if (endIdx < currentWord.length) {
-            rows.add(SizedBox(height: size * 0.1));
+    // Tìm số lượng ô lớn nhất trên 1 dòng để căn giữa các dòng còn lại
+    int maxRowLen = 0;
+    List<int> rowLens = [];
+    for (var group in groupedWords) {
+      int len = group.fold(0, (prev, w) => prev + w.length) + (group.length - 1);
+      rowLens.add(len);
+      if (len > maxRowLen) maxRowLen = len;
+    }
+
+    // Render từng dòng
+    for (int groupIdx = 0; groupIdx < groupedWords.length; groupIdx++) {
+      var group = groupedWords[groupIdx];
+      int rowLen = group.fold(0, (prev, w) => prev + w.length) + (group.length - 1);
+      int leadingSpaces = ((maxRowLen - rowLen) / 2).floor();
+      int trailingSpaces = maxRowLen - rowLen - leadingSpaces;
+      List<Widget> row = [];
+      // Thêm khoảng trống đầu dòng để căn giữa
+      for (int i = 0; i < leadingSpaces; i++) {
+        row.add(SizedBox(width: size));
+      }
+      // Thêm các ô chữ và khoảng trống giữa các từ
+      for (int i = 0; i < group.length; i++) {
+        for (int j = 0; j < group[i].length; j++) {
+          row.add(_buildAnswerBox(slotIdx++, slots, size));
+          if (j < group[i].length - 1) {
+            row.add(SizedBox(width: size * 0.15)); // Khoảng cách giữa các ký tự trong cùng 1 từ
           }
         }
+        if (i < group.length - 1) {
+          row.add(SizedBox(width: size * 1.25)); // Khoảng trống giữa các từ
+        }
+      }
+      // Thêm khoảng trống cuối dòng để căn g8iữa
+      for (int i = 0; i < trailingSpaces; i++) {
+        row.add(SizedBox(width: size));
+      }
+      rows.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: row,
+      ));
+      // Thêm khoảng cách giữa các dòng (trừ dòng cuối)
+      if (groupIdx < groupedWords.length - 1) {
+        rows.add(SizedBox(height: size * 0.15));
       }
     }
     return rows;
@@ -1431,63 +1521,63 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       child: AnimatedBuilder(
         animation: _shakeController,
         builder: (context, child) {
-          double offset = (isCorrect || isWrong) ? 10 * sin(_shakeAnimation.value) : 0;
+          double rotationAngle = (isCorrect || isWrong) ? 0.3 * sin(0.5 * _shakeAnimation.value) : 0;
+
           BoxDecoration boxDecoration;
           Color textColor = const Color(0xFF556B2F);
-          Color boxColor; // Declare boxColor here
 
           if (isCorrect) {
             boxDecoration = BoxDecoration(
-              image: DecorationImage(
+              image: const DecorationImage(
                 image: AssetImage('assets/images/Correct.png'),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(8),
             );
             textColor = Colors.white;
-            boxColor = Colors.transparent; // Assuming transparent for image background
           } else if (isWrong) {
             boxDecoration = BoxDecoration(
-              image: DecorationImage(
+              image: const DecorationImage(
                 image: AssetImage('assets/images/Incorrect.png'),
                 fit: BoxFit.cover,
               ),
               borderRadius: BorderRadius.circular(8),
             );
             textColor = Colors.white;
-            boxColor = Colors.transparent; // Assuming transparent for image background
           } else {
-            // This is the default state for the answer box
             boxDecoration = BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: Colors.white, width: 2), // Border here is correct
+              border: Border.all(color: Colors.white, width: 2),
               borderRadius: BorderRadius.circular(8),
             );
             textColor = const Color(0xFF556B2F);
-            boxColor = Colors.white; // Default color
           }
 
-          return Transform.translate(
-            offset: Offset(offset, 0),
-            child: Container(
-              width: size * 0.8,
-              height: size * 0.8,
-              margin: EdgeInsets.all(1.2),
-              decoration: boxDecoration,
-              alignment: Alignment.center,
+          return Container(
+            width: size,
+            height: size,
+            margin: const EdgeInsets.all(2.0),
+            decoration: boxDecoration,
+            alignment: Alignment.center,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 100),
+              transitionBuilder: (child, animation) =>
+                  ScaleTransition(scale: animation, child: child),
               child: slots[slotIdx].isNotEmpty
-                  ? Text(
-                slots[slotIdx],
-                key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
-                style: TextStyle(
-                  fontSize: size * 0.55,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+                  ? Transform.rotate(
+                angle: rotationAngle,
+                child: Text(
+                  slots[slotIdx],
+                  key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
+                  style: TextStyle(
+                    fontSize: size * 0.5,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               )
                   : const SizedBox.shrink(key: ValueKey('empty_answer')),
-
             ),
           );
         },
