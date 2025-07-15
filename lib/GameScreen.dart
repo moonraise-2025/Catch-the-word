@@ -335,7 +335,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     return chars;
   }
 
-    void _onCharTap(int idx) async {
+  void _onCharTap(int idx) async {
     int targetSlot = answerSlots.indexOf('');
     if (targetSlot == -1) {
       return;
