@@ -896,7 +896,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                     constraints.maxWidth;
                                 return Container(
                                   width: imageBoxSize ,
-                                  height: imageBoxSize * 1.0,
+                                  height: imageBoxSize * 0.95,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     border: Border.all(color: Colors.black26),
@@ -986,7 +986,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   Border.all(color: Colors.white, width: 2),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: adjustedSize * 3.6,
+                                height: adjustedSize * 3.95,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -1109,7 +1109,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       child: SizedBox(
                                         width: screenWidth * 0.31,
                                         child: ElevatedButton(
-                                          onPressed: _askFriendUsedOnce ? null : captureAndShareWidget,
+                                          onPressed: captureAndShareWidget,
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFFF8B52E),
                                             disabledBackgroundColor: const Color(0xFFF8B52E).withOpacity(0.6),
@@ -1369,7 +1369,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                   margin: EdgeInsets.all(2.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.15),
@@ -1400,7 +1400,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         children: row,
       ));
       if (idx + count < total) {
-        rows.add(SizedBox(height: size * 0.1));
+        rows.add(SizedBox(height: size * 0.05));
       }
       idx += count;
     }
@@ -1424,23 +1424,23 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         int trailingSpaces = maxLen - rowLen - leadingSpaces;
         List<Widget> row = [];
         for (int j = 0; j < leadingSpaces; j++) {
-          row.add(SizedBox(width: size + size * 0.15));
+          row.add(SizedBox(width: size + size * 0.1));
         }
         for (int j = 0; j < words[i].length; j++) {
           row.add(_buildAnswerBox(slotIdx++, slots, size));
           if (j < words[i].length - 1) {
-            row.add(SizedBox(width: size * 0.15));
+            row.add(SizedBox(width: size * 0.1));
           }
         }
         for (int j = 0; j < trailingSpaces; j++) {
-          row.add(SizedBox(width: size + size * 0.15));
+          row.add(SizedBox(width: size + size * 0.1));
         }
         rows.add(Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: row,
         ));
         if (i == 0) {
-          rows.add(SizedBox(height: size * 0.15));
+          rows.add(SizedBox(height: size * 0.1));
         }
       }
       return rows;
@@ -1489,7 +1489,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         for (int j = 0; j < group[i].length; j++) {
           row.add(_buildAnswerBox(slotIdx++, slots, size));
           if (j < group[i].length - 1) {
-            row.add(SizedBox(width: size * 0.15)); // Khoảng cách giữa các ký tự trong cùng 1 từ
+            row.add(SizedBox(width: size * 0.1)); // Khoảng cách giữa các ký tự trong cùng 1 từ
           }
         }
         if (i < group.length - 1) {
@@ -1506,7 +1506,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       ));
       // Thêm khoảng cách giữa các dòng (trừ dòng cuối)
       if (groupIdx < groupedWords.length - 1) {
-        rows.add(SizedBox(height: size * 0.15));
+        rows.add(SizedBox(height: size * 0.1));
       }
     }
     return rows;
@@ -1548,7 +1548,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             boxDecoration = BoxDecoration(
               color: Colors.white,
               border: Border.all(color: Colors.white, width: 2),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             );
             textColor = const Color(0xFF556B2F);
           }
