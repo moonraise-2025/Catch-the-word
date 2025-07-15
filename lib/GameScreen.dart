@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
 import 'PopupWatchVideo.dart';
@@ -76,6 +77,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final GlobalKey previewContainerKey = GlobalKey();
   // int dummyState = 0; // Biến này không được sử dụng
 
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
+
   void _preloadNextImage(int questionIndex) {
     if (questionIndex < questions.length) {
       final nextQuestion = questions[questionIndex];
@@ -138,6 +142,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _initAnimations();
     checkAndResetDailyProgress();
     _loadDiamonds();
+    _loadRewardedAd(); // <-- Thêm dòng này
   }
 
   Future<void> _loadAllDataAndInitGame() async {
@@ -687,6 +692,47 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     await prefs.setInt('diamonds', diamonds);
   }
 
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/1712485313', // ID test, thay bằng ID thật khi release
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          setState(() {
+            _rewardedAd = ad;
+            _isRewardedAdReady = true;
+          });
+        },
+        onAdFailedToLoad: (error) {
+          setState(() {
+            _isRewardedAdReady = false;
+          });
+          // Bạn có thể log lỗi nếu muốn
+        },
+      ),
+    );
+  }
+
+  void _showRewardedAd() {
+    if (_isRewardedAdReady && _rewardedAd != null) {
+      _rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) {
+          _goToNextQuestion();
+        },
+      );
+      setState(() {
+        _rewardedAd = null;
+        _isRewardedAdReady = false;
+      });
+      _loadRewardedAd(); // Load lại cho lần sau
+    } else {
+      // Có thể hiện thông báo: "Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!"
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // if (_isLoadingQuestions) {
@@ -985,13 +1031,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 height: adjustedSize * 3.95,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: _buildAnswerRows(
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: _buildAnswerRows(
                                       answerSlots,
                                       questions[currentQuestion].answer,
-                                      adjustedSize),
+                                      adjustedSize,
+                                    ),
+                                  ),
                                 ),
                               ),
                               SizedBox(height: screenHeight * 0.01),
@@ -1227,9 +1275,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                     onTapUp: (_) {},
                                     onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
                                     child: ElevatedButton(
-                                      onPressed: () {
-                                        // TODO: Implement "QUA MÀN" functionality (e.g., show video ad)
-                                      },
+                                      onPressed: _showRewardedAd,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.white,
                                         padding: EdgeInsets.zero,
@@ -1354,25 +1400,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final words = answer.split(' ');
     const int maxCharsPerRow = 7;
 
-    // Nếu chỉ có đúng 2 từ, luôn hiển thị mỗi từ trên 1 dòng, căn giữa 2 dòng với nhau
+    // Nếu chỉ có đúng 2 từ, luôn hiển thị mỗi từ trên 1 dòng, căn giữa từng dòng
     if (words.length == 2) {
       int maxLen = words[0].length > words[1].length ? words[0].length : words[1].length;
       for (int i = 0; i < 2; i++) {
-        int rowLen = words[i].length;
-        int leadingSpaces = ((maxLen - rowLen) / 2).floor();
-        int trailingSpaces = maxLen - rowLen - leadingSpaces;
         List<Widget> row = [];
-        for (int j = 0; j < leadingSpaces; j++) {
-          row.add(SizedBox(width: size + size * 0.1));
-        }
         for (int j = 0; j < words[i].length; j++) {
           row.add(_buildAnswerBox(slotIdx++, slots, size));
           if (j < words[i].length - 1) {
             row.add(SizedBox(width: size * 0.1));
           }
-        }
-        for (int j = 0; j < trailingSpaces; j++) {
-          row.add(SizedBox(width: size + size * 0.1));
         }
         rows.add(Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1385,13 +1422,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       return rows;
     }
 
-    // Trường hợp còn lại: gom nhiều từ liên tiếp trên 1 dòng nếu tổng ký tự + số khoảng trống giữa các từ <= 7
+    // Gom nhóm các từ thành từng hàng
     List<List<String>> groupedWords = [];
     List<String> currentGroup = [];
     int currentLen = 0;
     for (int i = 0; i < words.length; i++) {
       int wordLen = words[i].length;
-      int spaceNeeded = currentGroup.isEmpty ? 0 : 1; // Nếu đã có từ thì cần thêm 1 khoảng trống
+      int spaceNeeded = currentGroup.isEmpty ? 0 : 1;
       if (currentLen + spaceNeeded + wordLen <= maxCharsPerRow) {
         currentGroup.add(words[i]);
         currentLen += spaceNeeded + wordLen;
@@ -1405,45 +1442,34 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     // Tìm số lượng ô lớn nhất trên 1 dòng để căn giữa các dòng còn lại
     int maxRowLen = 0;
-    List<int> rowLens = [];
     for (var group in groupedWords) {
       int len = group.fold(0, (prev, w) => prev + w.length) + (group.length - 1);
-      rowLens.add(len);
       if (len > maxRowLen) maxRowLen = len;
     }
+    double maxRowWidth = maxRowLen * size + (maxRowLen - 1) * size * 0.1;
 
     // Render từng dòng
     for (int groupIdx = 0; groupIdx < groupedWords.length; groupIdx++) {
       var group = groupedWords[groupIdx];
       int rowLen = group.fold(0, (prev, w) => prev + w.length) + (group.length - 1);
-      int leadingSpaces = ((maxRowLen - rowLen) / 2).floor();
-      int trailingSpaces = maxRowLen - rowLen - leadingSpaces;
       List<Widget> row = [];
-      // Thêm khoảng trống đầu dòng để căn giữa
-      for (int i = 0; i < leadingSpaces; i++) {
-        row.add(SizedBox(width: size));
-      }
-      // Thêm các ô chữ và khoảng trống giữa các từ
       for (int i = 0; i < group.length; i++) {
         for (int j = 0; j < group[i].length; j++) {
           row.add(_buildAnswerBox(slotIdx++, slots, size));
           if (j < group[i].length - 1) {
-            row.add(SizedBox(width: size * 0.1)); // Khoảng cách giữa các ký tự trong cùng 1 từ
+            row.add(SizedBox(width: size * 0.1));
           }
         }
         if (i < group.length - 1) {
-          row.add(SizedBox(width: size * 1.25)); // Khoảng trống giữa các từ
+          row.add(SizedBox(width: size * 1.25));
         }
       }
-      // Thêm khoảng trống cuối dòng để căn g8iữa
-      for (int i = 0; i < trailingSpaces; i++) {
-        row.add(SizedBox(width: size));
-      }
-      rows.add(Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: row,
-      ));
-      // Thêm khoảng cách giữa các dòng (trừ dòng cuối)
+      rows.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: row,
+        ),
+      );
       if (groupIdx < groupedWords.length - 1) {
         rows.add(SizedBox(height: size * 0.1));
       }
@@ -1524,3 +1550,4 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 }
+
