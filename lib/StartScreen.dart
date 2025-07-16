@@ -32,11 +32,11 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
   void initState() {
     super.initState();
     print('initState: Bắt đầu khởi tạo StartScreen');
+    AnalyticsService().logHomeScreen();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     );
-    AnalyticsService().logHomeScreen();
     _logoAnimation = Tween<Offset>(
       begin: const Offset(-1.5, 0.0),
       end: Offset.zero,
