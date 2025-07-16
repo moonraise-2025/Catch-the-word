@@ -5,7 +5,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
-import 'PopupWatchVideo.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -23,6 +22,7 @@ import 'package:duoihinhbatchu/service/question_service.dart';
 
 
 class GameScreen extends ConsumerStatefulWidget { 
+
   final int initialLevel;
 
   const GameScreen({super.key, this.initialLevel = 1});
@@ -62,11 +62,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   String? _hintBanner;
   // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
-  Timer? _askFriendInitialTimer;
-  int _askFriendInitialSeconds = 30;
-  bool _askFriendInitialActive = true;
-  bool _askFriendUsedOnce = false;
-
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -93,9 +88,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   Future<void> captureAndShareWidget() async {
-    if (_askFriendInitialActive || _askFriendUsedOnce) {
-      return;
-    }
+
 
     try {
       RenderRepaintBoundary boundary = previewContainerKey.currentContext
@@ -115,9 +108,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
         await Share.shareFiles([file.path],
             text: 'Chơi game Đuổi hình bắt chữ nè!');
-        setState(() {
-          _askFriendUsedOnce = true;
-        });
       }
     } catch (e) {
       debugPrint('Lỗi chụp/chia sẻ widget: $e');
@@ -250,7 +240,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _controller.dispose();
     _shakeController.dispose();
     _hintTimer?.cancel();
-    _askFriendInitialTimer?.cancel();
     super.dispose();
   }
   void _goToNextQuestion() {
@@ -260,8 +249,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       isCorrect = false;
       isWrong = false;
       _hintUsedOnce = false;
-      _askFriendUsedOnce = false;
-      _askFriendInitialActive = true;
+
     });
 
     if (currentQuestion < questions.length) {
@@ -293,11 +281,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _hintBanner = null;
     _hintUsedOnce = false;
     // _hintWordIndex = 0; // Đã bỏ
-    _askFriendInitialActive = true;
-    _askFriendInitialSeconds = 30;
-    _askFriendUsedOnce = false;
-    _askFriendInitialTimer?.cancel();
-    _startAskFriendInitialCountdown();
     _startHintCountdown();
   }
 
@@ -335,7 +318,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     return chars;
   }
 
-    void _onCharTap(int idx) async {
+  void _onCharTap(int idx) async {
     int targetSlot = answerSlots.indexOf('');
     if (targetSlot == -1) {
       return;
@@ -435,27 +418,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     });
   }
 
-  void _startAskFriendInitialCountdown() {
-    setState(() {
-      _askFriendInitialSeconds = 30;
-      _askFriendInitialActive = true;
-    });
 
-    _askFriendInitialTimer?.cancel();
-    _askFriendInitialTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (_askFriendInitialSeconds == 0) {
-            timer.cancel();
-            setState(() {
-              _askFriendInitialActive = false;
-            });
-          } else {
-            setState(() {
-              _askFriendInitialSeconds--;
-            });
-          }
-        });
-  }
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -596,56 +559,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       );
       return;
     }
-    // final shouldReveal = await showDialog<bool>(
-    //   context: context,
-    //   builder: (context) {
-    //     final screenWidth = MediaQuery.of(context).size.width;
-    //     return AlertDialog(
-    //       title: Text(
-    //         'Hiện đáp án',
-    //         style: TextStyle(
-    //           fontSize: screenWidth * 0.06,
-    //           fontWeight: FontWeight.bold,
-    //           color: Colors.deepPurple,
-    //           letterSpacing: 1.2,
-    //         ),
-    //       ),
-    //       content: Text(
-    //         'Bạn có muốn dùng 10 kim cương để mở 1 chữ không?',
-    //         style: TextStyle(
-    //           fontSize: screenWidth * 0.05,
-    //           fontWeight: FontWeight.w600,
-    //           color: Colors.black87,
-    //           letterSpacing: 0.5,
-    //         ),
-    //       ),
-    //       actions: [
-    //         TextButton(
-    //           onPressed: () => Navigator.of(context).pop(false),
-    //           child: Text(
-    //             'Không',
-    //             style: TextStyle(
-    //               fontSize: screenWidth * 0.05,
-    //               fontWeight: FontWeight.bold,
-    //               color: Colors.redAccent,
-    //             ),
-    //           ),
-    //         ),
-    //         TextButton(
-    //           onPressed: () => Navigator.of(context).pop(true),
-    //           child: Text(
-    //             'Đồng ý',
-    //             style: TextStyle(
-    //               fontSize: screenWidth * 0.05,
-    //               fontWeight: FontWeight.bold,
-    //               color: Colors.green,
-    //             ),
-    //           ),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
       setState(() {
       diamonds -= 10;
     });
@@ -663,11 +576,40 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
               break;
             }
           }
-          break;
+
+          allSlotsFilled = false; // Đánh dấu là chưa điền hết
+          break; // Chỉ điền 1 chữ mỗi lần
+        }
+      }
+
+      // Kiểm tra nếu tất cả các ô đã được điền (có thể do đã điền hết hoặc do chỉ còn 1 ô cuối cùng được điền)
+      // và sau đó kiểm tra tính đúng đắn và kích hoạt hành động khi đúng.
+      if (allSlotsFilled || answerSlots.every((slot) => slot.isNotEmpty)) {
+        final userAnswer = answerSlots.join('');
+        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+
+        if (userAnswer == correctAnswer) {
+          isCorrect = true;
+          _shakeController.repeat();
+          Future.delayed(const Duration(seconds: 2), () {
+            _shakeController.stop();
+            _shakeController.value = 0.0;
+            showCorrectDialog();
+
+            if (dailyCount < 1) dailyCount++;
+            if (daily30Count < 30) daily30Count++;
+            if (daily50Count < 50) daily50Count++;
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.setInt('dailyCount', dailyCount);
+              prefs.setInt('daily30Count', daily30Count);
+              prefs.setInt('daily50Count', daily50Count);
+            });
+          });
         }
       }
     });
   }
+
 
   void _onHint() {
     if (_hintActive) return;
@@ -730,6 +672,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         const SnackBar(content: Text('Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!')),
       );
     }
+
   }
 
   @override
@@ -1173,7 +1116,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             'Hỏi Bạn',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color: _askFriendUsedOnce ? Colors.white70 : Colors.white,
+                                              color:  Colors.white,
                                               fontSize: screenWidth * 0.045,
                                             ),
                                           ),
