@@ -27,3 +27,4 @@ String getBannerAdUnitId() {
   }
   return 'ca-app-pub-YOUR_NEW_APP_ID/YOUR_NEW_BANNER_AD_UNIT_ID'; // Your production banner ad unit ID
 }
+
