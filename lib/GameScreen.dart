@@ -20,6 +20,8 @@ import 'audio_manager.dart';
 import 'package:duoihinhbatchu/model/question.dart';
 import 'package:duoihinhbatchu/service/question_service.dart';
 
+import 'firebase_analysis/analytics_service.dart';
+
 
 class GameScreen extends ConsumerStatefulWidget { // Thay đổi ở đây
   final int initialLevel;
@@ -116,6 +118,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   @override
   void initState() {
     super.initState();
+    AnalyticsService().logLevelScreen(widget.initialLevel);
     _loadAllDataAndInitGame(); // Gọi hàm tải dữ liệu và khởi tạo game
     _controller = AnimationController(
       vsync: this,
@@ -458,10 +461,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 currentQuestion++;
                 level++;
                 diamonds += 5;
+                AnalyticsService().logLevelScreen(level);
               } else {
                 currentQuestion = 0;
                 level = 1;
                 diamonds = 0;
+                AnalyticsService().logLevelScreen(level);
               }
               _initGame(); // Gọi _initGame sau khi cập nhật level/question
               _preloadNextImage(currentQuestion + 1);
