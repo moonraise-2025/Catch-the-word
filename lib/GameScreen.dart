@@ -890,8 +890,18 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                           Object exception,
                                           StackTrace? stackTrace) {
                                         return const Center(
-                                          child: Icon(Icons.error,
-                                              color: Colors.red, size: 50),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.error,
+                                                  color: Colors.red, size: 40),
+                                              SizedBox(height: 8), // Add some spacing between the icon and text
+                                              Text(
+                                                "ảnh chưa được tải lên",
+                                                style: TextStyle(color: Colors.red, fontSize: 16),
+                                              ),
+                                            ],
+                                          ),
                                         );
                                       },
                                     ),
