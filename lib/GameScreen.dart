@@ -596,80 +596,77 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       );
       return;
     }
-    final shouldReveal = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        return AlertDialog(
-          title: Text(
-            'Hiện đáp án',
-            style: TextStyle(
-              fontSize: screenWidth * 0.06,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
-              letterSpacing: 1.2,
-            ),
-          ),
-          content: Text(
-            'Bạn có muốn dùng 10 kim cương để mở 1 chữ không?',
-            style: TextStyle(
-              fontSize: screenWidth * 0.05,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-              letterSpacing: 0.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Không',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.05,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.redAccent,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(
-                'Đồng ý',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.05,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-    if (shouldReveal == true) {
+    // final shouldReveal = await showDialog<bool>(
+    //   context: context,
+    //   builder: (context) {
+    //     final screenWidth = MediaQuery.of(context).size.width;
+    //     return AlertDialog(
+    //       title: Text(
+    //         'Hiện đáp án',
+    //         style: TextStyle(
+    //           fontSize: screenWidth * 0.06,
+    //           fontWeight: FontWeight.bold,
+    //           color: Colors.deepPurple,
+    //           letterSpacing: 1.2,
+    //         ),
+    //       ),
+    //       content: Text(
+    //         'Bạn có muốn dùng 10 kim cương để mở 1 chữ không?',
+    //         style: TextStyle(
+    //           fontSize: screenWidth * 0.05,
+    //           fontWeight: FontWeight.w600,
+    //           color: Colors.black87,
+    //           letterSpacing: 0.5,
+    //         ),
+    //       ),
+    //       actions: [
+    //         TextButton(
+    //           onPressed: () => Navigator.of(context).pop(false),
+    //           child: Text(
+    //             'Không',
+    //             style: TextStyle(
+    //               fontSize: screenWidth * 0.05,
+    //               fontWeight: FontWeight.bold,
+    //               color: Colors.redAccent,
+    //             ),
+    //           ),
+    //         ),
+    //         TextButton(
+    //           onPressed: () => Navigator.of(context).pop(true),
+    //           child: Text(
+    //             'Đồng ý',
+    //             style: TextStyle(
+    //               fontSize: screenWidth * 0.05,
+    //               fontWeight: FontWeight.bold,
+    //               color: Colors.green,
+    //             ),
+    //           ),
+    //         ),
+    //       ],
+    //     );
+    //   },
+    // );
       setState(() {
-        diamonds -= 10;
-      });
-      await _saveDiamonds();
-      setState(() {
-        final answer = questions[currentQuestion].answer.toUpperCase();
-        for (int i = 0; i < answerSlots.length; i++) {
-          if (answerSlots[i].isEmpty) {
-            String correctChar =
-            answer.replaceAll(' ', '')[i];
-            for (int j = 0; j < charOptions.length; j++) {
-              if (charOptions[j] == correctChar && !charUsed[j]) {
-                answerSlots[i] = correctChar;
-                charUsed[j] = true;
-                currentSlot = i + 1;
-                break;
-              }
+      diamonds -= 10;
+    });
+    await _saveDiamonds();
+    setState(() {
+      final answer = questions[currentQuestion].answer.toUpperCase();
+      for (int i = 0; i < answerSlots.length; i++) {
+        if (answerSlots[i].isEmpty) {
+          String correctChar = answer.replaceAll(' ', '')[i];
+          for (int j = 0; j < charOptions.length; j++) {
+            if (charOptions[j] == correctChar && !charUsed[j]) {
+              answerSlots[i] = correctChar;
+              charUsed[j] = true;
+              currentSlot = i + 1;
+              break;
             }
-            break;
           }
+          break;
         }
-      });
-    }
+      }
+    });
   }
 
   void _onHint() {
