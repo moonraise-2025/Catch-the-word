@@ -518,45 +518,65 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _showRevealLetterDialog() async {
     if (diamonds < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Không đủ kim cương!',
-            style: TextStyle(
-              fontSize: MediaQuery.of(context).size.width * 0.04,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+      showDialog(
+        context: context,
+        builder: (context) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          return AlertDialog(
+            title: Text(
+              'Không đủ kim cương',
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                fontWeight: FontWeight.bold,
+                color: Colors.redAccent,
+                letterSpacing: 1.0,
+              ),
             ),
-          ),
-          backgroundColor: Colors.redAccent,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
+            content: Text(
+              'Bạn không đủ 10 kim cương để mở 1 chữ!',
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                letterSpacing: 0.4,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'OK',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.04,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       );
       return;
     }
-
-    setState(() {
+      setState(() {
       diamonds -= 10;
     });
     await _saveDiamonds();
-
     setState(() {
       final answer = questions[currentQuestion].answer.toUpperCase();
-      bool allSlotsFilled = true; // Thêm biến cờ để kiểm tra
       for (int i = 0; i < answerSlots.length; i++) {
         if (answerSlots[i].isEmpty) {
-          String correctChar =
-          answer.replaceAll(' ', '')[i];
+          String correctChar = answer.replaceAll(' ', '')[i];
           for (int j = 0; j < charOptions.length; j++) {
             if (charOptions[j] == correctChar && !charUsed[j]) {
               answerSlots[i] = correctChar;
-              answerCharIndexes[i] = j; // Cập nhật answerCharIndexes
               charUsed[j] = true;
               currentSlot = i + 1;
               break;
             }
           }
+
           allSlotsFilled = false; // Đánh dấu là chưa điền hết
           break; // Chỉ điền 1 chữ mỗi lần
         }
