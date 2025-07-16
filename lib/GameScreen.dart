@@ -32,10 +32,9 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStateMixin {
-  // Thay thế danh sách questions cứng bằng một danh sách rỗng ban đầu
-  // Dữ liệu sẽ được tải từ JSON
+  
   List<Question> questions = [];
-  bool _isLoadingQuestions = true; // Biến trạng thái để kiểm tra xem dữ liệu đã tải xong chưa
+  bool _isLoadingQuestions = true; 
   Map<String, bool> _isPressedMap = {};
 
   bool _adRewardEarned = false; //ads
@@ -56,11 +55,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   bool isCorrect = false;
 
   Timer? _hintTimer;
-  int _hintSeconds = 20;
+  int _hintSeconds = 30;
   bool _hintActive = false;
   bool _hintUsedOnce = false;
   String? _hintBanner;
-  // int _hintWordIndex = 0; // Đã bỏ vì không được sử dụng
 
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -68,7 +66,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
   bool isWrong = false;
-  late int maxAnswerLength; // Sẽ tính toán sau khi tải questions
+  late int maxAnswerLength; 
   late double bannerHeight;
 
   final GlobalKey previewContainerKey = GlobalKey();
@@ -88,8 +86,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   Future<void> captureAndShareWidget() async {
-
-
     try {
       RenderRepaintBoundary boundary = previewContainerKey.currentContext
           ?.findRenderObject() as RenderRepaintBoundary;
@@ -249,7 +245,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       isCorrect = false;
       isWrong = false;
       _hintUsedOnce = false;
-
     });
 
     if (currentQuestion < questions.length) {
@@ -403,7 +398,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _startHintCountdown() {
     setState(() {
-      _hintSeconds = 20;
+      _hintSeconds = 30;
       _hintActive = true;
     });
 
@@ -417,7 +412,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       }
     });
   }
-
 
 
   void _onAnswerSlotTap(int slotIndex) {
@@ -517,98 +511,78 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   void _showRevealLetterDialog() async {
-    if (diamonds < 10) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          final screenWidth = MediaQuery.of(context).size.width;
-          return AlertDialog(
-            title: Text(
-              'Không đủ kim cương',
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-                color: Colors.redAccent,
-                letterSpacing: 1.0,
-              ),
-            ),
-            content: Text(
-              'Bạn không đủ 10 kim cương để mở 1 chữ!',
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-                letterSpacing: 0.4,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'OK',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueAccent,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
-      setState(() {
-      diamonds -= 10;
-    });
-    await _saveDiamonds();
-    setState(() {
-      final answer = questions[currentQuestion].answer.toUpperCase();
-      for (int i = 0; i < answerSlots.length; i++) {
-        if (answerSlots[i].isEmpty) {
-          String correctChar = answer.replaceAll(' ', '')[i];
-          for (int j = 0; j < charOptions.length; j++) {
-            if (charOptions[j] == correctChar && !charUsed[j]) {
-              answerSlots[i] = correctChar;
-              charUsed[j] = true;
-              currentSlot = i + 1;
-              break;
-            }
-          }
-
-          allSlotsFilled = false; // Đánh dấu là chưa điền hết
-          break; // Chỉ điền 1 chữ mỗi lần
-        }
-      }
-
-      // Kiểm tra nếu tất cả các ô đã được điền (có thể do đã điền hết hoặc do chỉ còn 1 ô cuối cùng được điền)
-      // và sau đó kiểm tra tính đúng đắn và kích hoạt hành động khi đúng.
-      if (allSlotsFilled || answerSlots.every((slot) => slot.isNotEmpty)) {
-        final userAnswer = answerSlots.join('');
-        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
-
-        if (userAnswer == correctAnswer) {
-          isCorrect = true;
-          _shakeController.repeat();
-          Future.delayed(const Duration(seconds: 2), () {
-            _shakeController.stop();
-            _shakeController.value = 0.0;
-            showCorrectDialog();
-
-            if (dailyCount < 1) dailyCount++;
-            if (daily30Count < 30) daily30Count++;
-            if (daily50Count < 50) daily50Count++;
-            SharedPreferences.getInstance().then((prefs) {
-              prefs.setInt('dailyCount', dailyCount);
-              prefs.setInt('daily30Count', daily30Count);
-              prefs.setInt('daily50Count', daily50Count);
-            });
-          });
-        }
-      }
-    });
+  if (diamonds < 10) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Không đủ kim cương!',
+          style: TextStyle(
+            fontSize: MediaQuery.of(context).size.width * 0.04,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    return;
   }
+
+  setState(() {
+    diamonds -= 10;
+  });
+  await _saveDiamonds();
+
+  setState(() {
+    final answer = questions[currentQuestion].answer.toUpperCase();
+    bool allSlotsFilled = true; // Thêm biến cờ để kiểm tra
+    for (int i = 0; i < answerSlots.length; i++) {
+      if (answerSlots[i].isEmpty) {
+        String correctChar =
+        answer.replaceAll(' ', '')[i];
+        for (int j = 0; j < charOptions.length; j++) {
+          if (charOptions[j] == correctChar && !charUsed[j]) {
+            answerSlots[i] = correctChar;
+            answerCharIndexes[i] = j; // Cập nhật answerCharIndexes
+            charUsed[j] = true;
+            currentSlot = i + 1;
+            break;
+          }
+        }
+        allSlotsFilled = false; // Đánh dấu là chưa điền hết
+        break; // Chỉ điền 1 chữ mỗi lần
+      }
+    }
+
+    // Kiểm tra nếu tất cả các ô đã được điền (có thể do đã điền hết hoặc do chỉ còn 1 ô cuối cùng được điền)
+    // và sau đó kiểm tra tính đúng đắn và kích hoạt hành động khi đúng.
+    if (allSlotsFilled || answerSlots.every((slot) => slot.isNotEmpty)) {
+      final userAnswer = answerSlots.join('');
+      final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+
+      if (userAnswer == correctAnswer) {
+        isCorrect = true;
+        _shakeController.repeat();
+        Future.delayed(const Duration(seconds: 2), () {
+          _shakeController.stop();
+          _shakeController.value = 0.0;
+          showCorrectDialog();
+
+          if (dailyCount < 1) dailyCount++;
+          if (daily30Count < 30) daily30Count++;
+          if (daily50Count < 50) daily50Count++;
+          SharedPreferences.getInstance().then((prefs) {
+            prefs.setInt('dailyCount', dailyCount);
+            prefs.setInt('daily30Count', daily30Count);
+            prefs.setInt('daily50Count', daily50Count);
+          });
+        });
+      }
+    }
+  });
+}
 
 
   void _onHint() {
@@ -932,13 +906,13 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: mediumPadding),
                         width: double.infinity,
-                        height: screenWidth * 0.10,
+                        height: screenWidth * 0.1,
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             image: AssetImage('assets/images/banner.png'),
                             fit: BoxFit.cover,
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: _hintBanner != null
@@ -952,7 +926,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           )
                               : Image.asset(
                             'assets/images/logo3-15dhbc.png',
-                            height: bannerHeight * 3.0,
+                            height: bannerHeight * 3.5,
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -1116,7 +1090,8 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             'Hỏi Bạn',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              color:  Colors.white,
+                                              color: Colors.white,
+
                                               fontSize: screenWidth * 0.045,
                                             ),
                                           ),
@@ -1397,7 +1372,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   List<Widget> _buildAnswerRows(
-      List<String> slots, String answer, double size) {
+    List<String> slots, String answer, double size) {
     List<Widget> rows = [];
     int slotIdx = 0;
     final words = answer.split(' ');
@@ -1521,20 +1496,20 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             textColor = const Color(0xFF556B2F);
           }
 
-          return Container(
-            width: size,
-            height: size,
-            margin: const EdgeInsets.all(2.0),
-            decoration: boxDecoration,
-            alignment: Alignment.center,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 100),
-              transitionBuilder: (child, animation) =>
-                  ScaleTransition(scale: animation, child: child),
-              child: slots[slotIdx].isNotEmpty
-                  ? Transform.rotate(
-                angle: rotationAngle,
-                child: Text(
+          return Transform.rotate(
+            angle: rotationAngle,
+            child: Container(
+              width: size,
+              height: size,
+              margin: const EdgeInsets.all(2.0),
+              decoration: boxDecoration,
+              alignment: Alignment.center,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 100),
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
+                child: slots[slotIdx].isNotEmpty
+                    ? Text(
                   slots[slotIdx],
                   key: ValueKey('answer_${slotIdx}_${slots[slotIdx]}'),
                   style: TextStyle(
@@ -1543,9 +1518,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                     color: textColor,
                   ),
                   textAlign: TextAlign.center,
-                ),
-              )
-                  : const SizedBox.shrink(key: ValueKey('empty_answer')),
+                )
+                    : const SizedBox.shrink(key: ValueKey('empty_answer')),
+              ),
             ),
           );
         },
