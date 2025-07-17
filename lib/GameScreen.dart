@@ -15,6 +15,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
+import 'ads/banner_ad_provider.dart';
 import 'audio_manager.dart';
 
 import 'package:duoihinhbatchu/model/question.dart';
@@ -981,13 +982,13 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
 
                       Padding(
-                        padding: EdgeInsets.all(screenWidth * 0.027),
+                        padding: EdgeInsets.all(screenWidth * 0.01),
                         child: Column(
                           children: [
                             SizedBox(
-                              height: screenHeight * 0.07,
+                              height: screenHeight * 0.07, // Giữ nguyên chiều cao của hàng chứa các nút
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceAround, // Thay đổi thành spaceAround để phân bổ đều hơn và có khoảng trống ở hai đầu
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   // Nút "Hiện Đáp Án"
@@ -1006,7 +1007,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       onTapUp: (_) {},
                                       onTapCancel: () => setState(() => _isPressedMap['reveal_answer_button'] = false),
                                       child: SizedBox(
-                                        width: screenWidth * 0.31,
+                                        width: screenWidth * 0.23,
                                         child: ElevatedButton(
                                           onPressed: _showRevealLetterDialog,
                                           style: ElevatedButton.styleFrom(
@@ -1015,10 +1016,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              // side: BorderSide(
-                                              //   color: Colors.black,
-                                              //   width: screenWidth * 0.002,
-                                              // ),
                                             ),
                                           ),
                                           child: Column(
@@ -1030,7 +1027,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   color: Colors.white,
-                                                  fontSize: screenWidth * 0.045,
+                                                  fontSize: screenWidth * 0.030,
                                                 ),
                                               ),
                                               RichText(
@@ -1039,7 +1036,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                                     TextSpan(
                                                       text: '10 ',
                                                       style: TextStyle(
-                                                        fontSize: screenWidth * 0.03,
+                                                        fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
                                                         fontWeight: FontWeight.bold,
                                                         color: Colors.white,
                                                       ),
@@ -1048,8 +1045,8 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                                       alignment: PlaceholderAlignment.middle,
                                                       child: Image.asset(
                                                         'assets/images/Diamond_Borderless.png',
-                                                        width: screenWidth * 0.04,
-                                                        height: screenWidth * 0.04,
+                                                        width: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
+                                                        height: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
                                                       ),
                                                     ),
                                                   ],
@@ -1061,7 +1058,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: screenWidth * 0.001),
 
                                   // Nút "Hỏi Bạn"
                                   AnimatedScale(
@@ -1079,7 +1075,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       onTapUp: (_) {},
                                       onTapCancel: () => setState(() => _isPressedMap['ask_friend_button'] = false),
                                       child: SizedBox(
-                                        width: screenWidth * 0.31,
+                                        width: screenWidth * 0.23,
                                         child: ElevatedButton(
                                           onPressed: captureAndShareWidget,
                                           style: ElevatedButton.styleFrom(
@@ -1088,12 +1084,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              // side: BorderSide(
-                                              //   color: _askFriendUsedOnce
-                                              //       ? Colors.black.withOpacity(0.5)
-                                              //       : Colors.black,
-                                              //   width: screenWidth * 0.002,
-                                              // ),
                                             ),
                                           ),
                                           child: Text(
@@ -1101,15 +1091,13 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white,
-
-                                              fontSize: screenWidth * 0.045,
+                                              fontSize: screenWidth * 0.030,
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: screenWidth * 0.001),
 
                                   // Nút "Gợi Ý"
                                   AnimatedScale(
@@ -1127,7 +1115,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       onTapUp: (_) {},
                                       onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
                                       child: SizedBox(
-                                        width: screenWidth * 0.31,
+                                        width: screenWidth * 0.23,
                                         child: ElevatedButton(
                                           onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
                                           style: ElevatedButton.styleFrom(
@@ -1136,12 +1124,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             padding: EdgeInsets.zero,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(10),
-                                              // side: BorderSide(
-                                              //   color: (_hintActive || _hintUsedOnce)
-                                              //       ? Colors.black.withOpacity(0.5)
-                                              //       : Colors.black,
-                                              //   width: screenWidth * 0.002,
-                                              // ),
                                             ),
                                           ),
                                           child: Column(
@@ -1154,7 +1136,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                                   color: (_hintActive || _hintUsedOnce)
                                                       ? Colors.white70
                                                       : Colors.white,
-                                                  fontSize: screenWidth * 0.045,
+                                                  fontSize: screenWidth * 0.030,
                                                 ),
                                               ),
                                               if (_hintActive)
@@ -1162,9 +1144,123 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                                   '${_hintSeconds}s',
                                                   style: TextStyle(
                                                     color: Colors.white70,
-                                                    fontSize: screenWidth * 0.03,
+                                                    fontSize: screenWidth * 0.025,
                                                   ),
                                                 ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Nút "Qua Màn"
+                                  AnimatedScale(
+                                    scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
+                                    duration: const Duration(milliseconds: 500),
+                                    child: GestureDetector(
+                                      onTapDown: (_) {
+                                        setState(() => _isPressedMap['pass_level_button'] = true);
+                                        Future.delayed(const Duration(milliseconds: 150), () {
+                                          if (mounted) {
+                                            setState(() => _isPressedMap['pass_level_button'] = false);
+                                          }
+                                        });
+                                      },
+                                      onTapUp: (_) {},
+                                      onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
+                                      child: SizedBox(
+                                        width: screenWidth * 0.23,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
+                                            final rewardedAd = ref.read(rewardedAdProvider);
+
+                                            if (rewardedAd == null) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau 5s.'),
+                                                  duration: Duration(seconds: 2),
+                                                ),
+                                              );
+                                              rewardedAdNotifier.createRewardedAd();
+                                              return;
+                                            }
+
+                                            _adRewardEarned = false;
+
+                                            rewardedAdNotifier.showRewardedAd(
+                                                  () {
+                                                _adRewardEarned = true;
+                                                print('DEBUG: Người dùng đã nhận thưởng.');
+                                              },
+                                                  () {
+                                                print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
+                                                if (_adRewardEarned) {
+                                                  print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
+                                                  final correctAnswer = questions[currentQuestion]
+                                                      .answer
+                                                      .toUpperCase()
+                                                      .replaceAll(' ', '');
+
+                                                  setState(() {
+                                                    answerSlots = correctAnswer.split('');
+                                                    isCorrect = true;
+                                                    charUsed = List.filled(charOptions.length, false);
+                                                    for (int i = 0; i < correctAnswer.length; i++) {
+                                                      final char = correctAnswer[i];
+                                                      for (int j = 0; j < charOptions.length; j++) {
+                                                        if (charOptions[j] == char && !charUsed[j]) {
+                                                          charUsed[j] = true;
+                                                          break;
+                                                        }
+                                                      }
+                                                    }
+                                                  });
+
+                                                  _shakeController.forward(from: 0);
+
+                                                  Future.delayed(const Duration(seconds: 1), () {
+                                                    if (mounted) {
+                                                      setState(() {
+                                                        isCorrect = false;
+                                                      });
+                                                      showCorrectDialog();
+                                                    }
+                                                  });
+                                                } else {
+                                                  print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
+                                                }
+                                              },
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.white,
+                                            padding: EdgeInsets.zero,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                "QUA MÀN",
+                                                style: TextStyle(
+                                                  color: const Color(0xFF616FD3),
+                                                  fontSize: screenWidth * 0.030,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Text(
+                                                "(QC 15s~30s)",
+                                                style: TextStyle(
+                                                  color: const Color(0xFF43ADED),
+                                                  fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -1174,138 +1270,16 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 ],
                               ),
                             ),
-                            SizedBox(
-                              height: smallPadding,
-                            ),
-                            Visibility(
-                              visible: true,
-                              maintainSize: true,
-                              maintainAnimation: true,
-                              maintainState: true,
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: screenHeight * 0.07,
-                                child:
-                                AnimatedScale(
-                                  scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
-                                  duration: const Duration(milliseconds: 500),
-                                  child: GestureDetector(
-                                    onTapDown: (_) {
-                                      setState(() => _isPressedMap['pass_level_button'] = true);
-                                      Future.delayed(const Duration(milliseconds: 150), () {
-                                        if (mounted) {
-                                          setState(() => _isPressedMap['pass_level_button'] = false);
-                                        }
-                                      });
-                                    },
-                                    onTapUp: (_) {},
-                                    onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
-                                    child:
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
-                                        final rewardedAd = ref.read(rewardedAdProvider);
-
-                                        if (rewardedAd == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau.'),
-                                              duration: Duration(seconds: 2),
-                                            ),
-                                          );
-                                          rewardedAdNotifier.createRewardedAd();
-                                          return;
-                                        }
-
-                                        _adRewardEarned = false;
-
-                                        rewardedAdNotifier.showRewardedAd(
-                                              () {
-                                            _adRewardEarned = true;
-                                            print('DEBUG: Người dùng đã nhận thưởng.');
-                                          },
-                                              () {
-                                            print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
-                                            if (_adRewardEarned) {
-                                              print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
-                                              final correctAnswer = questions[currentQuestion]
-                                                  .answer
-                                                  .toUpperCase()
-                                                  .replaceAll(' ', '');
-
-                                              setState(() {
-                                                answerSlots = correctAnswer.split('');
-                                                isCorrect = true;
-                                                charUsed = List.filled(charOptions.length, false);
-                                                for (int i = 0; i < correctAnswer.length; i++) {
-                                                  final char = correctAnswer[i];
-                                                  for (int j = 0; j < charOptions.length; j++) {
-                                                    if (charOptions[j] == char && !charUsed[j]) {
-                                                      charUsed[j] = true;
-                                                      break;
-                                                    }
-                                                  }
-                                                }
-                                              });
-
-                                              _shakeController.forward(from: 0);
-
-                                              Future.delayed(const Duration(seconds: 1), () {
-                                                if (mounted) {
-                                                  setState(() {
-                                                    isCorrect = false;
-                                                  });
-                                                  showCorrectDialog();
-                                                }
-                                              });
-                                              // --- KẾT THÚC LOGIC CỦA NÚT "QUA MÀN" ---
-                                            } else {
-                                              print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
-                                            }
-                                          },
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,
-                                        padding: EdgeInsets.zero,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      child: RichText(
-                                        textAlign: TextAlign.center,
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: "QUA MÀN\n",
-                                              style: TextStyle(
-                                                color: const Color(0xFF616FD3),
-                                                fontSize: screenWidth * 0.07,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "(Quảng cáo 15s~30s)",
-                                              style: TextStyle(
-                                                color: const Color(0xFF43ADED),
-                                                fontSize: screenWidth * 0.03,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: getBanner(context, ref), //
               ),
             ],
           ),
