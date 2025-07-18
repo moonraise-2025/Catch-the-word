@@ -25,6 +25,6 @@ String getBannerAdUnitId() {
   if (isDebugMode) {
     return 'ca-app-pub-3940256099942544/6300978111'; // Test banner ad unit ID
   }
-  return ''; // Your production banner ad unit ID
+  return 'ca-app-pub-4955170106426992/2850995167'; // Your production banner ad unit ID
 }
 
