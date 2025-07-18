@@ -3,9 +3,10 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'StartScreen.dart';
 import 'audio_manager.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AudioManager().playBackgroundMusic();
+  await MobileAds.instance.initialize();
   runApp(const MyApp());
 }
 
