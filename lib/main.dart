@@ -8,11 +8,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await MobileAds.instance.initialize();
   AudioManager().playBackgroundMusic();
-  runApp(
-    const ProviderScope(
-    child: MyApp(),
-    ),
-  );
+  await MobileAds.instance.initialize();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
