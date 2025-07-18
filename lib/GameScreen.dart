@@ -21,7 +21,7 @@ import 'package:duoihinhbatchu/model/question.dart';
 import 'package:duoihinhbatchu/service/question_service.dart';
 
 
-class GameScreen extends ConsumerStatefulWidget { 
+class GameScreen extends ConsumerStatefulWidget {
 
   final int initialLevel;
 
@@ -32,9 +32,9 @@ class GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStateMixin {
-  
+
   List<Question> questions = [];
-  bool _isLoadingQuestions = true; 
+  bool _isLoadingQuestions = true;
   Map<String, bool> _isPressedMap = {};
 
   bool _adRewardEarned = false; //ads
@@ -66,7 +66,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
   bool isWrong = false;
-  late int maxAnswerLength; 
+  late int maxAnswerLength;
   late double bannerHeight;
 
   final GlobalKey previewContainerKey = GlobalKey();
@@ -437,78 +437,78 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   void _showRevealLetterDialog() async {
-  if (diamonds < 10) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Không đủ kim cương!',
-          style: TextStyle(
-            fontSize: MediaQuery.of(context).size.width * 0.04,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    if (diamonds < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Không đủ kim cương!',
+            style: TextStyle(
+              fontSize: MediaQuery.of(context).size.width * 0.04,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
         ),
-        backgroundColor: Colors.redAccent,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    return;
-  }
+      );
+      return;
+    }
 
-  setState(() {
-    diamonds -= 10;
-  });
-  await _saveDiamonds();
+    setState(() {
+      diamonds -= 10;
+    });
+    await _saveDiamonds();
 
-  setState(() {
-    final answer = questions[currentQuestion].answer.toUpperCase();
-    bool allSlotsFilled = true; // Thêm biến cờ để kiểm tra
-    for (int i = 0; i < answerSlots.length; i++) {
-      if (answerSlots[i].isEmpty) {
-        String correctChar =
-        answer.replaceAll(' ', '')[i];
-        for (int j = 0; j < charOptions.length; j++) {
-          if (charOptions[j] == correctChar && !charUsed[j]) {
-            answerSlots[i] = correctChar;
-            answerCharIndexes[i] = j; // Cập nhật answerCharIndexes
-            charUsed[j] = true;
-            currentSlot = i + 1;
-            break;
+    setState(() {
+      final answer = questions[currentQuestion].answer.toUpperCase();
+      bool allSlotsFilled = true; // Thêm biến cờ để kiểm tra
+      for (int i = 0; i < answerSlots.length; i++) {
+        if (answerSlots[i].isEmpty) {
+          String correctChar =
+          answer.replaceAll(' ', '')[i];
+          for (int j = 0; j < charOptions.length; j++) {
+            if (charOptions[j] == correctChar && !charUsed[j]) {
+              answerSlots[i] = correctChar;
+              answerCharIndexes[i] = j; // Cập nhật answerCharIndexes
+              charUsed[j] = true;
+              currentSlot = i + 1;
+              break;
+            }
           }
+          allSlotsFilled = false; // Đánh dấu là chưa điền hết
+          break; // Chỉ điền 1 chữ mỗi lần
         }
-        allSlotsFilled = false; // Đánh dấu là chưa điền hết
-        break; // Chỉ điền 1 chữ mỗi lần
       }
-    }
 
-    // Kiểm tra nếu tất cả các ô đã được điền (có thể do đã điền hết hoặc do chỉ còn 1 ô cuối cùng được điền)
-    // và sau đó kiểm tra tính đúng đắn và kích hoạt hành động khi đúng.
-    if (allSlotsFilled || answerSlots.every((slot) => slot.isNotEmpty)) {
-      final userAnswer = answerSlots.join('');
-      final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+      // Kiểm tra nếu tất cả các ô đã được điền (có thể do đã điền hết hoặc do chỉ còn 1 ô cuối cùng được điền)
+      // và sau đó kiểm tra tính đúng đắn và kích hoạt hành động khi đúng.
+      if (allSlotsFilled || answerSlots.every((slot) => slot.isNotEmpty)) {
+        final userAnswer = answerSlots.join('');
+        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
 
-      if (userAnswer == correctAnswer) {
-        isCorrect = true;
-        _shakeController.repeat();
-        Future.delayed(const Duration(seconds: 2), () {
-          _shakeController.stop();
-          _shakeController.value = 0.0;
-          showCorrectDialog();
+        if (userAnswer == correctAnswer) {
+          isCorrect = true;
+          _shakeController.repeat();
+          Future.delayed(const Duration(seconds: 2), () {
+            _shakeController.stop();
+            _shakeController.value = 0.0;
+            showCorrectDialog();
 
-          if (dailyCount < 1) dailyCount++;
-          if (daily30Count < 30) daily30Count++;
-          if (daily50Count < 50) daily50Count++;
-          SharedPreferences.getInstance().then((prefs) {
-            prefs.setInt('dailyCount', dailyCount);
-            prefs.setInt('daily30Count', daily30Count);
-            prefs.setInt('daily50Count', daily50Count);
+            if (dailyCount < 1) dailyCount++;
+            if (daily30Count < 30) daily30Count++;
+            if (daily50Count < 50) daily50Count++;
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.setInt('dailyCount', dailyCount);
+              prefs.setInt('daily30Count', daily30Count);
+              prefs.setInt('daily50Count', daily50Count);
+            });
           });
-        });
+        }
       }
-    }
-  });
-}
+    });
+  }
 
 
   void _onHint() {
@@ -575,29 +575,29 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _onSkipLevel() {
     _showRewardedAd(
-      onReward: () {
-        // Điền đáp án đúng lên màn hình
-        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
-        setState(() {
-          answerSlots = correctAnswer.split('');
-          isCorrect = true;
-          charUsed = List.filled(charOptions.length, false);
-          for (int i = 0; i < correctAnswer.length; i++) {
-            final char = correctAnswer[i];
-            for (int j = 0; j < charOptions.length; j++) {
-              if (charOptions[j] == char && !charUsed[j]) {
-                charUsed[j] = true;
-                break;
+        onReward: () {
+          // Điền đáp án đúng lên màn hình
+          final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+          setState(() {
+            answerSlots = correctAnswer.split('');
+            isCorrect = true;
+            charUsed = List.filled(charOptions.length, false);
+            for (int i = 0; i < correctAnswer.length; i++) {
+              final char = correctAnswer[i];
+              for (int j = 0; j < charOptions.length; j++) {
+                if (charOptions[j] == char && !charUsed[j]) {
+                  charUsed[j] = true;
+                  break;
+                }
               }
             }
-          }
-        });
+          });
 
-        // Hiện popup correct answer sau khi đã điền đáp án
-        Future.delayed(const Duration(milliseconds: 500), () {
-          showCorrectDialog();
-        });
-      }
+          // Hiện popup correct answer sau khi đã điền đáp án
+          Future.delayed(const Duration(milliseconds: 500), () {
+            showCorrectDialog();
+          });
+        }
     );
   }
 
@@ -883,16 +883,15 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                       Expanded(
                         child: (_hintBanner != null)
                             ? Center(
-                                child: Text(
-                                  _hintBanner!,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: screenWidth * 0.07,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                              )
+                          child: Text(
+                            _hintBanner!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.02,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                        )
                             : const SizedBox.shrink(),
                       ),
                     ],
@@ -1093,7 +1092,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           // Nút "Qua Màn"
                           AnimatedScale(
                             scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 300),
+                            duration: const Duration(milliseconds: 500),
                             child: GestureDetector(
                               onTapDown: (_) {
                                 setState(() => _isPressedMap['pass_level_button'] = true);
@@ -1109,38 +1108,65 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 width: screenWidth * 0.23,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    print('Nút QUA MÀN đã được bấm');
-                                    _showRewardedAd(
-                                      onReward: () async {
-                                        print('Người dùng đã nhận thưởng!');
-                                        // Điền đáp án đúng lên màn hình
-                                        final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
-                                        setState(() {
-                                          answerSlots = correctAnswer.split('');
-                                          isCorrect = true;
-                                          charUsed = List.filled(charOptions.length, false);
-                                          for (int i = 0; i < correctAnswer.length; i++) {
-                                            final char = correctAnswer[i];
-                                            for (int j = 0; j < charOptions.length; j++) {
-                                              if (charOptions[j] == char && !charUsed[j]) {
-                                                charUsed[j] = true;
-                                                break;
+                                    final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
+                                    final rewardedAd = ref.read(rewardedAdProvider);
+
+                                    if (rewardedAd == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau 5s.'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                      rewardedAdNotifier.createRewardedAd();
+                                      return;
+                                    }
+
+                                    _adRewardEarned = false;
+
+                                    rewardedAdNotifier.showRewardedAd(
+                                          () {
+                                        _adRewardEarned = true;
+                                        print('DEBUG: Người dùng đã nhận thưởng.');
+                                      },
+                                          () {
+                                        print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
+                                        if (_adRewardEarned) {
+                                          print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
+                                          final correctAnswer = questions[currentQuestion]
+                                              .answer
+                                              .toUpperCase()
+                                              .replaceAll(' ', '');
+
+                                          setState(() {
+                                            answerSlots = correctAnswer.split('');
+                                            isCorrect = true;
+                                            charUsed = List.filled(charOptions.length, false);
+                                            for (int i = 0; i < correctAnswer.length; i++) {
+                                              final char = correctAnswer[i];
+                                              for (int j = 0; j < charOptions.length; j++) {
+                                                if (charOptions[j] == char && !charUsed[j]) {
+                                                  charUsed[j] = true;
+                                                  break;
+                                                }
                                               }
                                             }
-                                          }
-                                        });
+                                          });
 
-                                        // Bắt đầu animation rung chữ đúng
-                                        _shakeController.repeat();
-                                        await Future.delayed(const Duration(seconds: 2));
-                                        _shakeController.stop();
-                                        _shakeController.value = 0.0;
+                                          _shakeController.forward(from: 0);
 
-                                        // Hiện popup correct answer sau khi đã điền đáp án và hiệu ứng
-                                        if (mounted) {
-                                          showCorrectDialog();
+                                          Future.delayed(const Duration(seconds: 1), () {
+                                            if (mounted) {
+                                              setState(() {
+                                                isCorrect = false;
+                                              });
+                                              showCorrectDialog();
+                                            }
+                                          });
+                                        } else {
+                                          print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
                                         }
-                                      }
+                                      },
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -1166,7 +1192,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         "(QC 15s~30s)",
                                         style: TextStyle(
                                           color: const Color(0xFF43ADED),
-                                          fontSize: screenWidth * 0.025, 
+                                          fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1261,7 +1287,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   List<Widget> _buildAnswerRows(
-    List<String> slots, String answer, double size) {
+      List<String> slots, String answer, double size) {
     List<Widget> rows = [];
     int slotIdx = 0;
     final words = answer.split(' ');
