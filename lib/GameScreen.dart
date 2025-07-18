@@ -5,7 +5,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import 'PopupAnswerCorrect.dart';
-import 'PopupWatchVideo.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:path_provider/path_provider.dart';
@@ -23,6 +22,7 @@ import 'package:duoihinhbatchu/service/question_service.dart';
 
 
 class GameScreen extends ConsumerStatefulWidget { 
+
   final int initialLevel;
 
   const GameScreen({super.key, this.initialLevel = 1});
@@ -59,7 +59,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   bool _hintActive = false;
   bool _hintUsedOnce = false;
   String? _hintBanner;
- 
+
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -107,7 +107,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
         await Share.shareFiles([file.path],
             text: 'Chơi game Đuổi hình bắt chữ nè!');
-        
       }
     } catch (e) {
       debugPrint('Lỗi chụp/chia sẻ widget: $e');
@@ -240,7 +239,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     return chars;
   }
 
-    void _onCharTap(int idx) async {
+  void _onCharTap(int idx) async {
     int targetSlot = answerSlots.indexOf('');
     if (targetSlot == -1) {
       return;
@@ -339,6 +338,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       }
     });
   }
+
 
   void _onAnswerSlotTap(int slotIndex) {
     if (answerCharIndexes[slotIndex] != null) {
@@ -510,6 +510,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   });
 }
 
+
   void _onHint() {
     if (_hintActive) return;
     final answer = questions[currentQuestion].answer.toUpperCase();
@@ -569,6 +570,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         const SnackBar(content: Text('Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!')),
       );
     }
+
   }
 
   void _onSkipLevel() {
@@ -831,7 +833,19 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       },
                                       errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
                                         return const Center(
-                                          child: Icon(Icons.error, color: Colors.red, size: 50),
+
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.error,
+                                                  color: Colors.red, size: 40),
+                                              SizedBox(height: 8), // Add some spacing between the icon and text
+                                              Text(
+                                                "ảnh chưa được tải lên",
+                                                style: TextStyle(color: Colors.red, fontSize: 16),
+                                              ),
+                                            ],
+                                          ),
                                         );
                                       },
                                     ),

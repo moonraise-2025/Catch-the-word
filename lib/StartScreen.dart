@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Thêm import này
+import 'package:google_mobile_ads/google_mobile_ads.dart'; // Thêm import này
 import 'GameScreen.dart';
 import 'SettingPopup.dart';
 import 'InfoPopup.dart';
+import 'ads/banner_ad_provider.dart';
 import 'audio_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class StartScreen extends StatefulWidget {
+// Thay đổi từ StatefulWidget thành ConsumerStatefulWidget
+class StartScreen extends ConsumerStatefulWidget {
   const StartScreen({super.key});
 
   @override
-  State<StartScreen> createState() => _StartScreenState();
+  ConsumerState<StartScreen> createState() => _StartScreenState(); // Thay đổi ở đây
 }
 
-class _StartScreenState extends State<StartScreen> with SingleTickerProviderStateMixin {
+// Thay đổi từ State thành ConsumerState
+class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProviderStateMixin {
   int? lastLevel;
   bool loading = true;
   Map<String, bool> _isPressedMap = {};
@@ -49,12 +54,21 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
     _isAnimationInitialized = true;
     print('initState: Animation đã được khởi tạo. Gọi _loadInitialDataAndAnimate.');
     _loadInitialDataAndAnimate();
+
+    // Thêm đoạn code tải banner ad
+    // Đảm bảo context đã sẵn sàng để tính toán kích thước banner thích ứng
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('initState: Calling createAnchoredBanner.');
+      ref.read(bannerAdProvider.notifier).createAnchoredBanner(context); // Tải banner ad
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     print('dispose: AnimationController đã được giải phóng.');
+    // Giải phóng tài nguyên banner ad khi màn hình bị loại bỏ
+    ref.read(bannerAdProvider.notifier).disposeBannerAd(); // Giải phóng banner ad
     super.dispose();
   }
 
@@ -100,6 +114,8 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
     );
     // Khi quay lại từ GameScreen, gọi lại hàm này để tải lại dữ liệu và chạy animation
     _loadInitialDataAndAnimate();
+    // Tải lại banner ad (nếu cần thiết, hoặc AdMob sẽ tự động làm nếu đã dispose)
+    // ref.read(bannerAdProvider.notifier).createAnchoredBanner(context);
   }
 
   void _continueGame() async {
@@ -114,6 +130,8 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
     );
     // Khi quay lại từ GameScreen, gọi lại hàm này để tải lại dữ liệu và chạy animation
     _loadInitialDataAndAnimate();
+    // Tải lại banner ad (nếu cần thiết, hoặc AdMob sẽ tự động làm nếu đã dispose)
+    // ref.read(bannerAdProvider.notifier).createAnchoredBanner(context);
   }
 
   @override
@@ -260,7 +278,7 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
                             barrierColor: Colors.black.withOpacity(0.5),
                             transitionDuration: const Duration(milliseconds: 300),
                             pageBuilder: (context, animation, secondaryAnimation) {
-                              return const InfoPopup( );
+                              return const InfoPopup();
                             },
                             transitionBuilder: (context, animation, secondaryAnimation, child) {
                               // Animation khi hiển thị: (0, 0.8) -> (1, 1.05) -> (1, 1.0)
@@ -336,6 +354,11 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
                       ),
                     ],
                   ),
+                ),
+                // Thêm widget banner ad ở dưới cùng
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: getBanner(context, ref), //
                 ),
               ],
             ),
