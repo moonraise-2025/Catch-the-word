@@ -513,14 +513,26 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _onHint() {
     if (_hintActive) return;
-    final answer = questions[currentQuestion].answer.toUpperCase();
-    final words = answer.split(' ');
-    String hint = words[0];
 
-    setState(() {
-      _hintBanner = hint;
-      _hintUsedOnce = true;
-    });
+    // Giả sử mô hình Question của bạn hiện có thuộc tính 'answerType'
+    // và nó được điền từ dữ liệu JSON của bạn.
+    final String? hintText = questions[currentQuestion].answerType;
+
+    if (hintText != null && hintText.isNotEmpty) {
+      setState(() {
+        _hintBanner = hintText;
+        _hintUsedOnce = true;
+      });
+    } else {
+      // Dự phòng nếu answerType không khả dụng hoặc trống
+      final answer = questions[currentQuestion].answer.toUpperCase();
+      final words = answer.split(' ');
+      String hint = words[0];
+      setState(() {
+        _hintBanner = hint;
+        _hintUsedOnce = true;
+      });
+    }
   }
 
   Future<void> _saveGameProgress() async {
@@ -887,7 +899,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                             _hintBanner!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: screenWidth * 0.02,
+                              fontSize: screenWidth * 0.05,
                               color: Colors.deepPurple,
                             ),
                           ),

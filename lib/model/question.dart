@@ -1,7 +1,7 @@
 class Question {
   final String id;
   final String answer;
-  final String answerType;
+  final String? answerType;
 
   Question({
     required this.id,
@@ -16,7 +16,7 @@ class Question {
     return Question(
       id: json['id'] as String,
       answer: json['answer'] as String,
-      answerType: json['answer_type'] as String,
+      answerType: json['answer_type'] as String?,
     );
   }
 
