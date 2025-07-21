@@ -137,7 +137,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
     // Khởi tạo BannerAd
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ID test banner của Google
+      adUnitId: 'ca-app-pub-4955170106426992/2850995167', // ID test banner của Google
       size: AdSize.banner,
       request: AdRequest(),
       listener: BannerAdListener(
