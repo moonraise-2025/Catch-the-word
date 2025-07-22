@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "999907979024",
+    "project_id": "duoihinhbatchuapp",
+    "storage_bucket": "duoihinhbatchuapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:999907979024:android:d25838179cb8bb2aa7ff95",
+        "android_client_info": {
+          "package_name": "com.duoihinhbatchu.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAz4FCJvXLcAUS2uve0DVdXvEmaol41qFQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
