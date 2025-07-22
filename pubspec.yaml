@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.2+3
+version: 1.0.6+7
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
@@ -32,8 +32,8 @@ dependencies:
     sdk: flutter
   firebase_core: ^2.27.0
   firebase_analytics: ^10.8.0
+  flutter_riverpod: ^2.4.0 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
   google_mobile_ads: ^5.0.0 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
-  flutter_riverpod: ^2.6.1 # Sử dụng phiên bản mới nhất, kiểm tra pub.dev để có phiên bản ổn định nhất
   path_provider: ^2.1.2
   share_plus: ^7.2.1
   shared_preferences: ^2.2.2
