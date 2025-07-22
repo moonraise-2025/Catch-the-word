@@ -18,7 +18,7 @@ String getRewardBasedVideoAdUnitId() {
   if (isDebugMode) {
     return 'ca-app-pub-3940256099942544/5224354917'; // Test rewarded ad unit ID
   }
-  return ''; // Your production rewarded ad unit ID
+  return 'ca-app-pub-4955170106426992/8920777166'; // Your production rewarded ad unit ID
 }
 
 String getBannerAdUnitId() {

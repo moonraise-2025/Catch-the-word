@@ -547,7 +547,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1712485313', // ID test rewarded của Google
+      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // ID test rewarded của Google
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
