@@ -8,6 +8,8 @@ import 'ads/banner_ad_provider.dart';
 import 'audio_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'firebase_analysis/analytics_service.dart';
+
 // Thay đổi từ StatefulWidget thành ConsumerStatefulWidget
 class StartScreen extends ConsumerStatefulWidget {
   const StartScreen({super.key});
@@ -30,11 +32,11 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
   void initState() {
     super.initState();
     print('initState: Bắt đầu khởi tạo StartScreen');
+    AnalyticsService().logHomeScreen();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     );
-
     _logoAnimation = Tween<Offset>(
       begin: const Offset(-1.5, 0.0),
       end: Offset.zero,
