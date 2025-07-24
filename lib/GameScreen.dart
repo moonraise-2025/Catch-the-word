@@ -552,7 +552,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // ID test rewarded của Google
+      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // ID test rewarded của Google //ca-app-pub-3940256099942544/5224354917
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -1194,7 +1194,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           // Nút "Qua Màn"
                           AnimatedScale(
                             scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 500),
+                            duration: const Duration(milliseconds: 300),
                             child: GestureDetector(
                               onTapDown: (_) {
                                 setState(() => _isPressedMap['pass_level_button'] = true);
@@ -1207,39 +1207,15 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.3,
+                                width: screenWidth * 0.23,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
-                                    final rewardedAd = ref.read(rewardedAdProvider);
-
-                                    if (rewardedAd == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau 5s.'),
-                                          duration: Duration(seconds: 2),
-                                        ),
-                                      );
-                                      rewardedAdNotifier.createRewardedAd();
-                                      return;
-                                    }
-
-                                    _adRewardEarned = false;
-
-                                    rewardedAdNotifier.showRewardedAd(
-                                          () {
-                                        _adRewardEarned = true;
-                                        print('DEBUG: Người dùng đã nhận thưởng.');
-                                      },
-                                          () {
-                                        print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
-                                        if (_adRewardEarned) {
-                                          print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
-                                          final correctAnswer = questions[currentQuestion]
-                                              .answer
-                                              .toUpperCase()
-                                              .replaceAll(' ', '');
-
+                                    print('Nút QUA MÀN đã được bấm');
+                                    _showRewardedAd(
+                                        onReward: () {
+                                          print('Người dùng đã nhận thưởng!');
+                                          // Điền đáp án đúng lên màn hình
+                                          final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
                                           setState(() {
                                             answerSlots = correctAnswer.split('');
                                             isCorrect = true;
@@ -1255,20 +1231,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             }
                                           });
 
-                                          _shakeController.forward(from: 0);
-
-                                          Future.delayed(const Duration(seconds: 1), () {
-                                            if (mounted) {
-                                              setState(() {
-                                                isCorrect = false;
-                                              });
-                                              showCorrectDialog();
-                                            }
+                                          // Hiện popup correct answer sau khi đã điền đáp án
+                                          Future.delayed(const Duration(milliseconds: 500), () {
+                                            showCorrectDialog();
                                           });
-                                        } else {
-                                          print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
                                         }
-                                      },
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -1291,7 +1258,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         ),
                                       ),
                                       Text(
-                                        "ADS",
+                                        "(QC 15s~30s)",
                                         style: TextStyle(
                                           color: const Color(0xFF43ADED),
                                           fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
