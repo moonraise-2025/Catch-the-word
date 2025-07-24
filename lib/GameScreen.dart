@@ -559,12 +559,21 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
           setState(() {
             _rewardedAd = ad;
             _isRewardedAdReady = true;
+            print('DEBUG: Rewarded Ad loaded successfully.'); // Thêm log
           });
         },
         onAdFailedToLoad: (error) {
           setState(() {
             _isRewardedAdReady = false;
+            _rewardedAd = null; // Đặt lại ad về null khi lỗi
           });
+          print('DEBUG: Rewarded Ad failed to load: $error'); // Thêm log lỗi chi tiết
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Không thể tải quảng cáo: ${error.code} - ${error.message}'), // Hiển thị lỗi chi tiết hơn
+              duration: const Duration(seconds: 3),
+            ),
+          );
         },
       ),
     );
@@ -572,29 +581,96 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _showRewardedAd({required VoidCallback onReward}) {
     if (_isRewardedAdReady && _rewardedAd != null) {
-      _rewardedAd!.show(
-        onUserEarnedReward: (ad, reward) {
-          onReward();
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (ad) {
+          print('DEBUG: Ad showed full screen content.');
+        },
+        onAdDismissedFullScreenContent: (ad) {
+          print('DEBUG: Ad dismissed. Checking if reward earned...');
+          ad.dispose(); // Giải phóng quảng cáo sau khi đóng
+          setState(() {
+            _rewardedAd = null;
+            _isRewardedAdReady = false;
+          });
+          // Kiểm tra xem thưởng đã được nhận chưa trước khi thực hiện logic
+          if (_adRewardEarned) {
+            print('DEBUG: Reward was earned. Proceeding with game logic.');
+            onReward(); // Thực hiện logic nhận thưởng
+          } else {
+            print('DEBUG: Ad dismissed, but no reward was earned.');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Bạn chưa nhận được thưởng. Vui lòng xem hết quảng cáo.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          _loadRewardedAd(); // Tải lại quảng cáo cho lần sau
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          print('DEBUG: Ad failed to show full screen content: $error');
+          ad.dispose(); // Giải phóng quảng cáo khi lỗi hiển thị
+          setState(() {
+            _rewardedAd = null;
+            _isRewardedAdReady = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Không thể hiển thị quảng cáo: ${error.code} - ${error.message}'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          _loadRewardedAd(); // Tải lại quảng cáo cho lần sau
         },
       );
-      setState(() {
-        _rewardedAd = null;
-        _isRewardedAdReady = false;
-      });
-      _loadRewardedAd(); // Load lại cho lần sau
+
+      _rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) {
+          _adRewardEarned = true;
+          print('DEBUG: User earned reward!');
+        },
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!')),
+        const SnackBar(content: Text('Quảng cáo chưa sẵn sàng. Đang thử tải lại...')),
       );
+      _loadRewardedAd(); // Thử tải lại ngay lập tức nếu chưa sẵn sàng
     }
-
   }
 
   void _onSkipLevel() {
-    _showRewardedAd(
-        onReward: () {
-          // Điền đáp án đúng lên màn hình
-          final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+    final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
+    final rewardedAd = ref.read(rewardedAdProvider);
+
+    if (rewardedAd == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau 5s.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      rewardedAdNotifier.createRewardedAd(); // Đảm bảo rằng hàm này gọi _loadRewardedAd()
+      return;
+    }
+
+    _adRewardEarned = false; // Đặt lại trạng thái nhận thưởng trước khi hiển thị ad
+
+    rewardedAdNotifier.showRewardedAd(
+          () {
+        // onUserEarnedReward callback
+        _adRewardEarned = true;
+        print('DEBUG: Người dùng đã nhận thưởng.');
+      },
+          () {
+        // onAdDismissedFullScreenContent callback
+        print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
+        if (_adRewardEarned) {
+          print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
+          final correctAnswer = questions[currentQuestion]
+              .answer
+              .toUpperCase()
+              .replaceAll(' ', '');
+
           setState(() {
             answerSlots = correctAnswer.split('');
             isCorrect = true;
@@ -610,11 +686,20 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             }
           });
 
-          // Hiện popup correct answer sau khi đã điền đáp án
-          Future.delayed(const Duration(milliseconds: 500), () {
-            showCorrectDialog();
+          _shakeController.forward(from: 0);
+
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              setState(() {
+                isCorrect = false;
+              });
+              showCorrectDialog();
+            }
           });
+        } else {
+          print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
         }
+      },
     );
   }
 
@@ -1537,3 +1622,4 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   //   }
   // }
 }
+
