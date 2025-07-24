@@ -140,7 +140,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
     // Khởi tạo BannerAd
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-4955170106426992/2850995167', // ID test banner của Google
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ID test banner của Google //ca-app-pub-4955170106426992/2850995167
       size: AdSize.banner,
       request: AdRequest(),
       listener: BannerAdListener(
@@ -897,20 +897,20 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                         children: buildCharRows(adjustedSize * 1.2),
                       ),
                       // Spacer để đẩy text gợi ý xuống giữa
-                      Expanded(
-                        child: (_hintBanner != null)
-                            ? Center(
-                          child: Text(
-                            _hintBanner!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.05,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                        )
-                            : const SizedBox.shrink(),
-                      ),
+                      // Expanded(
+                      //   child: (_hintBanner != null)
+                      //       ? Center(
+                      //     child: Text(
+                      //       _hintBanner!,
+                      //       textAlign: TextAlign.center,
+                      //       style: TextStyle(
+                      //         fontSize: screenWidth * 0.05,
+                      //         color: Colors.deepPurple,
+                      //       ),
+                      //     ),
+                      //   )
+                      //       : const SizedBox.shrink(),
+                      // ),
                     ],
                   ),
                 ),
@@ -934,7 +934,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
               SizedBox(height: screenHeight * 0.01),
               // Hàng các nút chức năng
               Padding(
-                padding: EdgeInsets.all(screenWidth * 0.01),
+                padding: EdgeInsets.all(screenWidth * 0.025),
                 child: Column(
                   children: [
                     SizedBox(
@@ -959,7 +959,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['reveal_answer_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.23,
+                                width: screenWidth * 0.3,
                                 child: ElevatedButton(
                                   onPressed: _showRevealLetterDialog,
                                   style: ElevatedButton.styleFrom(
@@ -1027,7 +1027,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['ask_friend_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.23,
+                                width: screenWidth * 0.3,
                                 child: ElevatedButton(
                                   onPressed: captureAndShareWidget,
                                   style: ElevatedButton.styleFrom(
@@ -1052,59 +1052,59 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           ),
 
                           // Nút "Gợi Ý"
-                          AnimatedScale(
-                            scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: GestureDetector(
-                              onTapDown: (_) {
-                                setState(() => _isPressedMap['hint_button'] = true);
-                                Future.delayed(const Duration(milliseconds: 150), () {
-                                  if (mounted) {
-                                    setState(() => _isPressedMap['hint_button'] = false);
-                                  }
-                                });
-                              },
-                              onTapUp: (_) {},
-                              onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
-                              child: SizedBox(
-                                width: screenWidth * 0.23,
-                                child: ElevatedButton(
-                                  onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFF3A3C5),
-                                    disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Gợi Ý',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: (_hintActive || _hintUsedOnce)
-                                              ? Colors.white70
-                                              : Colors.white,
-                                          fontSize: screenWidth * 0.030,
-                                        ),
-                                      ),
-                                      if (_hintActive)
-                                        Text(
-                                          '${_hintSeconds}s',
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: screenWidth * 0.025,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          // AnimatedScale(
+                          //   scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
+                          //   duration: const Duration(milliseconds: 300),
+                          //   child: GestureDetector(
+                          //     onTapDown: (_) {
+                          //       setState(() => _isPressedMap['hint_button'] = true);
+                          //       Future.delayed(const Duration(milliseconds: 150), () {
+                          //         if (mounted) {
+                          //           setState(() => _isPressedMap['hint_button'] = false);
+                          //         }
+                          //       });
+                          //     },
+                          //     onTapUp: (_) {},
+                          //     onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
+                          //     child: SizedBox(
+                          //       width: screenWidth * 0.23,
+                          //       child: ElevatedButton(
+                          //         onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
+                          //         style: ElevatedButton.styleFrom(
+                          //           backgroundColor: const Color(0xFFF3A3C5),
+                          //           disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
+                          //           padding: EdgeInsets.zero,
+                          //           shape: RoundedRectangleBorder(
+                          //             borderRadius: BorderRadius.circular(10),
+                          //           ),
+                          //         ),
+                          //         child: Column(
+                          //           mainAxisSize: MainAxisSize.min,
+                          //           children: [
+                          //             Text(
+                          //               'Gợi Ý',
+                          //               style: TextStyle(
+                          //                 fontWeight: FontWeight.bold,
+                          //                 color: (_hintActive || _hintUsedOnce)
+                          //                     ? Colors.white70
+                          //                     : Colors.white,
+                          //                 fontSize: screenWidth * 0.030,
+                          //               ),
+                          //             ),
+                          //             if (_hintActive)
+                          //               Text(
+                          //                 '${_hintSeconds}s',
+                          //                 style: TextStyle(
+                          //                   color: Colors.white70,
+                          //                   fontSize: screenWidth * 0.025,
+                          //                 ),
+                          //               ),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
 
                           // Nút "Qua Màn"
                           AnimatedScale(
@@ -1122,7 +1122,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.23,
+                                width: screenWidth * 0.3,
                                 child: ElevatedButton(
                                   onPressed: () {
                                     final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
@@ -1206,7 +1206,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         ),
                                       ),
                                       Text(
-                                        "(QC 15s~30s)",
+                                        "ADS",
                                         style: TextStyle(
                                           color: const Color(0xFF43ADED),
                                           fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
@@ -1519,4 +1519,21 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       return const SizedBox.shrink();
     }
   }
+
+  // Widget getBanner(BuildContext context, WidgetRef ref) {
+  //   final double screenWidth = MediaQuery.of(context).size.width;
+  //   final double screenHeight = MediaQuery.of(context).size.height;
+  //   final double horizontalPadding = screenWidth * 0.025;
+  //
+  //   if (_isBannerAdReady && _bannerAd != null) {
+  //     return Container(
+  //       width: screenWidth - (2 * horizontalPadding),
+  //       height: screenHeight * 0.07,
+  //       alignment: Alignment.center,
+  //       child: AdWidget(ad: _bannerAd!),
+  //     );
+  //   } else {
+  //     return const SizedBox.shrink();
+  //   }
+  // }
 }
