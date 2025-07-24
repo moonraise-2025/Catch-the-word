@@ -140,7 +140,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
     // Khởi tạo BannerAd
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ID test banner của Google
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ID test banner của Google //ca-app-pub-4955170106426992/2850995167
       size: AdSize.banner,
       request: AdRequest(),
       listener: BannerAdListener(
@@ -552,19 +552,28 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/1712485313', // ID test rewarded của Google
+      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // ID test rewarded của Google //ca-app-pub-3940256099942544/5224354917
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           setState(() {
             _rewardedAd = ad;
             _isRewardedAdReady = true;
+            print('DEBUG: Rewarded Ad loaded successfully.'); // Thêm log
           });
         },
         onAdFailedToLoad: (error) {
           setState(() {
             _isRewardedAdReady = false;
+            _rewardedAd = null; // Đặt lại ad về null khi lỗi
           });
+          print('DEBUG: Rewarded Ad failed to load: $error'); // Thêm log lỗi chi tiết
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Không thể tải quảng cáo: ${error.code} - ${error.message}'), // Hiển thị lỗi chi tiết hơn
+              duration: const Duration(seconds: 3),
+            ),
+          );
         },
       ),
     );
@@ -572,29 +581,96 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _showRewardedAd({required VoidCallback onReward}) {
     if (_isRewardedAdReady && _rewardedAd != null) {
-      _rewardedAd!.show(
-        onUserEarnedReward: (ad, reward) {
-          onReward();
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (ad) {
+          print('DEBUG: Ad showed full screen content.');
+        },
+        onAdDismissedFullScreenContent: (ad) {
+          print('DEBUG: Ad dismissed. Checking if reward earned...');
+          ad.dispose(); // Giải phóng quảng cáo sau khi đóng
+          setState(() {
+            _rewardedAd = null;
+            _isRewardedAdReady = false;
+          });
+          // Kiểm tra xem thưởng đã được nhận chưa trước khi thực hiện logic
+          if (_adRewardEarned) {
+            print('DEBUG: Reward was earned. Proceeding with game logic.');
+            onReward(); // Thực hiện logic nhận thưởng
+          } else {
+            print('DEBUG: Ad dismissed, but no reward was earned.');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Bạn chưa nhận được thưởng. Vui lòng xem hết quảng cáo.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          _loadRewardedAd(); // Tải lại quảng cáo cho lần sau
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          print('DEBUG: Ad failed to show full screen content: $error');
+          ad.dispose(); // Giải phóng quảng cáo khi lỗi hiển thị
+          setState(() {
+            _rewardedAd = null;
+            _isRewardedAdReady = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Không thể hiển thị quảng cáo: ${error.code} - ${error.message}'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          _loadRewardedAd(); // Tải lại quảng cáo cho lần sau
         },
       );
-      setState(() {
-        _rewardedAd = null;
-        _isRewardedAdReady = false;
-      });
-      _loadRewardedAd(); // Load lại cho lần sau
+
+      _rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) {
+          _adRewardEarned = true;
+          print('DEBUG: User earned reward!');
+        },
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Quảng cáo chưa sẵn sàng, vui lòng thử lại sau!')),
+        const SnackBar(content: Text('Quảng cáo chưa sẵn sàng. Đang thử tải lại...')),
       );
+      _loadRewardedAd(); // Thử tải lại ngay lập tức nếu chưa sẵn sàng
     }
-
   }
 
   void _onSkipLevel() {
-    _showRewardedAd(
-        onReward: () {
-          // Điền đáp án đúng lên màn hình
-          final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+    final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
+    final rewardedAd = ref.read(rewardedAdProvider);
+
+    if (rewardedAd == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau 5s.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      rewardedAdNotifier.createRewardedAd(); // Đảm bảo rằng hàm này gọi _loadRewardedAd()
+      return;
+    }
+
+    _adRewardEarned = false; // Đặt lại trạng thái nhận thưởng trước khi hiển thị ad
+
+    rewardedAdNotifier.showRewardedAd(
+          () {
+        // onUserEarnedReward callback
+        _adRewardEarned = true;
+        print('DEBUG: Người dùng đã nhận thưởng.');
+      },
+          () {
+        // onAdDismissedFullScreenContent callback
+        print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
+        if (_adRewardEarned) {
+          print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
+          final correctAnswer = questions[currentQuestion]
+              .answer
+              .toUpperCase()
+              .replaceAll(' ', '');
+
           setState(() {
             answerSlots = correctAnswer.split('');
             isCorrect = true;
@@ -610,11 +686,20 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             }
           });
 
-          // Hiện popup correct answer sau khi đã điền đáp án
-          Future.delayed(const Duration(milliseconds: 500), () {
-            showCorrectDialog();
+          _shakeController.forward(from: 0);
+
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              setState(() {
+                isCorrect = false;
+              });
+              showCorrectDialog();
+            }
           });
+        } else {
+          print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
         }
+      },
     );
   }
 
@@ -897,20 +982,20 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                         children: buildCharRows(adjustedSize * 1.2),
                       ),
                       // Spacer để đẩy text gợi ý xuống giữa
-                      Expanded(
-                        child: (_hintBanner != null)
-                            ? Center(
-                          child: Text(
-                            _hintBanner!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.05,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                        )
-                            : const SizedBox.shrink(),
-                      ),
+                      // Expanded(
+                      //   child: (_hintBanner != null)
+                      //       ? Center(
+                      //     child: Text(
+                      //       _hintBanner!,
+                      //       textAlign: TextAlign.center,
+                      //       style: TextStyle(
+                      //         fontSize: screenWidth * 0.05,
+                      //         color: Colors.deepPurple,
+                      //       ),
+                      //     ),
+                      //   )
+                      //       : const SizedBox.shrink(),
+                      // ),
                     ],
                   ),
                 ),
@@ -934,7 +1019,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
               SizedBox(height: screenHeight * 0.01),
               // Hàng các nút chức năng
               Padding(
-                padding: EdgeInsets.all(screenWidth * 0.01),
+                padding: EdgeInsets.all(screenWidth * 0.025),
                 child: Column(
                   children: [
                     SizedBox(
@@ -959,7 +1044,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['reveal_answer_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.23,
+                                width: screenWidth * 0.3,
                                 child: ElevatedButton(
                                   onPressed: _showRevealLetterDialog,
                                   style: ElevatedButton.styleFrom(
@@ -1027,7 +1112,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['ask_friend_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.23,
+                                width: screenWidth * 0.3,
                                 child: ElevatedButton(
                                   onPressed: captureAndShareWidget,
                                   style: ElevatedButton.styleFrom(
@@ -1052,64 +1137,64 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           ),
 
                           // Nút "Gợi Ý"
-                          AnimatedScale(
-                            scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: GestureDetector(
-                              onTapDown: (_) {
-                                setState(() => _isPressedMap['hint_button'] = true);
-                                Future.delayed(const Duration(milliseconds: 150), () {
-                                  if (mounted) {
-                                    setState(() => _isPressedMap['hint_button'] = false);
-                                  }
-                                });
-                              },
-                              onTapUp: (_) {},
-                              onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
-                              child: SizedBox(
-                                width: screenWidth * 0.23,
-                                child: ElevatedButton(
-                                  onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFF3A3C5),
-                                    disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Gợi Ý',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: (_hintActive || _hintUsedOnce)
-                                              ? Colors.white70
-                                              : Colors.white,
-                                          fontSize: screenWidth * 0.030,
-                                        ),
-                                      ),
-                                      if (_hintActive)
-                                        Text(
-                                          '${_hintSeconds}s',
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: screenWidth * 0.025,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          // AnimatedScale(
+                          //   scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
+                          //   duration: const Duration(milliseconds: 300),
+                          //   child: GestureDetector(
+                          //     onTapDown: (_) {
+                          //       setState(() => _isPressedMap['hint_button'] = true);
+                          //       Future.delayed(const Duration(milliseconds: 150), () {
+                          //         if (mounted) {
+                          //           setState(() => _isPressedMap['hint_button'] = false);
+                          //         }
+                          //       });
+                          //     },
+                          //     onTapUp: (_) {},
+                          //     onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
+                          //     child: SizedBox(
+                          //       width: screenWidth * 0.23,
+                          //       child: ElevatedButton(
+                          //         onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
+                          //         style: ElevatedButton.styleFrom(
+                          //           backgroundColor: const Color(0xFFF3A3C5),
+                          //           disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
+                          //           padding: EdgeInsets.zero,
+                          //           shape: RoundedRectangleBorder(
+                          //             borderRadius: BorderRadius.circular(10),
+                          //           ),
+                          //         ),
+                          //         child: Column(
+                          //           mainAxisSize: MainAxisSize.min,
+                          //           children: [
+                          //             Text(
+                          //               'Gợi Ý',
+                          //               style: TextStyle(
+                          //                 fontWeight: FontWeight.bold,
+                          //                 color: (_hintActive || _hintUsedOnce)
+                          //                     ? Colors.white70
+                          //                     : Colors.white,
+                          //                 fontSize: screenWidth * 0.030,
+                          //               ),
+                          //             ),
+                          //             if (_hintActive)
+                          //               Text(
+                          //                 '${_hintSeconds}s',
+                          //                 style: TextStyle(
+                          //                   color: Colors.white70,
+                          //                   fontSize: screenWidth * 0.025,
+                          //                 ),
+                          //               ),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
 
                           // Nút "Qua Màn"
                           AnimatedScale(
                             scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 500),
+                            duration: const Duration(milliseconds: 300),
                             child: GestureDetector(
                               onTapDown: (_) {
                                 setState(() => _isPressedMap['pass_level_button'] = true);
@@ -1125,36 +1210,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 width: screenWidth * 0.23,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    final rewardedAdNotifier = ref.read(rewardedAdProvider.notifier);
-                                    final rewardedAd = ref.read(rewardedAdProvider);
-
-                                    if (rewardedAd == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Không có quảng cáo nào sẵn sàng. Vui lòng thử lại sau 5s.'),
-                                          duration: Duration(seconds: 2),
-                                        ),
-                                      );
-                                      rewardedAdNotifier.createRewardedAd();
-                                      return;
-                                    }
-
-                                    _adRewardEarned = false;
-
-                                    rewardedAdNotifier.showRewardedAd(
-                                          () {
-                                        _adRewardEarned = true;
-                                        print('DEBUG: Người dùng đã nhận thưởng.');
-                                      },
-                                          () {
-                                        print('DEBUG: Quảng cáo đã đóng. Đang kiểm tra xem thưởng đã nhận chưa...');
-                                        if (_adRewardEarned) {
-                                          print('DEBUG: Thưởng đã được nhận. Tiến hành logic hiện đáp án.');
-                                          final correctAnswer = questions[currentQuestion]
-                                              .answer
-                                              .toUpperCase()
-                                              .replaceAll(' ', '');
-
+                                    print('Nút QUA MÀN đã được bấm');
+                                    _showRewardedAd(
+                                        onReward: () {
+                                          print('Người dùng đã nhận thưởng!');
+                                          // Điền đáp án đúng lên màn hình
+                                          final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
                                           setState(() {
                                             answerSlots = correctAnswer.split('');
                                             isCorrect = true;
@@ -1170,20 +1231,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             }
                                           });
 
-                                          _shakeController.forward(from: 0);
-
-                                          Future.delayed(const Duration(seconds: 1), () {
-                                            if (mounted) {
-                                              setState(() {
-                                                isCorrect = false;
-                                              });
-                                              showCorrectDialog();
-                                            }
+                                          // Hiện popup correct answer sau khi đã điền đáp án
+                                          Future.delayed(const Duration(milliseconds: 500), () {
+                                            showCorrectDialog();
                                           });
-                                        } else {
-                                          print('DEBUG: Quảng cáo đã đóng, nhưng thưởng CHƯA được nhận. Không hiện đáp án.');
                                         }
-                                      },
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -1519,4 +1571,22 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       return const SizedBox.shrink();
     }
   }
+
+  // Widget getBanner(BuildContext context, WidgetRef ref) {
+  //   final double screenWidth = MediaQuery.of(context).size.width;
+  //   final double screenHeight = MediaQuery.of(context).size.height;
+  //   final double horizontalPadding = screenWidth * 0.025;
+  //
+  //   if (_isBannerAdReady && _bannerAd != null) {
+  //     return Container(
+  //       width: screenWidth - (2 * horizontalPadding),
+  //       height: screenHeight * 0.07,
+  //       alignment: Alignment.center,
+  //       child: AdWidget(ad: _bannerAd!),
+  //     );
+  //   } else {
+  //     return const SizedBox.shrink();
+  //   }
+  // }
 }
+
