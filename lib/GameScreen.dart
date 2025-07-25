@@ -119,6 +119,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   void initState() {
     super.initState();
     AnalyticsService().logLevelScreen(widget.initialLevel);
+    AnalyticsService().logMilestoneLevelReached(widget.initialLevel);
     _loadAllDataAndInitGame(); // Gọi hàm tải dữ liệu và khởi tạo game
     _controller = AnimationController(
       vsync: this,
@@ -383,11 +384,13 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 level++;
                 diamonds += 5;
                 AnalyticsService().logLevelScreen(level);
+                AnalyticsService().logMilestoneLevelReached(level);
               } else {
                 currentQuestion = 0;
                 level = 1;
                 diamonds = 0;
                 AnalyticsService().logLevelScreen(level);
+                AnalyticsService().logMilestoneLevelReached(level);
               }
               _initGame(); // Gọi _initGame sau khi cập nhật level/question
               _preloadNextImage(currentQuestion + 1);
@@ -1207,7 +1210,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               onTapUp: (_) {},
                               onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
                               child: SizedBox(
-                                width: screenWidth * 0.23,
+                                width: screenWidth * 0.30,
                                 child: ElevatedButton(
                                   onPressed: () {
                                     print('Nút QUA MÀN đã được bấm');
@@ -1217,6 +1220,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                           // Điền đáp án đúng lên màn hình
                                           final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
                                           setState(() {
+
                                             answerSlots = correctAnswer.split('');
                                             isCorrect = true;
                                             charUsed = List.filled(charOptions.length, false);
@@ -1232,8 +1236,15 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                           });
 
                                           // Hiện popup correct answer sau khi đã điền đáp án
-                                          Future.delayed(const Duration(milliseconds: 500), () {
-                                            showCorrectDialog();
+                                          _shakeController.forward(from: 0);
+
+                                          Future.delayed(const Duration(seconds: 1), () {
+                                            if (mounted) {
+                                              setState(() {
+                                                isCorrect = false;
+                                              });
+                                              showCorrectDialog();
+                                            }
                                           });
                                         }
                                     );
@@ -1258,10 +1269,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         ),
                                       ),
                                       Text(
-                                        "(QC 15s~30s)",
+                                        "ADS",
                                         style: TextStyle(
                                           color: const Color(0xFF43ADED),
-                                          fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
+                                          fontSize: screenWidth * 0.025,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
