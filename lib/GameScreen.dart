@@ -92,26 +92,61 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   Future<void> captureAndShareWidget() async {
     try {
-      RenderRepaintBoundary boundary = previewContainerKey.currentContext
-          ?.findRenderObject() as RenderRepaintBoundary;
+      // Đợi một chút để đảm bảo UI đã render xong
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
+      if (renderObject == null) {
+        debugPrint('Không tìm thấy RenderObject');
+        return;
+      }
+      
+      if (renderObject is! RenderRepaintBoundary) {
+        debugPrint('RenderObject không phải là RenderRepaintBoundary');
+        return;
+      }
+      
+      final RenderRepaintBoundary boundary = renderObject;
+      
+      // Đợi để đảm bảo widget đã được vẽ xong
       if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 20));
-        return captureAndShareWidget();
+        await Future.delayed(const Duration(milliseconds: 0));
       }
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List? pngBytes = byteData?.buffer.asUint8List();
-
-      if (pngBytes != null) {
-        final tempDir = await getTemporaryDirectory();
-        final file =
-        await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
-        await Share.shareFiles([file.path],
-            text: 'Chơi game Đuổi hình bắt chữ nè!');
+      
+      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (byteData == null) {
+        debugPrint('Không thể tạo byte data từ image');
+        return;
       }
+      
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+      
+      // Tạo file tạm
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(pngBytes);
+      
+      // Chia sẻ file
+      await Share.shareFiles(
+        [file.path],
+        text: 'Chơi game Đuổi hình bắt chữ nè! 🎮\nTải ngay: [Link App Store]',
+      );
+      
+      debugPrint('Chia sẻ thành công: ${file.path}');
     } catch (e) {
       debugPrint('Lỗi chụp/chia sẻ widget: $e');
+      // Hiển thị thông báo lỗi cho user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể chia sẻ: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -136,11 +171,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _initAnimations();
     checkAndResetDailyProgress();
     _loadDiamonds();
-    _loadRewardedAd(); // <-- Thêm dòng này
+    _loadRewardedAd(); 
 
     // Khởi tạo BannerAd
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ID test banner của Google //ca-app-pub-4955170106426992/2850995167
+      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test banner ad unit ID
       size: AdSize.banner,
       request: AdRequest(),
       listener: BannerAdListener(
@@ -184,7 +219,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   void _initGame() {
-    // Đảm bảo `questions` không rỗng trước khi truy cập
     if (questions.isEmpty) {
       debugPrint("Lỗi: Không có câu hỏi để khởi tạo game.");
       return;
@@ -277,9 +311,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
       if (correct) {
         // Bắt đầu animation rung lặp lại
-        _shakeController.repeat(); // Hoặc _shakeController.repeat(reverse: true); nếu muốn hiệu ứng mượt hơn
+        _shakeController.repeat(); 
 
-        await Future.delayed(const Duration(seconds: 2)); // Thời gian bạn muốn chữ rung
+        await Future.delayed(const Duration(seconds: 2)); 
 
         // Dừng animation rung sau khi hết thời gian
         _shakeController.stop();
@@ -552,7 +586,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // ID test rewarded của Google //ca-app-pub-3940256099942544/5224354917
+      adUnitId: 'ca-app-pub-3940256099942544/5224354917', // Test rewarded ad unit ID
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -765,7 +799,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             maxPerRow *
             0.8;
 
-    return Container(
+    return RepaintBoundary(
+      key: previewContainerKey,
+      child: Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/BackgroundGame.png'),
@@ -777,7 +813,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+            children:[
               Padding(
                 padding: EdgeInsets.symmetric(
                     horizontal: mediumPadding, vertical: smallPadding),
@@ -891,72 +927,69 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
               ),
 
               SizedBox(height: screenHeight * 0.001),
-              Expanded( // Corrected Expanded usage
-                child: RepaintBoundary(
-                  key: previewContainerKey,
-                  child: Column(
-                    children: [
-                      SizedBox(height: screenHeight * 0.005),
-                      // Ảnh câu hỏi
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
-                        width: double.infinity,
-                        child: ScaleTransition(
-                          scale: _scaleAnimation,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final double imageBoxSize = constraints.maxWidth;
-                                return Container(
-                                  width: imageBoxSize,
-                                  height: imageBoxSize * 0.95,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(color: Colors.black26),
-                                    borderRadius: BorderRadius.circular(16),
+              Expanded(
+                child: Column(
+                  children: [
+                    SizedBox(height: screenHeight * 0.005),
+                    // Ảnh câu hỏi
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
+                      width: double.infinity,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final double imageBoxSize = constraints.maxWidth;
+                              return Container(
+                                width: imageBoxSize,
+                                height: imageBoxSize * 0.95,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.black26),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.network(
+                                    questions[currentQuestion].imgQuestion,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        return child;
+                                      }
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress.expectedTotalBytes != null
+                                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                      return const Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.error,
+                                                color: Colors.red, size: 40),
+                                            SizedBox(height: 8), // Add some spacing between the icon and text
+                                            Text(
+                                              "ảnh chưa được tải lên",
+                                              style: TextStyle(color: Colors.red, fontSize: 16),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
                                   ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Image.network(
-                                      questions[currentQuestion].imgQuestion,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                                        if (loadingProgress == null) {
-                                          return child;
-                                        }
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                                : null,
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                                        return const Center(
-
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.error,
-                                                  color: Colors.red, size: 40),
-                                              SizedBox(height: 8), // Add some spacing between the icon and text
-                                              Text(
-                                                "ảnh chưa được tải lên",
-                                                style: TextStyle(color: Colors.red, fontSize: 16),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                                ),
+                              );
+                            },
                           ),
                         ),
+                      ),
                       ),
                       SizedBox(height: screenHeight * 0.01),
                       // Đáp án
@@ -996,9 +1029,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                       //   )
                       //       : const SizedBox.shrink(),
                       // ),
+                    
                     ],
                   ),
-                ),
+                
               ),
               // Hiển thị text gợi ý căn giữa nếu có gợi ý
               // if (_hintBanner != null)
@@ -1114,7 +1148,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                               child: SizedBox(
                                 width: screenWidth * 0.3,
                                 child: ElevatedButton(
-                                  onPressed: captureAndShareWidget,
+                                  onPressed: () {
+                                    debugPrint('Nút Hỏi Bạn được bấm');
+                                    captureAndShareWidget();
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFF8B52E),
                                     disabledBackgroundColor: const Color(0xFFF8B52E).withOpacity(0.6),
@@ -1281,9 +1318,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 alignment: Alignment.bottomCenter,
                 child: getBanner(context, ref), // Banner quảng cáo nếu có
               ),
-            ],
+            ], // <-- THÊM DẤU ĐÓNG ']' Ở ĐÂY
           ),
         ),
+      ),
       ),
     );
   }
