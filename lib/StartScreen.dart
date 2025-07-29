@@ -240,8 +240,9 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
                     ],
                   ),
                 ),
+
                 Positioned(
-                  top: screenHeight * 0.04,
+                  top: screenHeight * 0.055,
                   right: screenWidth * 0.04,
                   child: Row(
                     children: [

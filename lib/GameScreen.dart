@@ -14,6 +14,8 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 
 import 'audio_manager.dart';
 
@@ -722,7 +724,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
           // Chỉ cần gọi showCorrectDialog(), nó sẽ xử lý animation rung
           // sau khi đáp án đã được hiển thị trên UI.
-          Future.delayed(const Duration(milliseconds: 500), () { // Có thể giảm thời gian chờ nếu muốn
+          Future.delayed(const Duration(milliseconds: 300), () { // Có thể giảm thời gian chờ nếu muốn
             if (mounted) {
               // isCorrect vẫn là true, không cần đặt lại thành false ở đây.
               // showCorrectDialog sẽ tự quản lý trạng thái rung và reset.
@@ -927,13 +929,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
                 SizedBox(height: screenHeight * 0.001),
                 Expanded(
-                  flex: 3,
                   child: Column(
                     children: [
-                      SizedBox(height: screenHeight * 0.005),
                       // Ảnh câu hỏi
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
+                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                         width: double.infinity,
                         child: ScaleTransition(
                           scale: _scaleAnimation,
@@ -944,7 +944,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 final double imageBoxSize = constraints.maxWidth;
                                 return Container(
                                   width: imageBoxSize,
-                                  height: imageBoxSize * 0.95,
+                                  height: imageBoxSize * 1.0,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     border: Border.all(color: Colors.black26),
@@ -1029,42 +1029,32 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 //       ),
                 //     ),
                 //   ),
-                SizedBox(height: screenHeight * 0.01),
 
-
-                Expanded(
-                  flex: 2, // Cân đối flex để phần này chiếm ít không gian hơn ảnh
+                SizedBox(height: screenHeight * 0.04), // Khoảng cách giữa ảnh và đáp án
+                // Đáp án
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                  // margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                  padding: const EdgeInsets.all(4.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // Căn giữa nội dung trong phần này
-                    children: [
-                      // Khoảng cách giữa ảnh và đáp án
-                      SizedBox(height: screenHeight * 0.01),
-                      // Đáp án
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                        padding: const EdgeInsets.all(4.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: _buildAnswerRows(
-                            answerSlots,
-                            questions[currentQuestion].answer,
-                            adjustedSize,
-                          ),
-                        ),
-                      ),
-                      // Khoảng cách giữa đáp án và chữ cái lựa chọn
-                      SizedBox(height: screenHeight * 0.01),
-                      // Các chữ cái lựa chọn
-                      Column(
-                        children: buildCharRows(adjustedSize * 1.2),
-                      ),
-                    ],
+                    mainAxisSize: MainAxisSize.min,
+                    children: _buildAnswerRows(
+                      answerSlots,
+                      questions[currentQuestion].answer,
+                      adjustedSize,
+                    ),
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.01), // Khoảng cách giữa đáp án và chữ cái lựa chọn
+                // Các chữ cái lựa chọn
+                Column(
+                  children: buildCharRows(adjustedSize * 1.2),
+                ),
+                SizedBox(height: screenHeight * 0.04),
 
                 // Hàng các nút chức năng
                 Padding(
@@ -1109,7 +1099,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          'Hiện Đáp Án',
+                                          'Hiện Chữ',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
@@ -1175,13 +1165,27 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
-                                    child: Text(
-                                      'Hỏi Bạn',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: screenWidth * 0.030,
-                                      ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Hỏi Bạn Bè',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: screenWidth * 0.030,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Chia sẻ",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -1317,7 +1321,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                           ),
                                         ),
                                         Text(
-                                          "(QC 15s~30s)",
+                                          "ADS",
                                           style: TextStyle(
                                             color: const Color(0xFF43ADED),
                                             fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
@@ -1340,7 +1344,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                   alignment: Alignment.bottomCenter,
                   child: getBanner(context, ref), // Banner quảng cáo nếu có
                 ),
-              ], // <-- THÊM DẤU ĐÓNG ']' Ở ĐÂY
+              ],
             ),
           ),
         ),
@@ -1408,7 +1412,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         children: row,
       ));
       if (idx + count < total) {
-        rows.add(SizedBox(height: size * 0.05));
+        rows.add(SizedBox(height: (size * 0.05) - 1.0));
       }
       idx += count;
     }
