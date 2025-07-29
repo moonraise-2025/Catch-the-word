@@ -24,8 +24,6 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
   bool loading = true;
   Map<String, bool> _isPressedMap = {};
   late AnimationController _animationController;
-  late Animation<Offset> _logoAnimation;
-  late Animation<Offset> _buttonAnimation;
   bool _isAnimationInitialized = false;
 
   @override
@@ -37,21 +35,6 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     );
-    _logoAnimation = Tween<Offset>(
-      begin: const Offset(-1.5, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _buttonAnimation = Tween<Offset>(
-      begin: const Offset(1.5, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
 
     _isAnimationInitialized = true;
     print('initState: Animation đã được khởi tạo. Gọi _loadInitialDataAndAnimate.');
@@ -171,91 +154,82 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
                     children: [
                       Padding(
                         padding: EdgeInsets.only(bottom: screenHeight * 0.08),
-                        child: SlideTransition(
-                          position: _logoAnimation,
-                          child: Image.asset(
-                            'assets/images/logodhbc.png',
-                            width: screenWidth * 0.8,
-                            height: screenHeight * 0.25,
-                            fit: BoxFit.contain,
-                          ),
+                        child: Image.asset( // Removed SlideTransition
+                          'assets/images/logodhbc.png',
+                          width: screenWidth * 0.8,
+                          height: screenHeight * 0.25,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.15),
                       if (lastLevel == null || lastLevel == 1) ...[
-                        SlideTransition(
-                          position: _buttonAnimation,
-                          child: AnimatedScale(
-                            scale: _isPressedMap['start_game'] == true ? 0.95 : 1.0,
-                            duration: const Duration(milliseconds: 100),
-                            child: GestureDetector(
-                              onTapDown: (_) => setState(() => _isPressedMap['start_game'] = true),
-                              onTapUp: (_) {
-                                setState(() => _isPressedMap['start_game'] = false);
-                                _startNewGame();
-                              },
-                              onTapCancel: () => setState(() => _isPressedMap['start_game'] = false),
-                              child: SizedBox(
-                                width: buttonWidth,
-                                height: buttonHeight,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: Colors.blue,
-                                    textStyle: TextStyle(
-                                      fontSize: screenWidth * 0.05,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                        AnimatedScale( // Removed SlideTransition
+                          scale: _isPressedMap['start_game'] == true ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: GestureDetector(
+                            onTapDown: (_) => setState(() => _isPressedMap['start_game'] = true),
+                            onTapUp: (_) {
+                              setState(() => _isPressedMap['start_game'] = false);
+                              _startNewGame();
+                            },
+                            onTapCancel: () => setState(() => _isPressedMap['start_game'] = false),
+                            child: SizedBox(
+                              width: buttonWidth,
+                              height: buttonHeight,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.blue,
+                                  textStyle: TextStyle(
+                                    fontSize: screenWidth * 0.05,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  onPressed: _startNewGame,
-                                  child: const Text('Chơi ngay', textAlign: TextAlign.center),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
+                                onPressed: _startNewGame,
+                                child: const Text('Chơi ngay', textAlign: TextAlign.center),
                               ),
                             ),
                           ),
                         ),
                       ] else ...[
-                        SlideTransition(
-                          position: _buttonAnimation,
-                          child: AnimatedScale(
-                            scale: _isPressedMap['continue_game'] == true ? 0.95 : 1.0,
-                            duration: const Duration(milliseconds: 100),
-                            child: GestureDetector(
-                              onTapDown: (_) => setState(() => _isPressedMap['continue_game'] = true),
-                              onTapUp: (_) {
-                                setState(() => _isPressedMap['continue_game'] = false);
-                                _continueGame();
-                              },
-                              onTapCancel: () => setState(() => _isPressedMap['continue_game'] = false),
-                              child: SizedBox(
-                                width: buttonWidth,
-                                height: buttonHeight,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF616FD3),
-                                    textStyle: TextStyle(
-                                      fontSize: screenWidth * 0.05,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                        AnimatedScale( // Removed SlideTransition
+                          scale: _isPressedMap['continue_game'] == true ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: GestureDetector(
+                            onTapDown: (_) => setState(() => _isPressedMap['continue_game'] = true),
+                            onTapUp: (_) {
+                              setState(() => _isPressedMap['continue_game'] = false);
+                              _continueGame();
+                            },
+                            onTapCancel: () => setState(() => _isPressedMap['continue_game'] = false),
+                            child: SizedBox(
+                              width: buttonWidth,
+                              height: buttonHeight,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF616FD3),
+                                  textStyle: TextStyle(
+                                    fontSize: screenWidth * 0.05,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  onPressed: _continueGame,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Text('TIẾP TỤC', textAlign: TextAlign.center),
-                                      Text('(Level $lastLevel)',
-                                          style: TextStyle(
-                                              fontSize: screenWidth * 0.03,
-                                              color: const Color(0xFF4E4E51))),
-                                    ],
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
+                                ),
+                                onPressed: _continueGame,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text('TIẾP TỤC', textAlign: TextAlign.center),
+                                    Text('(Level $lastLevel)',
+                                        style: TextStyle(
+                                            fontSize: screenWidth * 0.03,
+                                            color: const Color(0xFF4E4E51))),
+                                  ],
                                 ),
                               ),
                             ),
@@ -275,7 +249,7 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
                         onTap: () {
                           showGeneralDialog(
                             context: context,
-                            barrierDismissible: true,
+                            barrierDismissible: false,
                             barrierLabel: 'InfoPopup',
                             barrierColor: Colors.black.withOpacity(0.5),
                             transitionDuration: const Duration(milliseconds: 300),
@@ -318,7 +292,7 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
                         onTap: () {
                           showGeneralDialog(
                             context: context,
-                            barrierDismissible: true,
+                            barrierDismissible: false,
                             barrierLabel: 'SettingPopup',
                             barrierColor: Colors.black.withOpacity(0.5),
                             transitionDuration: const Duration(milliseconds: 300),

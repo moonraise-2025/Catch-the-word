@@ -92,26 +92,61 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   Future<void> captureAndShareWidget() async {
     try {
-      RenderRepaintBoundary boundary = previewContainerKey.currentContext
-          ?.findRenderObject() as RenderRepaintBoundary;
-      if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 20));
-        return captureAndShareWidget();
-      }
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List? pngBytes = byteData?.buffer.asUint8List();
+      // Đợi một chút để đảm bảo UI đã render xong
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      if (pngBytes != null) {
-        final tempDir = await getTemporaryDirectory();
-        final file =
-        await File('${tempDir.path}/screenshot.png').writeAsBytes(pngBytes);
-        await Share.shareFiles([file.path],
-            text: 'Chơi game Đuổi hình bắt chữ nè!');
+      final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
+      if (renderObject == null) {
+        debugPrint('Không tìm thấy RenderObject');
+        return;
       }
+
+      if (renderObject is! RenderRepaintBoundary) {
+        debugPrint('RenderObject không phải là RenderRepaintBoundary');
+        return;
+      }
+
+      final RenderRepaintBoundary boundary = renderObject;
+
+      // Đợi để đảm bảo widget đã được vẽ xong
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 0));
+      }
+
+      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData == null) {
+        debugPrint('Không thể tạo byte data từ image');
+        return;
+      }
+
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+      // Tạo file tạm
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(pngBytes);
+
+      // Chia sẻ file
+      await Share.shareFiles(
+        [file.path],
+        text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
+      );
+
+      debugPrint('Chia sẻ thành công: ${file.path}');
     } catch (e) {
       debugPrint('Lỗi chụp/chia sẻ widget: $e');
+      // Hiển thị thông báo lỗi cho user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể chia sẻ: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -119,7 +154,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   void initState() {
     super.initState();
     AnalyticsService().logLevelScreen(widget.initialLevel);
-    AnalyticsService().logMilestoneLevelReached(widget.initialLevel);
     _loadAllDataAndInitGame(); // Gọi hàm tải dữ liệu và khởi tạo game
     _controller = AnimationController(
       vsync: this,
@@ -137,11 +171,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     _initAnimations();
     checkAndResetDailyProgress();
     _loadDiamonds();
-    _loadRewardedAd(); // <-- Thêm dòng này
+    _loadRewardedAd();
 
     // Khởi tạo BannerAd
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // ID test banner của Google //ca-app-pub-4955170106426992/2850995167
+      adUnitId: 'ca-app-pub-4955170106426992/3758722469', // Test banner ad unit ID
       size: AdSize.banner,
       request: AdRequest(),
       listener: BannerAdListener(
@@ -185,7 +219,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   }
 
   void _initGame() {
-    // Đảm bảo `questions` không rỗng trước khi truy cập
     if (questions.isEmpty) {
       debugPrint("Lỗi: Không có câu hỏi để khởi tạo game.");
       return;
@@ -278,9 +311,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
       if (correct) {
         // Bắt đầu animation rung lặp lại
-        _shakeController.repeat(); // Hoặc _shakeController.repeat(reverse: true); nếu muốn hiệu ứng mượt hơn
+        _shakeController.repeat();
 
-        await Future.delayed(const Duration(seconds: 2)); // Thời gian bạn muốn chữ rung
+        await Future.delayed(const Duration(seconds: 2));
 
         // Dừng animation rung sau khi hết thời gian
         _shakeController.stop();
@@ -384,13 +417,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 level++;
                 diamonds += 5;
                 AnalyticsService().logLevelScreen(level);
-                AnalyticsService().logMilestoneLevelReached(level);
               } else {
                 currentQuestion = 0;
                 level = 1;
                 diamonds = 0;
                 AnalyticsService().logLevelScreen(level);
-                AnalyticsService().logMilestoneLevelReached(level);
               }
               _initGame(); // Gọi _initGame sau khi cập nhật level/question
               _preloadNextImage(currentQuestion + 1);
@@ -555,7 +586,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // ID test rewarded của Google //ca-app-pub-3940256099942544/5224354917
+      adUnitId: 'ca-app-pub-4955170106426992/8920777166', // Test rewarded ad unit ID
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -652,11 +683,11 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
           duration: Duration(seconds: 2),
         ),
       );
-      rewardedAdNotifier.createRewardedAd(); // Đảm bảo rằng hàm này gọi _loadRewardedAd()
+      rewardedAdNotifier.createRewardedAd();
       return;
     }
 
-    _adRewardEarned = false; // Đặt lại trạng thái nhận thưởng trước khi hiển thị ad
+    _adRewardEarned = false;
 
     rewardedAdNotifier.showRewardedAd(
           () {
@@ -676,7 +707,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
 
           setState(() {
             answerSlots = correctAnswer.split('');
-            isCorrect = true;
+            isCorrect = true; // Đặt isCorrect thành true
             charUsed = List.filled(charOptions.length, false);
             for (int i = 0; i < correctAnswer.length; i++) {
               final char = correctAnswer[i];
@@ -689,13 +720,12 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             }
           });
 
-          _shakeController.forward(from: 0);
-
-          Future.delayed(const Duration(seconds: 1), () {
+          // Chỉ cần gọi showCorrectDialog(), nó sẽ xử lý animation rung
+          // sau khi đáp án đã được hiển thị trên UI.
+          Future.delayed(const Duration(milliseconds: 500), () { // Có thể giảm thời gian chờ nếu muốn
             if (mounted) {
-              setState(() {
-                isCorrect = false;
-              });
+              // isCorrect vẫn là true, không cần đặt lại thành false ở đây.
+              // showCorrectDialog sẽ tự quản lý trạng thái rung và reset.
               showCorrectDialog();
             }
           });
@@ -768,135 +798,136 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             maxPerRow *
             0.8;
 
-    return Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/BackgroundGame.png'),
-          fit: BoxFit.cover,
+    return RepaintBoundary(
+      key: previewContainerKey,
+      child: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/BackgroundGame.png'),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: mediumPadding, vertical: smallPadding),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        await _saveGameProgress();
-                        Navigator.pop(context);
-                      },
-                      child: Image.asset(
-                        'assets/images/home.png',
-                        width: screenWidth * 0.07,
-                        height: screenWidth * 0.07,
-                        fit: BoxFit.contain,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children:[
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: mediumPadding, vertical: smallPadding),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          await _saveGameProgress();
+                          Navigator.pop(context);
+                        },
+                        child: Image.asset(
+                          'assets/images/home.png',
+                          width: screenWidth * 0.07,
+                          height: screenWidth * 0.07,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Level ',
-                            style: TextStyle(
-                                fontSize: screenWidth * 0.06,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
-                        Text('$level',
-                            style: TextStyle(
-                                fontSize: screenWidth * 0.06,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white)),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('$diamonds',
-                                style: TextStyle(
-                                    fontSize: screenWidth * 0.06,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white)),
-                            SizedBox(width: screenWidth * 0.0015),
-                            Image.asset(
-                              'assets/images/Diamond_Borderless.png',
-                              width: screenWidth * 0.06,
-                              height: screenWidth * 0.06,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Level ',
+                              style: TextStyle(
+                                  fontSize: screenWidth * 0.06,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                          Text('$level',
+                              style: TextStyle(
+                                  fontSize: screenWidth * 0.06,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('$diamonds',
+                                  style: TextStyle(
+                                      fontSize: screenWidth * 0.06,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white)),
+                              SizedBox(width: screenWidth * 0.0015),
+                              Image.asset(
+                                'assets/images/Diamond_Borderless.png',
+                                width: screenWidth * 0.06,
+                                height: screenWidth * 0.06,
+                                fit: BoxFit.contain,
+                              ),
+                            ],
+                          ),
+                          SizedBox(width: smallPadding),
+                          GestureDetector(
+                            onTap: () {
+                              showGeneralDialog(
+                                context: context,
+                                barrierDismissible: true,
+                                barrierLabel: 'Giftpopup',
+                                barrierColor: Colors.black.withOpacity(0.5),
+                                transitionDuration: const Duration(milliseconds: 300),
+                                pageBuilder: (context, animation, secondaryAnimation) {
+                                  return  Giftpopup(
+                                    dailyCount: dailyCount,
+                                    daily30Count: daily30Count,
+                                    daily50Count: daily50Count,
+                                    onReward: (amount) async {
+                                      setState(() {
+                                        diamonds += amount;
+                                      });
+                                      final prefs =
+                                      await SharedPreferences.getInstance();
+                                      await prefs.setInt('diamonds', diamonds);
+                                    },
+                                  );
+                                },
+                                transitionBuilder: (context, animation, secondaryAnimation, child) {
+
+                                  final opacityTween = TweenSequence<double>([
+                                    TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                                    TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                                  ]);
+
+                                  final scaleTween = TweenSequence<double>([
+                                    TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                                    TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                                  ]);
+
+                                  return ScaleTransition(
+                                    scale: scaleTween.animate(animation),
+                                    child: FadeTransition(
+                                      opacity: opacityTween.animate(animation),
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            child: Image.asset(
+                              'assets/images/gift.png',
+                              width: screenWidth * 0.07,
+                              height: screenWidth * 0.07,
                               fit: BoxFit.contain,
                             ),
-                          ],
-                        ),
-                        SizedBox(width: smallPadding),
-                        GestureDetector(
-                          onTap: () {
-                            showGeneralDialog(
-                              context: context,
-                              barrierDismissible: true,
-                              barrierLabel: 'Giftpopup',
-                              barrierColor: Colors.black.withOpacity(0.5),
-                              transitionDuration: const Duration(milliseconds: 300),
-                              pageBuilder: (context, animation, secondaryAnimation) {
-                                return  Giftpopup(
-                                  dailyCount: dailyCount,
-                                  daily30Count: daily30Count,
-                                  daily50Count: daily50Count,
-                                  onReward: (amount) async {
-                                    setState(() {
-                                      diamonds += amount;
-                                    });
-                                    final prefs =
-                                    await SharedPreferences.getInstance();
-                                    await prefs.setInt('diamonds', diamonds);
-                                  },
-                                );
-                              },
-                              transitionBuilder: (context, animation, secondaryAnimation, child) {
-
-                                final opacityTween = TweenSequence<double>([
-                                  TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
-                                  TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
-                                ]);
-
-                                final scaleTween = TweenSequence<double>([
-                                  TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
-                                  TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
-                                ]);
-
-                                return ScaleTransition(
-                                  scale: scaleTween.animate(animation),
-                                  child: FadeTransition(
-                                    opacity: opacityTween.animate(animation),
-                                    child: child,
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          child: Image.asset(
-                            'assets/images/gift.png',
-                            width: screenWidth * 0.07,
-                            height: screenWidth * 0.07,
-                            fit: BoxFit.contain,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
 
-              SizedBox(height: screenHeight * 0.001),
-              Expanded( // Corrected Expanded usage
-                child: RepaintBoundary(
-                  key: previewContainerKey,
+                SizedBox(height: screenHeight * 0.001),
+                Expanded(
+                  flex: 3,
                   child: Column(
                     children: [
                       SizedBox(height: screenHeight * 0.005),
@@ -938,7 +969,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       },
                                       errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
                                         return const Center(
-
                                           child: Column(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
@@ -961,29 +991,8 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           ),
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.01),
-                      // Đáp án
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                        padding: EdgeInsets.all(4.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: _buildAnswerRows(
-                            answerSlots,
-                            questions[currentQuestion].answer,
-                            adjustedSize,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: screenHeight * 0.01),
-                      // Các chữ cái lựa chọn
-                      Column(
-                        children: buildCharRows(adjustedSize * 1.2),
-                      ),
+
+
                       // Spacer để đẩy text gợi ý xuống giữa
                       // Expanded(
                       //   child: (_hintBanner != null)
@@ -999,305 +1008,346 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                       //   )
                       //       : const SizedBox.shrink(),
                       // ),
+
+                    ],
+                  ),
+
+                ),
+                // Hiển thị text gợi ý căn giữa nếu có gợi ý
+                // if (_hintBanner != null)
+                //   Padding(
+                //     padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                //     child: Center(
+                //       child: Text(
+                //         _hintBanner!,
+                //         textAlign: TextAlign.center,
+                //         style: TextStyle(
+                //           fontSize: screenWidth * 0.07,
+                //           fontWeight: FontWeight.bold,
+                //           color: Colors.deepPurple,
+                //         ),
+                //       ),
+                //     ),
+                //   ),
+                SizedBox(height: screenHeight * 0.01),
+
+
+                Expanded(
+                  flex: 2, // Cân đối flex để phần này chiếm ít không gian hơn ảnh
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // Căn giữa nội dung trong phần này
+                    children: [
+                      // Khoảng cách giữa ảnh và đáp án
+                      SizedBox(height: screenHeight * 0.01),
+                      // Đáp án
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: mediumPadding),
+                        padding: const EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: _buildAnswerRows(
+                            answerSlots,
+                            questions[currentQuestion].answer,
+                            adjustedSize,
+                          ),
+                        ),
+                      ),
+                      // Khoảng cách giữa đáp án và chữ cái lựa chọn
+                      SizedBox(height: screenHeight * 0.01),
+                      // Các chữ cái lựa chọn
+                      Column(
+                        children: buildCharRows(adjustedSize * 1.2),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              // Hiển thị text gợi ý căn giữa nếu có gợi ý
-              // if (_hintBanner != null)
-              //   Padding(
-              //     padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
-              //     child: Center(
-              //       child: Text(
-              //         _hintBanner!,
-              //         textAlign: TextAlign.center,
-              //         style: TextStyle(
-              //           fontSize: screenWidth * 0.07,
-              //           fontWeight: FontWeight.bold,
-              //           color: Colors.deepPurple,
-              //         ),
-              //       ),
-              //     ),
-              //   ),
-              SizedBox(height: screenHeight * 0.01),
-              // Hàng các nút chức năng
-              Padding(
-                padding: EdgeInsets.all(screenWidth * 0.025),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: screenHeight * 0.07,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Nút "Hiện Đáp Án"
-                          AnimatedScale(
-                            scale: _isPressedMap['reveal_answer_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: GestureDetector(
-                              onTapDown: (_) {
-                                setState(() => _isPressedMap['reveal_answer_button'] = true);
-                                Future.delayed(const Duration(milliseconds: 150), () {
-                                  if (mounted) {
-                                    setState(() => _isPressedMap['reveal_answer_button'] = false);
-                                  }
-                                });
-                              },
-                              onTapUp: (_) {},
-                              onTapCancel: () => setState(() => _isPressedMap['reveal_answer_button'] = false),
-                              child: SizedBox(
-                                width: screenWidth * 0.3,
-                                child: ElevatedButton(
-                                  onPressed: _showRevealLetterDialog,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF90C240),
-                                    disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Hiện Đáp Án',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: screenWidth * 0.030,
-                                        ),
-                                      ),
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: '10 ',
-                                              style: TextStyle(
-                                                fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            WidgetSpan(
-                                              alignment: PlaceholderAlignment.middle,
-                                              child: Image.asset(
-                                                'assets/images/Diamond_Borderless.png',
-                                                width: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
-                                                height: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
 
-                          // Nút "Hỏi Bạn"
-                          AnimatedScale(
-                            scale: _isPressedMap['ask_friend_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: GestureDetector(
-                              onTapDown: (_) {
-                                setState(() => _isPressedMap['ask_friend_button'] = true);
-                                Future.delayed(const Duration(milliseconds: 150), () {
-                                  if (mounted) {
-                                    setState(() => _isPressedMap['ask_friend_button'] = false);
-                                  }
-                                });
-                              },
-                              onTapUp: (_) {},
-                              onTapCancel: () => setState(() => _isPressedMap['ask_friend_button'] = false),
-                              child: SizedBox(
-                                width: screenWidth * 0.3,
-                                child: ElevatedButton(
-                                  onPressed: captureAndShareWidget,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFF8B52E),
-                                    disabledBackgroundColor: const Color(0xFFF8B52E).withOpacity(0.6),
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                // Hàng các nút chức năng
+                Padding(
+                  padding: EdgeInsets.all(screenWidth * 0.025),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: screenHeight * 0.07,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Nút "Hiện Đáp Án"
+                            AnimatedScale(
+                              scale: _isPressedMap['reveal_answer_button'] ?? false ? 0.90 : 1.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: GestureDetector(
+                                onTapDown: (_) {
+                                  setState(() => _isPressedMap['reveal_answer_button'] = true);
+                                  Future.delayed(const Duration(milliseconds: 150), () {
+                                    if (mounted) {
+                                      setState(() => _isPressedMap['reveal_answer_button'] = false);
+                                    }
+                                  });
+                                },
+                                onTapUp: (_) {},
+                                onTapCancel: () => setState(() => _isPressedMap['reveal_answer_button'] = false),
+                                child: SizedBox(
+                                  width: screenWidth * 0.3,
+                                  child: ElevatedButton(
+                                    onPressed: _showRevealLetterDialog,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF90C240),
+                                      disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
+                                      padding: EdgeInsets.zero,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
                                     ),
-                                  ),
-                                  child: Text(
-                                    'Hỏi Bạn',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.030,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Hiện Đáp Án',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: screenWidth * 0.030,
+                                          ),
+                                        ),
+                                        RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: '10 ',
+                                                style: TextStyle(
+                                                  fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              WidgetSpan(
+                                                alignment: PlaceholderAlignment.middle,
+                                                child: Image.asset(
+                                                  'assets/images/Diamond_Borderless.png',
+                                                  width: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
+                                                  height: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          // Nút "Gợi Ý"
-                          // AnimatedScale(
-                          //   scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
-                          //   duration: const Duration(milliseconds: 300),
-                          //   child: GestureDetector(
-                          //     onTapDown: (_) {
-                          //       setState(() => _isPressedMap['hint_button'] = true);
-                          //       Future.delayed(const Duration(milliseconds: 150), () {
-                          //         if (mounted) {
-                          //           setState(() => _isPressedMap['hint_button'] = false);
-                          //         }
-                          //       });
-                          //     },
-                          //     onTapUp: (_) {},
-                          //     onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
-                          //     child: SizedBox(
-                          //       width: screenWidth * 0.23,
-                          //       child: ElevatedButton(
-                          //         onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
-                          //         style: ElevatedButton.styleFrom(
-                          //           backgroundColor: const Color(0xFFF3A3C5),
-                          //           disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
-                          //           padding: EdgeInsets.zero,
-                          //           shape: RoundedRectangleBorder(
-                          //             borderRadius: BorderRadius.circular(10),
-                          //           ),
-                          //         ),
-                          //         child: Column(
-                          //           mainAxisSize: MainAxisSize.min,
-                          //           children: [
-                          //             Text(
-                          //               'Gợi Ý',
-                          //               style: TextStyle(
-                          //                 fontWeight: FontWeight.bold,
-                          //                 color: (_hintActive || _hintUsedOnce)
-                          //                     ? Colors.white70
-                          //                     : Colors.white,
-                          //                 fontSize: screenWidth * 0.030,
-                          //               ),
-                          //             ),
-                          //             if (_hintActive)
-                          //               Text(
-                          //                 '${_hintSeconds}s',
-                          //                 style: TextStyle(
-                          //                   color: Colors.white70,
-                          //                   fontSize: screenWidth * 0.025,
-                          //                 ),
-                          //               ),
-                          //           ],
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
+                            // Nút "Hỏi Bạn"
+                            AnimatedScale(
+                              scale: _isPressedMap['ask_friend_button'] ?? false ? 0.90 : 1.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: GestureDetector(
+                                onTapDown: (_) {
+                                  setState(() => _isPressedMap['ask_friend_button'] = true);
+                                  Future.delayed(const Duration(milliseconds: 150), () {
+                                    if (mounted) {
+                                      setState(() => _isPressedMap['ask_friend_button'] = false);
+                                    }
+                                  });
+                                },
+                                onTapUp: (_) {},
+                                onTapCancel: () => setState(() => _isPressedMap['ask_friend_button'] = false),
+                                child: SizedBox(
+                                  width: screenWidth * 0.3,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      debugPrint('Nút Hỏi Bạn được bấm');
+                                      captureAndShareWidget();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFF8B52E),
+                                      disabledBackgroundColor: const Color(0xFFF8B52E).withOpacity(0.6),
+                                      padding: EdgeInsets.zero,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Hỏi Bạn',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.030,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
 
-                          // Nút "Qua Màn"
-                          AnimatedScale(
-                            scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: GestureDetector(
-                              onTapDown: (_) {
-                                setState(() => _isPressedMap['pass_level_button'] = true);
-                                Future.delayed(const Duration(milliseconds: 150), () {
-                                  if (mounted) {
-                                    setState(() => _isPressedMap['pass_level_button'] = false);
-                                  }
-                                });
-                              },
-                              onTapUp: (_) {},
-                              onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
-                              child: SizedBox(
-                                width: screenWidth * 0.30,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    print('Nút QUA MÀN đã được bấm');
-                                    _showRewardedAd(
-                                        onReward: () {
-                                          print('Người dùng đã nhận thưởng!');
-                                          // Điền đáp án đúng lên màn hình
-                                          final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
-                                          setState(() {
+                            // Nút "Gợi Ý"
+                            // AnimatedScale(
+                            //   scale: _isPressedMap['hint_button'] ?? false ? 0.90 : 1.0,
+                            //   duration: const Duration(milliseconds: 300),
+                            //   child: GestureDetector(
+                            //     onTapDown: (_) {
+                            //       setState(() => _isPressedMap['hint_button'] = true);
+                            //       Future.delayed(const Duration(milliseconds: 150), () {
+                            //         if (mounted) {
+                            //           setState(() => _isPressedMap['hint_button'] = false);
+                            //         }
+                            //       });
+                            //     },
+                            //     onTapUp: (_) {},
+                            //     onTapCancel: () => setState(() => _isPressedMap['hint_button'] = false),
+                            //     child: SizedBox(
+                            //       width: screenWidth * 0.23,
+                            //       child: ElevatedButton(
+                            //         onPressed: (_hintActive || _hintUsedOnce) ? null : () => _onHint(),
+                            //         style: ElevatedButton.styleFrom(
+                            //           backgroundColor: const Color(0xFFF3A3C5),
+                            //           disabledBackgroundColor: const Color(0xFFF3A3C5).withOpacity(0.6),
+                            //           padding: EdgeInsets.zero,
+                            //           shape: RoundedRectangleBorder(
+                            //             borderRadius: BorderRadius.circular(10),
+                            //           ),
+                            //         ),
+                            //         child: Column(
+                            //           mainAxisSize: MainAxisSize.min,
+                            //           children: [
+                            //             Text(
+                            //               'Gợi Ý',
+                            //               style: TextStyle(
+                            //                 fontWeight: FontWeight.bold,
+                            //                 color: (_hintActive || _hintUsedOnce)
+                            //                     ? Colors.white70
+                            //                     : Colors.white,
+                            //                 fontSize: screenWidth * 0.030,
+                            //               ),
+                            //             ),
+                            //             if (_hintActive)
+                            //               Text(
+                            //                 '${_hintSeconds}s',
+                            //                 style: TextStyle(
+                            //                   color: Colors.white70,
+                            //                   fontSize: screenWidth * 0.025,
+                            //                 ),
+                            //               ),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
 
-                                            answerSlots = correctAnswer.split('');
-                                            isCorrect = true;
-                                            charUsed = List.filled(charOptions.length, false);
-                                            for (int i = 0; i < correctAnswer.length; i++) {
-                                              final char = correctAnswer[i];
-                                              for (int j = 0; j < charOptions.length; j++) {
-                                                if (charOptions[j] == char && !charUsed[j]) {
-                                                  charUsed[j] = true;
-                                                  break;
+                            // Nút "Qua Màn"
+                            AnimatedScale(
+                              scale: _isPressedMap['pass_level_button'] ?? false ? 0.90 : 1.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: GestureDetector(
+                                onTapDown: (_) {
+                                  setState(() => _isPressedMap['pass_level_button'] = true);
+                                  Future.delayed(const Duration(milliseconds: 150), () {
+                                    if (mounted) {
+                                      setState(() => _isPressedMap['pass_level_button'] = false);
+                                    }
+                                  });
+                                },
+                                onTapUp: (_) {},
+                                onTapCancel: () => setState(() => _isPressedMap['pass_level_button'] = false),
+                                child: SizedBox(
+                                  width: screenWidth * 0.30,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      print('Nút QUA MÀN đã được bấm');
+                                      _showRewardedAd(
+                                          onReward: () {
+                                            print('Người dùng đã nhận thưởng!');
+                                            // Điền đáp án đúng lên màn hình
+                                            final correctAnswer = questions[currentQuestion].answer.toUpperCase().replaceAll(' ', '');
+                                            setState(() {
+                                              answerSlots = correctAnswer.split('');
+                                              isCorrect = true;
+                                              charUsed = List.filled(charOptions.length, false);
+                                              for (int i = 0; i < correctAnswer.length; i++) {
+                                                final char = correctAnswer[i];
+                                                for (int j = 0; j < charOptions.length; j++) {
+                                                  if (charOptions[j] == char && !charUsed[j]) {
+                                                    charUsed[j] = true;
+                                                    break;
+                                                  }
                                                 }
                                               }
-                                            }
-                                          });
+                                            });
 
-                                          // Hiện popup correct answer sau khi đã điền đáp án
-                                          _shakeController.forward(from: 0);
+                                            // Hiện popup correct answer sau khi đã điền đáp án
+                                            _shakeController.forward(from: 0);
 
-                                          Future.delayed(const Duration(seconds: 1), () {
-                                            if (mounted) {
-                                              setState(() {
-                                                isCorrect = false;
-                                              });
-                                              showCorrectDialog();
-                                            }
-                                          });
-                                        }
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    padding: EdgeInsets.zero,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                            Future.delayed(const Duration(seconds: 1), () {
+                                              if (mounted) {
+                                                setState(() {
+                                                  isCorrect = false;
+                                                });
+                                                showCorrectDialog();
+                                              }
+                                            });
+                                          }
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      padding: EdgeInsets.zero,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
                                     ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        "QUA MÀN",
-                                        style: TextStyle(
-                                          color: const Color(0xFF616FD3),
-                                          fontSize: screenWidth * 0.030,
-                                          fontWeight: FontWeight.bold,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "QUA MÀN",
+                                          style: TextStyle(
+                                            color: const Color(0xFF616FD3),
+                                            fontSize: screenWidth * 0.030,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        "ADS",
-                                        style: TextStyle(
-                                          color: const Color(0xFF43ADED),
-                                          fontSize: screenWidth * 0.025,
-                                          fontWeight: FontWeight.bold,
+                                        Text(
+                                          "(QC 15s~30s)",
+                                          style: TextStyle(
+                                            color: const Color(0xFF43ADED),
+                                            fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: getBanner(context, ref), // Banner quảng cáo nếu có
-              ),
-            ],
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: getBanner(context, ref), // Banner quảng cáo nếu có
+                ),
+              ], // <-- THÊM DẤU ĐÓNG ']' Ở ĐÂY
+            ),
           ),
         ),
       ),
     );
   }
+
   List<Widget> buildCharRows(double size) {
     const int maxPerRow = 7;
     List<Widget> rows = [];
@@ -1583,21 +1633,20 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     }
   }
 
-  // Widget getBanner(BuildContext context, WidgetRef ref) {
-  //   final double screenWidth = MediaQuery.of(context).size.width;
-  //   final double screenHeight = MediaQuery.of(context).size.height;
-  //   final double horizontalPadding = screenWidth * 0.025;
-  //
-  //   if (_isBannerAdReady && _bannerAd != null) {
-  //     return Container(
-  //       width: screenWidth - (2 * horizontalPadding),
-  //       height: screenHeight * 0.07,
-  //       alignment: Alignment.center,
-  //       child: AdWidget(ad: _bannerAd!),
-  //     );
-  //   } else {
-  //     return const SizedBox.shrink();
-  //   }
-  // }
+// Widget getBanner(BuildContext context, WidgetRef ref) {
+//   final double screenWidth = MediaQuery.of(context).size.width;
+//   final double screenHeight = MediaQuery.of(context).size.height;
+//   final double horizontalPadding = screenWidth * 0.025;
+//
+//   if (_isBannerAdReady && _bannerAd != null) {
+//     return Container(
+//       width: screenWidth - (2 * horizontalPadding),
+//       height: screenHeight * 0.07,
+//       alignment: Alignment.center,
+//       child: AdWidget(ad: _bannerAd!),
+//     );
+//   } else {
+//     return const SizedBox.shrink();
+//   }
+// }
 }
-
