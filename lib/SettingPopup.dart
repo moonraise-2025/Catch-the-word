@@ -199,24 +199,24 @@ class _SettingPopupState extends State<SettingPopup> {
                       SizedBox(height: screenHeight * 0.02),
 
                       // Phần nút "Đánh giá" đã được thêm hiệu ứng phóng to/thu nhỏ
-                      AnimatedScale(
-                        scale: _isRatingButtonPressed ? 0.95 : 1.0,
-                        duration: const Duration(milliseconds: 100),
-                        child: GestureDetector(
-                          onTapDown: (_) => setState(() => _isRatingButtonPressed = true),
-                          onTapUp: (_) {
-                            setState(() {
-                              _isRatingButtonPressed = false; // Đặt lại trạng thái không nhấn
-                            });
-                          },
-                          onTapCancel: () => setState(() => _isRatingButtonPressed = false),
-                          child: AnimatedButton( // Giữ nguyên AnimatedButton bên trong
-                            text: 'Đánh giá',
-                            onPressed: () {
-                            },
-                          ),
-                        ),
-                      )
+                      // AnimatedScale(
+                      //   scale: _isRatingButtonPressed ? 0.95 : 1.0,
+                      //   duration: const Duration(milliseconds: 100),
+                      //   child: GestureDetector(
+                      //     onTapDown: (_) => setState(() => _isRatingButtonPressed = true),
+                      //     onTapUp: (_) {
+                      //       setState(() {
+                      //         _isRatingButtonPressed = false; // Đặt lại trạng thái không nhấn
+                      //       });
+                      //     },
+                      //     onTapCancel: () => setState(() => _isRatingButtonPressed = false),
+                      //     child: AnimatedButton( // Giữ nguyên AnimatedButton bên trong
+                      //       text: 'Đánh giá',
+                      //       onPressed: () {
+                      //       },
+                      //     ),
+                      //   ),
+                      // )
                     ],
                   ),
                 ),

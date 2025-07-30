@@ -25,6 +25,7 @@ import 'package:duoihinhbatchu/service/question_service.dart';
 import 'firebase_analysis/analytics_service.dart';
 
 
+
 class GameScreen extends ConsumerStatefulWidget {
 
   final int initialLevel;
@@ -92,63 +93,169 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     }
   }
 
-  Future<void> captureAndShareWidget() async {
-    try {
-      // Đợi một chút để đảm bảo UI đã render xong
-      await Future.delayed(const Duration(milliseconds: 100));
+  // Future<void> captureAndShareWidget() async {
+  //   try {
+  //     // Đợi một chút để đảm bảo UI đã render xong
+  //     await Future.delayed(const Duration(milliseconds: 100));
+  //
+  //     final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
+  //     if (renderObject == null) {
+  //       debugPrint('Không tìm thấy RenderObject');
+  //       return;
+  //     }
+  //
+  //     if (renderObject is! RenderRepaintBoundary) {
+  //       debugPrint('RenderObject không phải là RenderRepaintBoundary');
+  //       return;
+  //     }
+  //
+  //     final RenderRepaintBoundary boundary = renderObject;
+  //
+  //     // Đợi để đảm bảo widget đã được vẽ xong
+  //     if (boundary.debugNeedsPaint) {
+  //       await Future.delayed(const Duration(milliseconds: 0));
+  //     }
+  //
+  //     final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+  //     final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  //
+  //     if (byteData == null) {
+  //       debugPrint('Không thể tạo byte data từ image');
+  //       return;
+  //     }
+  //
+  //     final Uint8List pngBytes = byteData.buffer.asUint8List();
+  //
+  //     // Tạo file tạm
+  //     final tempDir = await getTemporaryDirectory();
+  //     final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+  //     await file.writeAsBytes(pngBytes);
+  //
+  //     // Chia sẻ file
+  //     await Share.shareFiles(
+  //       [file.path],
+  //       text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
+  //     );
+  //
+  //     debugPrint('Chia sẻ thành công: ${file.path}');
+  //   } catch (e) {
+  //     debugPrint('Lỗi chụp/chia sẻ widget: $e');
+  //     // Hiển thị thông báo lỗi cho user
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Không thể chia sẻ: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //           duration: const Duration(seconds: 3),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
-      final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
-      if (renderObject == null) {
-        debugPrint('Không tìm thấy RenderObject');
-        return;
+  Future<void> captureAndShareWidget(BuildContext context) async { // Thêm BuildContext vào đây
+    // Bước 1: Yêu cầu quyền truy cập bộ nhớ
+    var status = await Permission.storage.request();
+
+    if (status.isGranted) {
+      // Quyền đã được cấp, tiếp tục thực hiện chụp và chia sẻ
+      try {
+        // Đợi một chút để đảm bảo UI đã render xong
+        // Sử dụng addPostFrameCallback thường đáng tin cậy hơn Future.delayed(0)
+        await Future.delayed(const Duration(milliseconds: 100)); // Giữ lại delay ban đầu
+
+        // Đảm bảo widget đã được vẽ xong một cách đáng tin cậy hơn
+        await WidgetsBinding.instance.endOfFrame; // Chờ đến cuối frame hiện tại
+
+        final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
+        if (renderObject == null) {
+          debugPrint('Không tìm thấy RenderObject');
+          // Ghi log lỗi vào Firebase Analytics
+          // AnalyticsService.logEvent('screenshot_error', parameters: {'reason': 'RenderObject_null'});
+          return;
+        }
+
+        if (renderObject is! RenderRepaintBoundary) {
+          debugPrint('RenderObject không phải là RenderRepaintBoundary');
+          // AnalyticsService.logEvent('screenshot_error', parameters: {'reason': 'Not_RepaintBoundary'});
+          return;
+        }
+
+        final RenderRepaintBoundary boundary = renderObject;
+
+        final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+        if (byteData == null) {
+          debugPrint('Không thể tạo byte data từ image');
+          // AnalyticsService.logEvent('screenshot_error', parameters: {'reason': 'ByteData_null'});
+          return;
+        }
+
+        final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+        // Tạo file tạm
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+        await file.writeAsBytes(pngBytes);
+
+        // Chia sẻ file
+        await Share.shareXFiles( // Sử dụng shareXFiles thay vì shareFiles cho XFile
+          [XFile(file.path)], // Bọc file.path trong XFile
+          text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
+        );
+
+        debugPrint('Chia sẻ thành công: ${file.path}');
+        // AnalyticsService.logEvent('screenshot_shared_successfully');
+
+      } catch (e) {
+        debugPrint('Lỗi chụp/chia sẻ widget: $e');
+        // Ghi log lỗi vào Firebase Analytics để theo dõi trên thiết bị thật
+        // AnalyticsService.logEvent('screenshot_share_failed', parameters: {'error': e.toString()});
+
+        // Hiển thị thông báo lỗi cho user
+        if (context.mounted) { // Sử dụng context.mounted thay vì chỉ mounted
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Không thể chia sẻ: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
-
-      if (renderObject is! RenderRepaintBoundary) {
-        debugPrint('RenderObject không phải là RenderRepaintBoundary');
-        return;
-      }
-
-      final RenderRepaintBoundary boundary = renderObject;
-
-      // Đợi để đảm bảo widget đã được vẽ xong
-      if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 0));
-      }
-
-      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-      if (byteData == null) {
-        debugPrint('Không thể tạo byte data từ image');
-        return;
-      }
-
-      final Uint8List pngBytes = byteData.buffer.asUint8List();
-
-      // Tạo file tạm
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
-      await file.writeAsBytes(pngBytes);
-
-      // Chia sẻ file
-      await Share.shareFiles(
-        [file.path],
-        text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
-      );
-
-      debugPrint('Chia sẻ thành công: ${file.path}');
-    } catch (e) {
-      debugPrint('Lỗi chụp/chia sẻ widget: $e');
-      // Hiển thị thông báo lỗi cho user
-      if (mounted) {
+    } else if (status.isPermanentlyDenied) {
+      // Người dùng đã từ chối quyền vĩnh viễn, hướng dẫn họ mở cài đặt
+      debugPrint('Quyền truy cập bộ nhớ bị từ chối vĩnh viễn. Mở cài đặt.');
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Không thể chia sẻ: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text('Cần cấp quyền truy cập bộ nhớ. Vui lòng vào Cài đặt > Ứng dụng > [Tên ứng dụng của bạn] > Quyền để cấp quyền.'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Mở Cài đặt',
+              onPressed: () {
+                openAppSettings(); // Hàm này từ permission_handler
+              },
+            ),
+          ),
+        );
+      }
+      // AnalyticsService.logEvent('permission_denied_permanently');
+    } else {
+      // Quyền bị từ chối (không vĩnh viễn), có thể thử lại sau
+      debugPrint('Quyền truy cập bộ nhớ bị từ chối.');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cần cấp quyền truy cập bộ nhớ để chia sẻ. Vui lòng đi đến cài đặt.'),
+            backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
         );
       }
+      // AnalyticsService.logEvent('permission_denied_temporary');
     }
   }
 
@@ -800,6 +907,10 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
             maxPerRow *
             0.8;
 
+    final double answerBoxSize = adjustedSize;
+    final double lineSpacing = answerBoxSize * 0.1;
+    final double containerHeight = answerBoxSize * 3 + lineSpacing * 2;
+
     return RepaintBoundary(
       key: previewContainerKey,
       child: Container(
@@ -933,7 +1044,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                     children: [
                       // Ảnh câu hỏi
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.075),
                         width: double.infinity,
                         child: ScaleTransition(
                           scale: _scaleAnimation,
@@ -944,7 +1055,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                 final double imageBoxSize = constraints.maxWidth;
                                 return Container(
                                   width: imageBoxSize,
-                                  height: imageBoxSize * 1.0,
+                                  height: imageBoxSize * 0.95,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     border: Border.all(color: Colors.black26),
@@ -976,7 +1087,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                                   color: Colors.red, size: 40),
                                               SizedBox(height: 8), // Add some spacing between the icon and text
                                               Text(
-                                                "ảnh chưa được tải lên",
+                                                "Ảnh chưa được tải lên",
                                                 style: TextStyle(color: Colors.red, fontSize: 16),
                                               ),
                                             ],
@@ -991,6 +1102,36 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                           ),
                         ),
                       ),
+
+                      SizedBox(height: screenHeight * 0.0037), // Khoảng cách giữa đáp án và chữ cái lựa chọn
+
+                      // Đáp án
+                      Container(
+                        constraints: BoxConstraints(
+                          minHeight: adjustedSize * 4.0, // luôn đủ 3 dòng
+                        ),
+                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.075),
+                        padding: const EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.max,
+                          children: _buildAnswerRows(
+                            answerSlots,
+                            questions[currentQuestion].answer,
+                            adjustedSize,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // Các chữ cái lựa chọn
+                      Column(
+                        children: buildCharRows(adjustedSize * 1.15),
+                      ),
+                      const Spacer(),
 
 
                       // Spacer để đẩy text gợi ý xuống giữa
@@ -1012,6 +1153,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                     ],
                   ),
 
+
                 ),
                 // Hiển thị text gợi ý căn giữa nếu có gợi ý
                 // if (_hintBanner != null)
@@ -1029,32 +1171,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                 //       ),
                 //     ),
                 //   ),
-
-                SizedBox(height: screenHeight * 0.04), // Khoảng cách giữa ảnh và đáp án
-                // Đáp án
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                  // margin: EdgeInsets.symmetric(horizontal: mediumPadding),
-                  padding: const EdgeInsets.all(4.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: _buildAnswerRows(
-                      answerSlots,
-                      questions[currentQuestion].answer,
-                      adjustedSize,
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.01), // Khoảng cách giữa đáp án và chữ cái lựa chọn
-                // Các chữ cái lựa chọn
-                Column(
-                  children: buildCharRows(adjustedSize * 1.2),
-                ),
-                SizedBox(height: screenHeight * 0.04),
 
                 // Hàng các nút chức năng
                 Padding(
@@ -1155,7 +1271,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   child: ElevatedButton(
                                     onPressed: () {
                                       debugPrint('Nút Hỏi Bạn được bấm');
-                                      captureAndShareWidget();
+                                      captureAndShareWidget(context);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFF8B52E),
