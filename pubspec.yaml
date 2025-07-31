@@ -80,7 +80,10 @@ flutter:
     - assets/audio/
     - assets/questions.json
     - assets/images/BackgroundDHBC.png
+    - assets/images/BG.png
+    - assets/images/logo2.png
     - assets/images/logodhbc.png
+    - assets/images/mascot.png
     - assets/images/banner.png
     - assets/images/logo3-15dhbc.png
     - assets/questions/

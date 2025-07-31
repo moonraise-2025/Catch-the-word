@@ -1,10 +1,15 @@
 import 'package:flutter/foundation.dart';
 
+import 'ads_info.dart' as IpadHelper;
+
 bool get isDebugMode {
   if (kDebugMode) {
     return true;
   }
   return false;
+}
+bool get shouldUseAdsFallback {
+  return IpadHelper.shouldUseAdsFallback;
 }
 
 // String getInterstitialAdUnitId() {

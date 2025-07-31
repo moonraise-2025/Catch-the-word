@@ -1,4 +1,5 @@
 import 'package:duoihinhbatchu/ads/rewarded_ad_provider.dart';
+import 'package:duoihinhbatchu/utilss/ipad_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -25,6 +26,7 @@ import 'package:duoihinhbatchu/service/question_service.dart';
 import 'firebase_analysis/analytics_service.dart';
 
 import 'package:flutter/foundation.dart';
+
 
 Future<Uint8List?> _convertImageToPngBytes(ui.Image image) async {
   try {
@@ -109,55 +111,129 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   Future<void> captureAndShareWidget() async {
     try {
       // Đợi một chút để đảm bảo UI đã render xong
-      await Future.delayed(const Duration(milliseconds: 100));
-
+      await Future.delayed(Duration(milliseconds: IpadHelper.captureDelay));
       final RenderObject? renderObject = _previewContainerKey.currentContext?.findRenderObject();
       if (renderObject == null) {
-        debugPrint('Không tìm thấy RenderObject');
+        debugPrint("Không tìm thấy RenderObject");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Không thể chụp màn hình. Vui lòng thử lại."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
         return;
       }
-
       if (renderObject is! RenderRepaintBoundary) {
-        debugPrint('RenderObject không phải là RenderRepaintBoundary');
+        debugPrint("RenderObject không phải là RenderRepaintBoundary");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Không thể chụp màn hình. Vui lòng thử lại."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
         return;
       }
-
       final RenderRepaintBoundary boundary = renderObject;
-
       // Đợi để đảm bảo widget đã được vẽ xong
       if (boundary.debugNeedsPaint) {
-        await Future.delayed(const Duration(milliseconds: 0));
+        await Future.delayed(const Duration(milliseconds: 100));
       }
-
-      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      // Sử dụng pixel ratio tối ưu cho iPad
+      final double pixelRatio = IpadHelper.optimalPixelRatio;
+      final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
       final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
       if (byteData == null) {
-        debugPrint('Không thể tạo byte data từ image');
+        debugPrint("Không thể tạo byte data từ image");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Không thể tạo ảnh. Vui lòng thử lại."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
         return;
       }
-
       final Uint8List pngBytes = byteData.buffer.asUint8List();
-
-      // Tạo file tạm
+      // Tạo file tạm với tên unique
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
-      await file.writeAsBytes(pngBytes);
-
-      // Chia sẻ file
-      await Share.shareFiles(
-        [file.path],
-        text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
-      );
-
-      debugPrint('Chia sẻ thành công: ${file.path}');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File("${tempDir.path}/dhbc_screenshot_$timestamp.png");
+      try {
+        await file.writeAsBytes(pngBytes);
+        debugPrint("File đã được tạo: ${file.path}");
+      } catch (writeError) {
+        debugPrint("Lỗi ghi file: $writeError");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Không thể tạo file ảnh. Vui lòng thử lại."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+      // Kiểm tra file đã được tạo thành công
+      if (!await file.exists()) {
+        debugPrint("File không được tạo thành công");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Không thể tạo file ảnh. Vui lòng thử lại."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+      // Thử chia sẻ file trước
+      bool shareSuccess = false;
+      try {
+        await Share.shareFiles(
+          [file.path],
+          text: "Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app",
+        );
+        debugPrint("Chia sẻ file thành công: ${file.path}");
+        shareSuccess = true;
+      } catch (shareError) {
+        debugPrint("Lỗi chia sẻ file: $shareError");
+      }
+      // Nếu chia sẻ file thất bại, thử chia sẻ text
+      if (!shareSuccess && mounted) {
+        try {
+          await Share.share(
+            "Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app ",);
+          debugPrint("Chia sẻ text thành công");
+        } catch (textShareError) {
+          debugPrint("Lỗi chia sẻ text: $textShareError");
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Không thể chia sẻ: ${textShareError.toString()}"),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      }
     } catch (e) {
-      debugPrint('Lỗi chụp/chia sẻ widget: $e');
+      debugPrint("Lỗi chụp/chia sẻ widget: $e");
       // Hiển thị thông báo lỗi cho user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Không thể chia sẻ: ${e.toString()}'),
+            content: Text("Không thể chia sẻ: ${e.toString()}"),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -963,7 +1039,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Level ',
+                          Text('Câu ',
                               style: TextStyle(
                                   fontSize: screenWidth * 0.06,
                                   fontWeight: FontWeight.bold,
