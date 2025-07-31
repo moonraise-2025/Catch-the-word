@@ -24,6 +24,18 @@ import 'package:duoihinhbatchu/service/question_service.dart';
 
 import 'firebase_analysis/analytics_service.dart';
 
+import 'package:flutter/foundation.dart';
+
+Future<Uint8List?> _convertImageToPngBytes(ui.Image image) async {
+  try {
+    // Thực hiện chuyển đổi image sang ByteData và Uint8List trong isolate riêng
+    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData?.buffer.asUint8List();
+  } catch (e) {
+    debugPrint('Lỗi khi chuyển đổi ảnh trong isolate: $e');
+    return null;
+  }
+}
 
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -74,7 +86,8 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   late int maxAnswerLength;
   late double bannerHeight;
 
-  final GlobalKey previewContainerKey = GlobalKey();
+  final GlobalKey _previewContainerKey = GlobalKey(); // Đây là khai báo bạn đang thiếu
+
   // int dummyState = 0; // Biến này không được sử dụng
 
   RewardedAd? _rewardedAd;
@@ -93,59 +106,166 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     }
   }
 
-  // Future<void> captureAndShareWidget() async {
-  //   try {
-  //     // Đợi một chút để đảm bảo UI đã render xong
-  //     await Future.delayed(const Duration(milliseconds: 100));
+  Future<void> captureAndShareWidget() async {
+    try {
+      // Đợi một chút để đảm bảo UI đã render xong
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final RenderObject? renderObject = _previewContainerKey.currentContext?.findRenderObject();
+      if (renderObject == null) {
+        debugPrint('Không tìm thấy RenderObject');
+        return;
+      }
+
+      if (renderObject is! RenderRepaintBoundary) {
+        debugPrint('RenderObject không phải là RenderRepaintBoundary');
+        return;
+      }
+
+      final RenderRepaintBoundary boundary = renderObject;
+
+      // Đợi để đảm bảo widget đã được vẽ xong
+      if (boundary.debugNeedsPaint) {
+        await Future.delayed(const Duration(milliseconds: 0));
+      }
+
+      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData == null) {
+        debugPrint('Không thể tạo byte data từ image');
+        return;
+      }
+
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+      // Tạo file tạm
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+      await file.writeAsBytes(pngBytes);
+
+      // Chia sẻ file
+      await Share.shareFiles(
+        [file.path],
+        text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
+      );
+
+      debugPrint('Chia sẻ thành công: ${file.path}');
+    } catch (e) {
+      debugPrint('Lỗi chụp/chia sẻ widget: $e');
+      // Hiển thị thông báo lỗi cho user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể chia sẻ: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  // Future<void> _requestStoragePermissionOnLaunch() async {
+  //   PermissionStatus status = await Permission.storage.request();
+  //   debugPrint('Trạng thái quyền truy cập bộ nhớ khi khởi động: $status');
+  // }
   //
-  //     final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
-  //     if (renderObject == null) {
-  //       debugPrint('Không tìm thấy RenderObject');
-  //       return;
+  // Future<void> captureAndShareWidget(BuildContext context) async {
+  //   var status = await Permission.storage.request(); // Hoặc Permission.photos.request() nếu bạn chỉ quan tâm đến ảnh trên iOS
+  //
+  //   if (status.isGranted) {
+  //     try {
+  //       // Đảm bảo UI ổn định trước khi chụp
+  //       await Future.delayed(const Duration(milliseconds: 100));
+  //       await WidgetsBinding.instance.endOfFrame;
+  //
+  //       final RenderObject? renderObject = _previewContainerKey.currentContext?.findRenderObject();
+  //       if (renderObject == null || renderObject is! RenderRepaintBoundary) {
+  //         debugPrint('Không tìm thấy RenderObject hoặc không phải RenderRepaintBoundary');
+  //         if (context.mounted) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text('Lỗi: Không thể chụp màn hình.')),
+  //           );
+  //         }
+  //         return;
+  //       }
+  //
+  //       final RenderRepaintBoundary boundary = renderObject;
+  //       final ui.Image image = await boundary.toImage(pixelRatio: 2.0); // Chụp ảnh gốc
+  //
+  //       // Vẫn sử dụng compute để chuyển đổi ảnh sang Uint8List
+  //       // để tránh lỗi ANR trên các thiết bị yếu.
+  //       final Uint8List? pngBytes = await compute(_convertImageToPngBytes, image);
+  //
+  //       if (pngBytes == null) {
+  //         debugPrint('Không thể tạo byte data từ image (sau khi convert trong isolate)');
+  //         if (context.mounted) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text('Lỗi: Không thể chuẩn bị ảnh chia sẻ.')),
+  //           );
+  //         }
+  //         return;
+  //       }
+  //
+  //       final tempDir = await getTemporaryDirectory();
+  //       final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
+  //       await file.writeAsBytes(pngBytes);
+  //
+  //       // Debugging: Kiểm tra xem file có tồn tại và kích thước trước khi chia sẻ
+  //       debugPrint('Đường dẫn file để chia sẻ: ${file.path}');
+  //       debugPrint('File có tồn tại không: ${await file.exists()}');
+  //       if (await file.exists()) {
+  //         debugPrint('Kích thước file: ${await file.length()} bytes');
+  //       }
+  //       // End Debugging
+  //
+  //       // Chia sẻ file và text: text được truyền qua tham số text của Share.shareXFiles
+  //       await Share.shareXFiles(
+  //         [XFile(file.path)],
+  //         text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app', // Text được truyền vào đây
+  //       );
+  //
+  //       debugPrint('Chia sẻ thành công: ${file.path}');
+  //       // AnalyticsService.logEvent('screenshot_shared_successfully'); // Bỏ comment nếu dùng Firebase
+  //     } catch (e) {
+  //       debugPrint('Lỗi chụp/chia sẻ widget: $e');
+  //       // AnalyticsService.logEvent('screenshot_share_failed', parameters: {'error': e.toString()}); // Bỏ comment nếu dùng Firebase
+  //
+  //       if (context.mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text('Không thể chia sẻ: ${e.toString()}'),
+  //             backgroundColor: Colors.red,
+  //             duration: const Duration(seconds: 3),
+  //           ),
+  //         );
+  //       }
   //     }
-  //
-  //     if (renderObject is! RenderRepaintBoundary) {
-  //       debugPrint('RenderObject không phải là RenderRepaintBoundary');
-  //       return;
-  //     }
-  //
-  //     final RenderRepaintBoundary boundary = renderObject;
-  //
-  //     // Đợi để đảm bảo widget đã được vẽ xong
-  //     if (boundary.debugNeedsPaint) {
-  //       await Future.delayed(const Duration(milliseconds: 0));
-  //     }
-  //
-  //     final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-  //     final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-  //
-  //     if (byteData == null) {
-  //       debugPrint('Không thể tạo byte data từ image');
-  //       return;
-  //     }
-  //
-  //     final Uint8List pngBytes = byteData.buffer.asUint8List();
-  //
-  //     // Tạo file tạm
-  //     final tempDir = await getTemporaryDirectory();
-  //     final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
-  //     await file.writeAsBytes(pngBytes);
-  //
-  //     // Chia sẻ file
-  //     await Share.shareFiles(
-  //       [file.path],
-  //       text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
-  //     );
-  //
-  //     debugPrint('Chia sẻ thành công: ${file.path}');
-  //   } catch (e) {
-  //     debugPrint('Lỗi chụp/chia sẻ widget: $e');
-  //     // Hiển thị thông báo lỗi cho user
-  //     if (mounted) {
+  //   } else if (status.isPermanentlyDenied) {
+  //     debugPrint('Quyền truy cập bộ nhớ bị từ chối vĩnh viễn. Mở cài đặt.');
+  //     if (context.mounted) {
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         SnackBar(
-  //           content: Text('Không thể chia sẻ: ${e.toString()}'),
-  //           backgroundColor: Colors.red,
+  //           content: Text('Cần cấp quyền truy cập bộ nhớ. Vui lòng vào Cài đặt > Ứng dụng > [Tên ứng dụng của bạn] > Quyền để cấp quyền.'),
+  //           backgroundColor: Colors.orange,
+  //           duration: const Duration(seconds: 5),
+  //           action: SnackBarAction(
+  //             label: 'Mở Cài đặt',
+  //             onPressed: () {
+  //               openAppSettings();
+  //             },
+  //           ),
+  //         ),
+  //       );
+  //     }
+  //   } else {
+  //     debugPrint('Quyền truy cập bộ nhớ bị từ chối.');
+  //     if (context.mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Cần cấp quyền truy cập bộ nhớ để chia sẻ. Vui lòng thử lại.'),
+  //           backgroundColor: Colors.orange,
   //           duration: const Duration(seconds: 3),
   //         ),
   //       );
@@ -153,111 +273,6 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
   //   }
   // }
 
-  Future<void> captureAndShareWidget(BuildContext context) async { // Thêm BuildContext vào đây
-    // Bước 1: Yêu cầu quyền truy cập bộ nhớ
-    var status = await Permission.storage.request();
-
-    if (status.isGranted) {
-      // Quyền đã được cấp, tiếp tục thực hiện chụp và chia sẻ
-      try {
-        // Đợi một chút để đảm bảo UI đã render xong
-        // Sử dụng addPostFrameCallback thường đáng tin cậy hơn Future.delayed(0)
-        await Future.delayed(const Duration(milliseconds: 100)); // Giữ lại delay ban đầu
-
-        // Đảm bảo widget đã được vẽ xong một cách đáng tin cậy hơn
-        await WidgetsBinding.instance.endOfFrame; // Chờ đến cuối frame hiện tại
-
-        final RenderObject? renderObject = previewContainerKey.currentContext?.findRenderObject();
-        if (renderObject == null) {
-          debugPrint('Không tìm thấy RenderObject');
-          // Ghi log lỗi vào Firebase Analytics
-          // AnalyticsService.logEvent('screenshot_error', parameters: {'reason': 'RenderObject_null'});
-          return;
-        }
-
-        if (renderObject is! RenderRepaintBoundary) {
-          debugPrint('RenderObject không phải là RenderRepaintBoundary');
-          // AnalyticsService.logEvent('screenshot_error', parameters: {'reason': 'Not_RepaintBoundary'});
-          return;
-        }
-
-        final RenderRepaintBoundary boundary = renderObject;
-
-        final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-        final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-        if (byteData == null) {
-          debugPrint('Không thể tạo byte data từ image');
-          // AnalyticsService.logEvent('screenshot_error', parameters: {'reason': 'ByteData_null'});
-          return;
-        }
-
-        final Uint8List pngBytes = byteData.buffer.asUint8List();
-
-        // Tạo file tạm
-        final tempDir = await getTemporaryDirectory();
-        final file = File('${tempDir.path}/dhbc_screenshot_${DateTime.now().millisecondsSinceEpoch}.png');
-        await file.writeAsBytes(pngBytes);
-
-        // Chia sẻ file
-        await Share.shareXFiles( // Sử dụng shareXFiles thay vì shareFiles cho XFile
-          [XFile(file.path)], // Bọc file.path trong XFile
-          text: 'Hình gì đây? 🎮\nTải app tại: https://play.google.com/store/apps/details?id=com.duoihinhbatchu.app',
-        );
-
-        debugPrint('Chia sẻ thành công: ${file.path}');
-        // AnalyticsService.logEvent('screenshot_shared_successfully');
-
-      } catch (e) {
-        debugPrint('Lỗi chụp/chia sẻ widget: $e');
-        // Ghi log lỗi vào Firebase Analytics để theo dõi trên thiết bị thật
-        // AnalyticsService.logEvent('screenshot_share_failed', parameters: {'error': e.toString()});
-
-        // Hiển thị thông báo lỗi cho user
-        if (context.mounted) { // Sử dụng context.mounted thay vì chỉ mounted
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Không thể chia sẻ: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } else if (status.isPermanentlyDenied) {
-      // Người dùng đã từ chối quyền vĩnh viễn, hướng dẫn họ mở cài đặt
-      debugPrint('Quyền truy cập bộ nhớ bị từ chối vĩnh viễn. Mở cài đặt.');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cần cấp quyền truy cập bộ nhớ. Vui lòng vào Cài đặt > Ứng dụng > [Tên ứng dụng của bạn] > Quyền để cấp quyền.'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Mở Cài đặt',
-              onPressed: () {
-                openAppSettings(); // Hàm này từ permission_handler
-              },
-            ),
-          ),
-        );
-      }
-      // AnalyticsService.logEvent('permission_denied_permanently');
-    } else {
-      // Quyền bị từ chối (không vĩnh viễn), có thể thử lại sau
-      debugPrint('Quyền truy cập bộ nhớ bị từ chối.');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Cần cấp quyền truy cập bộ nhớ để chia sẻ. Vui lòng đi đến cài đặt.'),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-      // AnalyticsService.logEvent('permission_denied_temporary');
-    }
-  }
 
   @override
   void initState() {
@@ -301,6 +316,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
         },
       ),
     )..load();
+    // _requestStoragePermissionOnLaunch();
   }
 
   @override
@@ -912,7 +928,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
     final double containerHeight = answerBoxSize * 3 + lineSpacing * 2;
 
     return RepaintBoundary(
-      key: previewContainerKey,
+      key: _previewContainerKey,
       child: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -1271,7 +1287,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   child: ElevatedButton(
                                     onPressed: () {
                                       debugPrint('Nút Hỏi Bạn được bấm');
-                                      captureAndShareWidget(context);
+                                      captureAndShareWidget();
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFFF8B52E),
