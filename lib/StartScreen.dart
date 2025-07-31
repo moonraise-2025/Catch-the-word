@@ -24,8 +24,6 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
   bool loading = true;
   Map<String, bool> _isPressedMap = {};
   late AnimationController _animationController;
-  late Animation<Offset> _logoAnimation;
-  late Animation<Offset> _buttonAnimation;
   bool _isAnimationInitialized = false;
 
   @override
@@ -37,21 +35,6 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     );
-    _logoAnimation = Tween<Offset>(
-      begin: const Offset(-1.5, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _buttonAnimation = Tween<Offset>(
-      begin: const Offset(1.5, 0.0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
 
     _isAnimationInitialized = true;
     print('initState: Animation đã được khởi tạo. Gọi _loadInitialDataAndAnimate.');
@@ -148,8 +131,8 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
     final size = MediaQuery.of(context).size;
     final screenWidth = size.width;
     final screenHeight = size.height;
-    final double buttonWidth = screenWidth * 0.7;
-    final double buttonHeight = screenHeight * 0.06;
+    final double buttonWidth = screenWidth * 0.55;
+    final double buttonHeight = screenHeight * 0.075;
     return Scaffold(
       body: Builder(
         builder: (context) {
@@ -158,11 +141,12 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
             height: screenHeight,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/BackgroundDHBC.png'),
+                image: AssetImage('assets/images/BG.png'),
                 fit: BoxFit.cover,
                 repeat: ImageRepeat.noRepeat,
               ),
             ),
+
             child: Stack(
               children: [
                 Center(
@@ -170,191 +154,203 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(bottom: screenHeight * 0.08),
-                        child: SlideTransition(
-                          position: _logoAnimation,
-                          child: Image.asset(
-                            'assets/images/logodhbc.png',
-                            width: screenWidth * 0.8,
-                            height: screenHeight * 0.25,
-                            fit: BoxFit.contain,
-                          ),
+                        padding: EdgeInsets.only(bottom: screenHeight * 0.01),
+                        child: Image.asset( // Removed SlideTransition
+                          'assets/images/logo2.png',
+                          width: screenWidth * 0.85,
+                          height: screenHeight * 0.45,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.15),
+                      SizedBox(height: screenHeight * 0.10),
                       if (lastLevel == null || lastLevel == 1) ...[
-                        SlideTransition(
-                          position: _buttonAnimation,
-                          child: AnimatedScale(
-                            scale: _isPressedMap['start_game'] == true ? 0.95 : 1.0,
-                            duration: const Duration(milliseconds: 100),
-                            child: GestureDetector(
-                              onTapDown: (_) => setState(() => _isPressedMap['start_game'] = true),
-                              onTapUp: (_) {
-                                setState(() => _isPressedMap['start_game'] = false);
-                                _startNewGame();
-                              },
-                              onTapCancel: () => setState(() => _isPressedMap['start_game'] = false),
-                              child: SizedBox(
-                                width: buttonWidth,
-                                height: buttonHeight,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: Colors.blue,
-                                    textStyle: TextStyle(
-                                      fontSize: screenWidth * 0.05,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
+                        AnimatedScale( // Removed SlideTransition
+                          scale: _isPressedMap['start_game'] == true ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: GestureDetector(
+                            onTapDown: (_) => setState(() => _isPressedMap['start_game'] = true),
+                            onTapUp: (_) {
+                              setState(() => _isPressedMap['start_game'] = false);
+                              _startNewGame();
+                            },
+                            onTapCancel: () => setState(() => _isPressedMap['start_game'] = false),
+                            child: SizedBox(
+                              width: buttonWidth,
+                              height: buttonHeight,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF8C42),
+                                  foregroundColor: Colors.white,
+                                  textStyle: TextStyle(
+                                    fontSize: screenWidth * 0.05,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  onPressed: _startNewGame,
-                                  child: const Text('Chơi ngay', textAlign: TextAlign.center),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
+                                onPressed: _startNewGame,
+                                child: const Text('Chơi ngay', textAlign: TextAlign.center),
                               ),
                             ),
                           ),
                         ),
                       ] else ...[
-                        SlideTransition(
-                          position: _buttonAnimation,
-                          child: AnimatedScale(
-                            scale: _isPressedMap['continue_game'] == true ? 0.95 : 1.0,
-                            duration: const Duration(milliseconds: 100),
-                            child: GestureDetector(
+                        AnimatedScale( // Removed SlideTransition
+                          scale: _isPressedMap['continue_game'] == true ? 0.95 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: GestureDetector(
                               onTapDown: (_) => setState(() => _isPressedMap['continue_game'] = true),
                               onTapUp: (_) {
                                 setState(() => _isPressedMap['continue_game'] = false);
                                 _continueGame();
                               },
                               onTapCancel: () => setState(() => _isPressedMap['continue_game'] = false),
-                              child: SizedBox(
-                                width: buttonWidth,
-                                height: buttonHeight,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF616FD3),
-                                    textStyle: TextStyle(
-                                      fontSize: screenWidth * 0.05,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                              child: Stack(
+                                alignment: Alignment.center, // căn giữa nút theo chiều ngang
+                                children: [
+                                  // Nút TIẾP TỤC ở giữa
+                                  Center(
+                                    child: SizedBox(
+                                      width: buttonWidth,
+                                      height: buttonHeight,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFFF8C42),
+                                          foregroundColor: Colors.white,
+                                          side: const BorderSide(color: Colors.white, width: 1.5),
+                                          textStyle: TextStyle(
+                                            fontSize: screenWidth * 0.05,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                        onPressed: _continueGame,
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Text('TIẾP TỤC', textAlign: TextAlign.center),
+                                            Text(
+                                              '(Câu $lastLevel)',
+                                              style: TextStyle(
+                                                fontSize: screenWidth * 0.03,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  onPressed: _continueGame,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Text('TIẾP TỤC', textAlign: TextAlign.center),
-                                      Text('(Level $lastLevel)',
-                                          style: TextStyle(
-                                              fontSize: screenWidth * 0.03,
-                                              color: const Color(0xFF4E4E51))),
-                                    ],
+
+                                  // Icon đặt ở bên phải nút, nhưng không bị giới hạn trong kích thước của nút
+                                  Positioned(
+                                    right: screenWidth * 0.01, // điều chỉnh vị trí bên phải của nút
+                                    child: Image.asset(
+                                      'assets/images/mascot.png',
+                                      width: screenWidth * 0.2,
+                                      height: screenWidth * 0.2,
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
+                                ],
+                              )
                           ),
                         ),
                       ],
-                      SizedBox(height: screenHeight * 0.08),
+
                     ],
                   ),
                 ),
+
+
                 Positioned(
-                  top: screenHeight * 0.04,
-                  right: screenWidth * 0.04,
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          showGeneralDialog(
-                            context: context,
-                            barrierDismissible: true,
-                            barrierLabel: 'InfoPopup',
-                            barrierColor: Colors.black.withOpacity(0.5),
-                            transitionDuration: const Duration(milliseconds: 300),
-                            pageBuilder: (context, animation, secondaryAnimation) {
-                              return const InfoPopup();
-                            },
-                            transitionBuilder: (context, animation, secondaryAnimation, child) {
-                              // Animation khi hiển thị: (0, 0.8) -> (1, 1.05) -> (1, 1.0)
-                              // Animation khi ẩn: (1, 1.0) -> (1, 1.05) -> (0, 0.8)
+                  top: screenHeight * 0.055,
+                  left: screenWidth * 0.05,
+                  child: GestureDetector(
+                    onTap: () {
+                      showGeneralDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        barrierLabel: 'InfoPopup',
+                        barrierColor: Colors.black.withOpacity(0.5),
+                        transitionDuration: const Duration(milliseconds: 300),
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return const InfoPopup();
+                        },
+                        transitionBuilder: (context, animation, secondaryAnimation, child) {
+                          final opacityTween = TweenSequence<double>([
+                            TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                            TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                          ]);
 
-                              final opacityTween = TweenSequence<double>([
-                                TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7), // Hiện rõ 70% thời gian đầu
-                                TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3), // Giữ nguyên 100% opacity 30% thời gian sau
-                              ]);
+                          final scaleTween = TweenSequence<double>([
+                            TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                            TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                          ]);
 
-                              final scaleTween = TweenSequence<double>([
-                                TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7), // Phóng to từ 0.8 lên 1.05 trong 70% thời gian đầu
-                                TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3), // Thu nhỏ từ 1.05 về 1.0 trong 30% thời gian sau
-                              ]);
-
-                              return ScaleTransition(
-                                scale: scaleTween.animate(animation),
-                                child: FadeTransition(
-                                  opacity: opacityTween.animate(animation),
-                                  child: child,
-                                ),
-                              );
-                            },
+                          return ScaleTransition(
+                            scale: scaleTween.animate(animation),
+                            child: FadeTransition(
+                              opacity: opacityTween.animate(animation),
+                              child: child,
+                            ),
                           );
                         },
-                        child: Image.asset(
-                          'assets/images/thongtin.png',
-                          width: screenWidth * 0.07,
-                          height: screenWidth * 0.07,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.04),
-                      GestureDetector(
-                        onTap: () {
-                          showGeneralDialog(
-                            context: context,
-                            barrierDismissible: true,
-                            barrierLabel: 'SettingPopup',
-                            barrierColor: Colors.black.withOpacity(0.5),
-                            transitionDuration: const Duration(milliseconds: 300),
-                            pageBuilder: (context, animation, secondaryAnimation) {
-                              return const SettingPopup();
-                            },
-                            transitionBuilder: (context, animation, secondaryAnimation, child) {
+                      );
+                    },
+                    child: Image.asset(
+                      'assets/images/thongtin.png',
+                      width: screenWidth * 0.09,
+                      height: screenWidth * 0.09,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
 
-                              final opacityTween = TweenSequence<double>([
-                                TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
-                                TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
-                              ]);
+                Positioned(
+                  top: screenHeight * 0.055,
+                  right: screenWidth * 0.05,
+                  child: GestureDetector(
+                    onTap: () {
+                      showGeneralDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        barrierLabel: 'SettingPopup',
+                        barrierColor: Colors.black.withOpacity(0.5),
+                        transitionDuration: const Duration(milliseconds: 300),
+                        pageBuilder: (context, animation, secondaryAnimation) {
+                          return const SettingPopup();
+                        },
+                        transitionBuilder: (context, animation, secondaryAnimation, child) {
+                          final opacityTween = TweenSequence<double>([
+                            TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                            TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                          ]);
 
-                              final scaleTween = TweenSequence<double>([
-                                TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
-                                TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
-                              ]);
+                          final scaleTween = TweenSequence<double>([
+                            TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                            TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                          ]);
 
-                              return ScaleTransition(
-                                scale: scaleTween.animate(animation),
-                                child: FadeTransition(
-                                  opacity: opacityTween.animate(animation),
-                                  child: child,
-                                ),
-                              );
-                            },
+                          return ScaleTransition(
+                            scale: scaleTween.animate(animation),
+                            child: FadeTransition(
+                              opacity: opacityTween.animate(animation),
+                              child: child,
+                            ),
                           );
                         },
-                        child: Image.asset(
-                          'assets/images/setting.png',
-                          width: screenWidth * 0.07,
-                          height: screenWidth * 0.07,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ],
+                      );
+                    },
+                    child: Image.asset(
+                      'assets/images/setting.png',
+                      width: screenWidth * 0.09,
+                      height: screenWidth * 0.09,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 // Thêm widget banner ad ở dưới cùng
