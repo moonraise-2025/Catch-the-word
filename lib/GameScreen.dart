@@ -1008,7 +1008,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
       child: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/BackgroundGame.png'),
+            image: AssetImage('assets/images/BG.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -1051,77 +1051,90 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   color: Colors.white)),
                         ],
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                      Stack(
+                        clipBehavior: Clip.none, // Cho phép icon gift nằm ngoài khung
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('$diamonds',
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                              vertical: screenHeight * 0.004,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.brown, // Màu nền như hình
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset(
+                                  'assets/images/xu.png',
+                                  width: screenWidth * 0.05,
+                                  height: screenWidth * 0.05,
+                                  fit: BoxFit.contain,
+                                ),
+                                SizedBox(width: screenWidth * 0.015),
+                                Text(
+                                  '$diamonds',
                                   style: TextStyle(
-                                      fontSize: screenWidth * 0.06,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white)),
-                              SizedBox(width: screenWidth * 0.0015),
-                              Image.asset(
-                                'assets/images/Diamond_Borderless.png',
-                                width: screenWidth * 0.06,
-                                height: screenWidth * 0.06,
-                                fit: BoxFit.contain,
-                              ),
-                            ],
+                                    fontSize: screenWidth * 0.05,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          SizedBox(width: smallPadding),
-                          GestureDetector(
-                            onTap: () {
-                              showGeneralDialog(
-                                context: context,
-                                barrierDismissible: true,
-                                barrierLabel: 'Giftpopup',
-                                barrierColor: Colors.black.withOpacity(0.5),
-                                transitionDuration: const Duration(milliseconds: 300),
-                                pageBuilder: (context, animation, secondaryAnimation) {
-                                  return  Giftpopup(
-                                    dailyCount: dailyCount,
-                                    daily30Count: daily30Count,
-                                    daily50Count: daily50Count,
-                                    onReward: (amount) async {
-                                      setState(() {
-                                        diamonds += amount;
-                                      });
-                                      final prefs =
-                                      await SharedPreferences.getInstance();
-                                      await prefs.setInt('diamonds', diamonds);
-                                    },
-                                  );
-                                },
-                                transitionBuilder: (context, animation, secondaryAnimation, child) {
+                          Positioned(
+                            top: -screenWidth * 0.03, // Dịch lên
+                            left: -screenWidth * 0.03, // Dịch sang trái
+                            child: GestureDetector(
+                              onTap: () {
+                                showGeneralDialog(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  barrierLabel: 'Giftpopup',
+                                  barrierColor: Colors.black.withOpacity(0.5),
+                                  transitionDuration: const Duration(milliseconds: 300),
+                                  pageBuilder: (context, animation, secondaryAnimation) {
+                                    return Giftpopup(
+                                      dailyCount: dailyCount,
+                                      daily30Count: daily30Count,
+                                      daily50Count: daily50Count,
+                                      onReward: (amount) async {
+                                        setState(() {
+                                          diamonds += amount;
+                                        });
+                                        final prefs = await SharedPreferences.getInstance();
+                                        await prefs.setInt('diamonds', diamonds);
+                                      },
+                                    );
+                                  },
+                                  transitionBuilder: (context, animation, secondaryAnimation, child) {
+                                    final opacityTween = TweenSequence<double>([
+                                      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
+                                      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
+                                    ]);
 
-                                  final opacityTween = TweenSequence<double>([
-                                    TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 0.7),
-                                    TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.0), weight: 0.3),
-                                  ]);
+                                    final scaleTween = TweenSequence<double>([
+                                      TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
+                                      TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
+                                    ]);
 
-                                  final scaleTween = TweenSequence<double>([
-                                    TweenSequenceItem(tween: Tween<double>(begin: 0.8, end: 1.05), weight: 0.7),
-                                    TweenSequenceItem(tween: Tween<double>(begin: 1.05, end: 1.0), weight: 0.3),
-                                  ]);
-
-                                  return ScaleTransition(
-                                    scale: scaleTween.animate(animation),
-                                    child: FadeTransition(
-                                      opacity: opacityTween.animate(animation),
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                            child: Image.asset(
-                              'assets/images/gift.png',
-                              width: screenWidth * 0.07,
-                              height: screenWidth * 0.07,
-                              fit: BoxFit.contain,
+                                    return ScaleTransition(
+                                      scale: scaleTween.animate(animation),
+                                      child: FadeTransition(
+                                        opacity: opacityTween.animate(animation),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: Image.asset(
+                                'assets/images/gift.png',
+                                width: screenWidth * 0.08,
+                                height: screenWidth * 0.08,
+                              ),
                             ),
                           ),
                         ],
@@ -1155,37 +1168,41 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: Image.network(
-                                      questions[currentQuestion].imgQuestion,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                                        if (loadingProgress == null) {
-                                          return child;
-                                        }
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                                : null,
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                                        return const Center(
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.error,
-                                                  color: Colors.red, size: 40),
-                                              SizedBox(height: 8), // Add some spacing between the icon and text
-                                              Text(
-                                                "Ảnh chưa được tải lên",
-                                                style: TextStyle(color: Colors.red, fontSize: 16),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.white, width: 1.5), // Viền trắng
+                                      ),
+                                      child: Image.network(
+                                        questions[currentQuestion].imgQuestion,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                          return const Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.error, color: Colors.red, size: 40),
+                                                SizedBox(height: 8),
+                                                Text(
+                                                  "Ảnh chưa được tải lên",
+                                                  style: TextStyle(color: Colors.red, fontSize: 16),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 );
@@ -1295,8 +1312,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                   child: ElevatedButton(
                                     onPressed: _showRevealLetterDialog,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF90C240),
-                                      disabledBackgroundColor: const Color(0xFF90C240).withOpacity(0.6),
+                                      backgroundColor: const Color(0xFFFF8C42),
+                                      disabledBackgroundColor: const Color(0xFFFF8C42).withOpacity(0.6),
+                                      side: const BorderSide(color: Colors.white, width: 1.5),
                                       padding: EdgeInsets.zero,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -1314,27 +1332,25 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                             fontSize: screenWidth * 0.030,
                                           ),
                                         ),
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: '10 ',
-                                                style: TextStyle(
-                                                  fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              '10',
+                                              style: TextStyle(
+                                                fontSize: screenWidth * 0.025,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
                                               ),
-                                              WidgetSpan(
-                                                alignment: PlaceholderAlignment.middle,
-                                                child: Image.asset(
-                                                  'assets/images/Diamond_Borderless.png',
-                                                  width: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
-                                                  height: screenWidth * 0.03, // Giữ nguyên kích thước biểu tượng
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                            SizedBox(width: screenWidth * 0.005),
+                                            Image.asset(
+                                              'assets/images/xu.png',
+                                              width: screenWidth * 0.025,
+                                              height: screenWidth * 0.025,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -1366,8 +1382,9 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       captureAndShareWidget();
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFF8B52E),
-                                      disabledBackgroundColor: const Color(0xFFF8B52E).withOpacity(0.6),
+                                      backgroundColor: const Color(0xFFFF8C42),
+                                      disabledBackgroundColor: const Color(0xFFFF8C42).withOpacity(0.6),
+                                      side: const BorderSide(color: Colors.white, width: 1.5),
                                       padding: EdgeInsets.zero,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -1510,7 +1527,8 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                       );
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
+                                      backgroundColor: const Color(0xFFFF8C42),
+                                      side: const BorderSide(color: Colors.white, width: 1.5),
                                       padding: EdgeInsets.zero,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -1523,7 +1541,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         Text(
                                           "QUA MÀN",
                                           style: TextStyle(
-                                            color: const Color(0xFF616FD3),
+                                            color: Colors.white,
                                             fontSize: screenWidth * 0.030,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -1531,7 +1549,7 @@ class _GameScreenState extends ConsumerState<GameScreen> with TickerProviderStat
                                         Text(
                                           "ADS",
                                           style: TextStyle(
-                                            color: const Color(0xFF43ADED),
+                                            color: Colors.white,
                                             fontSize: screenWidth * 0.025, // Giữ nguyên kích thước chữ
                                             fontWeight: FontWeight.bold,
                                           ),

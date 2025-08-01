@@ -174,24 +174,44 @@ class _StartScreenState extends ConsumerState<StartScreen> with SingleTickerProv
                               _startNewGame();
                             },
                             onTapCancel: () => setState(() => _isPressedMap['start_game'] = false),
-                            child: SizedBox(
-                              width: buttonWidth,
-                              height: buttonHeight,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFF8C42),
-                                  foregroundColor: Colors.white,
-                                  textStyle: TextStyle(
-                                    fontSize: screenWidth * 0.05,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Nút
+                                Center(
+                                  child: SizedBox(
+                                    width: buttonWidth,
+                                    height: buttonHeight,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFFF8C42),
+                                        side: const BorderSide(color: Colors.white, width: 1.5),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: screenWidth * 0.05,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      onPressed: _startNewGame,
+                                      child: const Text('Chơi ngay', textAlign: TextAlign.center),
+                                    ),
                                   ),
                                 ),
-                                onPressed: _startNewGame,
-                                child: const Text('Chơi ngay', textAlign: TextAlign.center),
-                              ),
+
+                                // Icon bên ngoài nút (phải của nút)
+                                Positioned(
+                                  right: screenWidth * 0.01,
+                                  child: Image.asset(
+                                    'assets/images/mascot.png',
+                                    width: screenWidth * 0.2,
+                                    height: screenWidth * 0.2,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
